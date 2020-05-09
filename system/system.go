@@ -25,13 +25,14 @@ type system struct {
 
 func check() system {
 	return system{
-		Host:    host.Check(),
-		CPU:     cpu.Check(),
-		RAM:     ram.Check(),
-		Disks:   disk.Check(),
-		Network: network.Check(),
-		GPU:     gpu.Check(),
-		Chassis: chassis.Check(),
+		Host:      host.Check(),
+		CPU:       cpu.Check(),
+		RAM:       ram.Check(),
+		Disks:     disk.Check(),
+		Network:   network.Check(),
+		GPU:       gpu.Check(),
+		Chassis:   chassis.Check(),
+		Processes: process.Check(),
 	}
 }
 
