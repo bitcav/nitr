@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/gofiber/fiber"
 	"github.com/juanhuttemann/nitr-api/cpu"
 	"github.com/juanhuttemann/nitr-api/disk"
@@ -12,7 +14,9 @@ import (
 )
 
 func main() {
-	app := fiber.New()
+	app := fiber.New(&fiber.Settings{
+		DisableStartupMessage: true,
+	})
 
 	api := app.Group("/api")
 
@@ -26,5 +30,12 @@ func main() {
 	v1.Get("/processes", process.Data)
 	v1.Get("/ram", ram.Data)
 
+	fmt.Println(`                 _  __       
+         ____   (_)/ /_ _____
+   ____ / __ \ / // __// ___/
+ _____ / / / // // /_ / /    
+   __ /_/ /_//_/ \__//_/ v0.1.0b     
+Running agent on http://localhost:3000/api/v1
+`)
 	app.Listen(3000)
 }
