@@ -19,7 +19,7 @@ func main() {
 	v1 := api.Group("/v1")
 
 	v1.Get("/", system.Data)
-	v1.Get("/cpus", cpu.Data)
+	v1.Get("/cpu", cpu.Data)
 	v1.Get("/disks", disk.Data)
 	v1.Get("/host", host.Data)
 	v1.Get("/network", network.Data)
