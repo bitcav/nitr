@@ -1,4 +1,4 @@
-package cpu
+package ram
 
 import (
 	"fmt"
