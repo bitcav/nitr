@@ -26,5 +26,5 @@ func Check() Bios {
 }
 
 func Data(c *fiber.Ctx) {
-	c.JSON(check())
+	c.JSON(Check())
 }
