@@ -10,18 +10,18 @@ import (
 	"github.com/juanhuttemann/nitr-api/ram"
 )
 
-func setupRoutes(app *fiber.App) {
-	app.Get("/api/v1/cpus", cpu.GetCPU)
-	app.Get("/api/v1/disks", disk.GetDisks)
-	app.Get("/api/v1/host", host.GetHost)
-	app.Get("/api/v1/networks", network.GetNetWorks)
-	app.Get("/api/v1/processes", process.GetProcess)
-	app.Get("/api/v1/ram", ram.GetRAM)
-}
-
 func main() {
 	app := fiber.New()
+	api := app.Group("/api")
 
-	setupRoutes(app)
+	v1 := api.Group("/v1")
+
+	v1.Get("/cpus", cpu.GetCPU)
+	v1.Get("/disks", disk.GetDisks)
+	v1.Get("/host", host.GetHost)
+	v1.Get("/networks", network.GetNetWorks)
+	v1.Get("/processes", process.GetProcess)
+	v1.Get("/ram", ram.GetRAM)
+
 	app.Listen(3000)
 }
