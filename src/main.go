@@ -6,7 +6,7 @@ import (
 )
 
 func setupRoutes(app *fiber.App) {
-	app.Get("/api/v1/cpu", cpu.GetCPU)
+	app.Get("/api/v1/cpus", cpu.GetCPU)
 }
 
 func main() {
