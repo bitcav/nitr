@@ -6,6 +6,7 @@ import (
 	"github.com/gofiber/fiber"
 	"github.com/juanhuttemann/nitr-api/cpu"
 	"github.com/juanhuttemann/nitr-api/disk"
+	"github.com/juanhuttemann/nitr-api/gpu"
 	"github.com/juanhuttemann/nitr-api/host"
 	"github.com/juanhuttemann/nitr-api/network"
 	"github.com/juanhuttemann/nitr-api/process"
@@ -25,6 +26,7 @@ func main() {
 	v1.Get("/", system.Data)
 	v1.Get("/cpu", cpu.Data)
 	v1.Get("/disks", disk.Data)
+	v1.Get("/gpu", gpu.Data)
 	v1.Get("/host", host.Data)
 	v1.Get("/network", network.Data)
 	v1.Get("/processes", process.Data)
