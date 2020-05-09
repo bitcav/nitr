@@ -32,6 +32,6 @@ func checkHost() hostInfo {
 	}
 }
 
-func GetHost(c *fiber.Ctx) {
+func Data(c *fiber.Ctx) {
 	c.JSON(checkHost())
 }

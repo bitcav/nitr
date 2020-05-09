@@ -74,6 +74,6 @@ func checkCPU() CPU {
 	}
 }
 
-func GetCPU(c *fiber.Ctx) {
+func Data(c *fiber.Ctx) {
 	c.JSON(checkCPU())
 }

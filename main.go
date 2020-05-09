@@ -12,16 +12,17 @@ import (
 
 func main() {
 	app := fiber.New()
+
 	api := app.Group("/api")
 
 	v1 := api.Group("/v1")
 
-	v1.Get("/cpus", cpu.GetCPU)
-	v1.Get("/disks", disk.GetDisks)
-	v1.Get("/host", host.GetHost)
-	v1.Get("/networks", network.GetNetWorks)
-	v1.Get("/processes", process.GetProcess)
-	v1.Get("/ram", ram.GetRAM)
+	v1.Get("/cpus", cpu.Data)
+	v1.Get("/disks", disk.Data)
+	v1.Get("/host", host.Data)
+	v1.Get("/networks", network.Data)
+	v1.Get("/processes", process.Data)
+	v1.Get("/ram", ram.Data)
 
 	app.Listen(3000)
 }

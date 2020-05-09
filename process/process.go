@@ -24,6 +24,6 @@ func checkProcesses() []process {
 	return processList
 }
 
-func GetProcess(c *fiber.Ctx) {
+func Data(c *fiber.Ctx) {
 	c.JSON(checkProcesses())
 }

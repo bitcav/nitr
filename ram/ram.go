@@ -27,6 +27,6 @@ func checkRAM() RAM {
 	return ram
 }
 
-func GetRAM(c *fiber.Ctx) {
+func Data(c *fiber.Ctx) {
 	c.JSON(checkRAM())
 }

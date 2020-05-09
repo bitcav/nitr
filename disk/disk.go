@@ -32,6 +32,6 @@ func checkDisks() []disk {
 	return totalDisks
 }
 
-func GetDisks(c *fiber.Ctx) {
+func Data(c *fiber.Ctx) {
 	c.JSON(checkDisks())
 }
