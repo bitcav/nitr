@@ -13,7 +13,9 @@ type disk struct {
 	Percent    float64 `json:"percent"`
 }
 
-func checkDisks() []disk {
+type Disks []disk
+
+func Check() []disk {
 	disks, _ := gdisk.Partitions(false)
 
 	var totalDisks []disk
@@ -33,5 +35,5 @@ func checkDisks() []disk {
 }
 
 func Data(c *fiber.Ctx) {
-	c.JSON(checkDisks())
+	c.JSON(Check())
 }

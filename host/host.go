@@ -8,7 +8,7 @@ import (
 	"github.com/shirou/gopsutil/host"
 )
 
-type hostInfo struct {
+type HostInfo struct {
 	Name     string `json:"name"`
 	OS       string `json:"os"`
 	Arch     string `json:"arch"`
@@ -16,14 +16,13 @@ type hostInfo struct {
 	Uptime   uint64 `json:"uptime"`
 }
 
-func checkHost() hostInfo {
-
+func Check() HostInfo {
 	host, err := host.Info()
 	if err != nil {
 		fmt.Print(err)
 	}
 
-	return hostInfo{
+	return HostInfo{
 		Name:     host.Hostname,
 		OS:       host.OS,
 		Arch:     runtime.GOARCH,
@@ -33,5 +32,5 @@ func checkHost() hostInfo {
 }
 
 func Data(c *fiber.Ctx) {
-	c.JSON(checkHost())
+	c.JSON(Check())
 }

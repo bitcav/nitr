@@ -10,7 +10,9 @@ type process struct {
 	Name string `json:"name"`
 }
 
-func checkProcesses() []process {
+type Processes []process
+
+func Check() []process {
 	processes, err := ps.Processes()
 	if err != nil {
 		panic(err)
@@ -25,5 +27,5 @@ func checkProcesses() []process {
 }
 
 func Data(c *fiber.Ctx) {
-	c.JSON(checkProcesses())
+	c.JSON(Check())
 }

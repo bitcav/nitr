@@ -19,7 +19,9 @@ type networkDevice struct {
 	Active    bool      `json:"active"`
 }
 
-func checkNetworkDevices() []networkDevice {
+type NetworkDevices []networkDevice
+
+func Check() []networkDevice {
 	var networkDevices []networkDevice
 	var mac string
 	interfaces, err := net.Interfaces()
@@ -74,5 +76,5 @@ func checkNetworkDevices() []networkDevice {
 }
 
 func Data(c *fiber.Ctx) {
-	c.JSON(checkNetworkDevices())
+	c.JSON(Check())
 }

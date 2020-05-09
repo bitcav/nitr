@@ -13,7 +13,7 @@ type RAM struct {
 	Usage uint64 `json:"usage"`
 }
 
-func checkRAM() RAM {
+func Check() RAM {
 	memory, err := mem.VirtualMemory()
 	if err != nil {
 		fmt.Print(err)
@@ -28,5 +28,5 @@ func checkRAM() RAM {
 }
 
 func Data(c *fiber.Ctx) {
-	c.JSON(checkRAM())
+	c.JSON(Check())
 }
