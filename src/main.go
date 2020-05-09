@@ -5,12 +5,7 @@ import (
 	"github.com/juanhuttemann/nitr-api/src/cpu"
 )
 
-func helloWorld(c *fiber.Ctx) {
-	c.Send("Hello, World!")
-}
-
 func setupRoutes(app *fiber.App) {
-	app.Get("/", helloWorld)
 	app.Get("/api/v1/cpu", cpu.GetCPU)
 }
 
