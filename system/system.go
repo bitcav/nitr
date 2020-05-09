@@ -2,8 +2,10 @@ package system
 
 import (
 	"github.com/gofiber/fiber"
+	"github.com/juanhuttemann/nitr-api/chassis"
 	"github.com/juanhuttemann/nitr-api/cpu"
 	"github.com/juanhuttemann/nitr-api/disk"
+	"github.com/juanhuttemann/nitr-api/gpu"
 	"github.com/juanhuttemann/nitr-api/host"
 	"github.com/juanhuttemann/nitr-api/network"
 	"github.com/juanhuttemann/nitr-api/process"
@@ -17,16 +19,19 @@ type system struct {
 	Disks     disk.Disks             `json:"disks"`
 	Network   network.NetworkDevices `json:"network"`
 	Processes process.Processes      `json:"processes"`
+	GPU       gpu.GPUs               `json:"gpu"`
+	Chassis   chassis.Chassis        `json:"chassis"`
 }
 
 func check() system {
 	return system{
-		Host:      host.Check(),
-		CPU:       cpu.Check(),
-		RAM:       ram.Check(),
-		Disks:     disk.Check(),
-		Network:   network.Check(),
-		Processes: process.Check(),
+		Host:    host.Check(),
+		CPU:     cpu.Check(),
+		RAM:     ram.Check(),
+		Disks:   disk.Check(),
+		Network: network.Check(),
+		GPU:     gpu.Check(),
+		Chassis: chassis.Check(),
 	}
 }
 
