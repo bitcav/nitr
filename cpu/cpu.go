@@ -65,11 +65,15 @@ func cpuBrand() string {
 	return cpuBrand
 }
 
-func GetCPU(c *fiber.Ctx) {
-	c.JSON(CPU{
+func checkCPU() CPU {
+	return CPU{
 		Brand:        cpuBrand(),
 		Cores:        runtime.NumCPU(),
 		Usage:        cpuUsage(),
 		UsagePerCore: cpuUsagePerCore(),
-	})
+	}
+}
+
+func GetCPU(c *fiber.Ctx) {
+	c.JSON(checkCPU())
 }
