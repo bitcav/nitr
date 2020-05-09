@@ -5,22 +5,19 @@ import (
 	"github.com/mitchellh/go-ps"
 )
 
-type Process struct {
+type process struct {
 	Pid  int    `json:"pid"`
 	Name string `json:"name"`
 }
 
-type Processes []Process
-
-func CheckProcesses() []Process {
-
+func checkProcesses() []process {
 	processes, err := ps.Processes()
 	if err != nil {
 		panic(err)
 	}
-	var processList []Process
+	var processList []process
 	for _, p := range processes {
-		proc := Process{Pid: p.Pid(), Name: p.Executable()}
+		proc := process{Pid: p.Pid(), Name: p.Executable()}
 		processList = append(processList, proc)
 	}
 
@@ -28,5 +25,5 @@ func CheckProcesses() []Process {
 }
 
 func GetProcess(c *fiber.Ctx) {
-	c.JSON(CheckProcesses())
+	c.JSON(checkProcesses())
 }
