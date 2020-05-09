@@ -12,11 +12,9 @@ type address struct {
 	IP string `json:"ip"`
 }
 
-type addresses []address
-
 type networkDevice struct {
 	Name      string    `json:"name"`
-	Addresses addresses `json:"addresses"`
+	Addresses []address `json:"addresses"`
 	MAC       string    `json:"mac"`
 	Active    bool      `json:"active"`
 }
