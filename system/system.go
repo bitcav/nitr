@@ -2,6 +2,7 @@ package system
 
 import (
 	"github.com/gofiber/fiber"
+	"github.com/juanhuttemann/nitr-api/bios"
 	"github.com/juanhuttemann/nitr-api/chassis"
 	"github.com/juanhuttemann/nitr-api/cpu"
 	"github.com/juanhuttemann/nitr-api/disk"
@@ -15,6 +16,7 @@ import (
 type system struct {
 	Host      host.HostInfo          `json:"host"`
 	CPU       cpu.CPU                `json:"cpu"`
+	Bios      bios.Bios              `json:"bios"`
 	RAM       ram.RAM                `json:"ram"`
 	Disks     disk.Disks             `json:"disks"`
 	Network   network.NetworkDevices `json:"network"`
@@ -27,6 +29,7 @@ func check() system {
 	return system{
 		Host:      host.Check(),
 		CPU:       cpu.Check(),
+		Bios:      bios.Check(),
 		RAM:       ram.Check(),
 		Disks:     disk.Check(),
 		Network:   network.Check(),

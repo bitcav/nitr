@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/gofiber/fiber"
+	"github.com/juanhuttemann/nitr-api/bios"
 	"github.com/juanhuttemann/nitr-api/chassis"
 	"github.com/juanhuttemann/nitr-api/cpu"
 	"github.com/juanhuttemann/nitr-api/disk"
@@ -26,6 +27,7 @@ func main() {
 
 	v1.Get("/", system.Data)
 	v1.Get("/cpu", cpu.Data)
+	v1.Get("/bios", bios.Data)
 	v1.Get("/chassis", chassis.Data)
 	v1.Get("/disks", disk.Data)
 	v1.Get("/gpu", gpu.Data)
