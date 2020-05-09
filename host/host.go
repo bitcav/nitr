@@ -18,17 +18,17 @@ type hostInfo struct {
 
 func checkHost() hostInfo {
 
-	hostInfo, err := host.Info()
+	host, err := host.Info()
 	if err != nil {
 		fmt.Print(err)
 	}
 
 	return hostInfo{
-		Name:     hostInfo.Hostname,
-		OS:       hostInfo.OS,
+		Name:     host.Hostname,
+		OS:       host.OS,
 		Arch:     runtime.GOARCH,
-		Platform: hostInfo.Platform + " " + hostInfo.PlatformVersion,
-		Uptime:   hostInfo.Uptime,
+		Platform: host.Platform + " " + host.PlatformVersion,
+		Uptime:   host.Uptime,
 	}
 }
 
