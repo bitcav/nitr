@@ -1,6 +1,9 @@
 package system
 
 import (
+	"log"
+	"time"
+
 	"github.com/gofiber/fiber"
 	"github.com/juanhuttemann/nitr-api/bios"
 	"github.com/juanhuttemann/nitr-api/chassis"
@@ -26,7 +29,8 @@ type system struct {
 }
 
 func check() system {
-	return system{
+	start := time.Now()
+	sys := system{
 		Host:      host.Check(),
 		CPU:       cpu.Check(),
 		Bios:      bios.Check(),
@@ -37,6 +41,9 @@ func check() system {
 		Chassis:   chassis.Check(),
 		Processes: process.Check(),
 	}
+	elapsed := time.Since(start)
+	log.Printf("/ took %s", elapsed)
+	return sys
 }
 
 func Data(c *fiber.Ctx) {

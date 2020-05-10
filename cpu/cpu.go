@@ -2,22 +2,20 @@ package cpu
 
 import (
 	"fmt"
-	"log"
-	"os/exec"
-	"regexp"
-	"runtime"
-	"strings"
 	"time"
 
 	"github.com/gofiber/fiber"
+	"github.com/jaypipes/ghw"
 	"github.com/shirou/gopsutil/cpu"
 )
 
 type CPU struct {
-	Brand        string    `json:"brand"`
-	Cores        int       `json:"cores"`
-	Usage        float64   `json:"usage"`
-	UsagePerCore []float64 `json:"usagePerCore"`
+	Brand     string    `json:"brand"`
+	Cores     uint32    `json:"cores"`
+	Threads   uint32    `json:"threads"`
+	Frecuency float64   `json:"frecuency"`
+	Usage     float64   `json:"usage"`
+	UsageEach []float64 `json:"usageEach"`
 }
 
 func cpuUsage() float64 {
@@ -29,7 +27,7 @@ func cpuUsage() float64 {
 	return cpuUsage[0]
 }
 
-func cpuUsagePerCore() []float64 {
+func cpuUsageEach() []float64 {
 	duration := 500 * time.Millisecond
 	cpuUsage, err := cpu.Percent(duration, true)
 	if err != nil {
@@ -38,39 +36,49 @@ func cpuUsagePerCore() []float64 {
 	return cpuUsage
 }
 
-func cpuBrand() string {
-	var cpuBrand string
-	if runtime.GOOS == "windows" {
-		out, err := exec.Command("wmic", "cpu", "get", "name").Output()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		cpuBrand = strings.TrimSpace(strings.Trim(string(out), "Name"))
-	} else {
-		command := []string{"/proc/cpuinfo"}
-		out, err := exec.Command("cat", command...).Output()
-		if err != nil {
-			fmt.Println("an error has occurred while checking the cpu")
-			log.Fatal(err)
-		}
-
-		re := regexp.MustCompile(`.*model name.*`)
-		matches := re.FindStringSubmatch(string(out))
-
-		cpuBrand = strings.TrimSpace(strings.Trim(strings.Join(matches, " "), "model name"))
-		cpuBrand = strings.Trim(cpuBrand, " :")
+func cores() uint32 {
+	cpu, err := ghw.CPU()
+	if err != nil {
+		fmt.Printf("Error getting CPU info: %v", err)
 	}
 
-	return cpuBrand
+	return cpu.TotalCores
+}
+
+func threads() uint32 {
+	cpu, err := ghw.CPU()
+	if err != nil {
+		fmt.Printf("Error getting CPU info: %v", err)
+	}
+
+	return cpu.TotalThreads
+}
+
+func frecuency() float64 {
+	cpu, err := cpu.Info()
+	if err != nil {
+		fmt.Printf("Error getting CPU info: %v", err)
+	}
+	return cpu[0].Mhz
+}
+
+func model() string {
+	cpu, err := ghw.CPU()
+	if err != nil {
+		fmt.Printf("Error getting CPU info: %v", err)
+	}
+
+	return cpu.Processors[0].Model
 }
 
 func Check() CPU {
 	return CPU{
-		Brand:        cpuBrand(),
-		Cores:        runtime.NumCPU(),
-		Usage:        cpuUsage(),
-		UsagePerCore: cpuUsagePerCore(),
+		Brand:     model(),
+		Cores:     cores(),
+		Threads:   threads(),
+		Frecuency: frecuency(),
+		Usage:     cpuUsage(),
+		UsageEach: cpuUsageEach(),
 	}
 }
 
