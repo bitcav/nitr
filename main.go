@@ -102,6 +102,11 @@ func main() {
 		}
 	})
 
+	app.Post("/logout", func(c *fiber.Ctx) {
+		c.ClearCookie()
+		c.Redirect("/")
+	})
+
 	api := app.Group("/api")
 
 	v1 := api.Group("/v1")
