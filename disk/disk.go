@@ -17,18 +17,19 @@ type Disks []disk
 
 func Check() []disk {
 	disks, _ := gdisk.Partitions(false)
-
 	var totalDisks []disk
 
 	for _, d := range disks {
 		diskUsageOf, _ := gdisk.Usage(d.Mountpoint)
-		totalDisks = append(totalDisks, disk{
-			Free:       diskUsageOf.Free,
-			Mountpoint: d.Mountpoint,
-			Percent:    diskUsageOf.UsedPercent,
-			Size:       diskUsageOf.Total,
-			Used:       diskUsageOf.Used,
-		})
+		if d.Fstype != "squashfs" {
+			totalDisks = append(totalDisks, disk{
+				Free:       diskUsageOf.Free,
+				Mountpoint: d.Mountpoint,
+				Percent:    diskUsageOf.UsedPercent,
+				Size:       diskUsageOf.Total,
+				Used:       diskUsageOf.Used,
+			})
+		}
 
 	}
 	return totalDisks
