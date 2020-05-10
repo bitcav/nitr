@@ -1,14 +1,12 @@
 package system
 
 import (
-	"log"
-	"time"
-
 	"github.com/gofiber/fiber"
 	"github.com/juanhuttemann/nitr-api/bios"
 	"github.com/juanhuttemann/nitr-api/chassis"
 	"github.com/juanhuttemann/nitr-api/cpu"
 	"github.com/juanhuttemann/nitr-api/disk"
+	"github.com/juanhuttemann/nitr-api/drive"
 	"github.com/juanhuttemann/nitr-api/gpu"
 	"github.com/juanhuttemann/nitr-api/host"
 	"github.com/juanhuttemann/nitr-api/network"
@@ -22,27 +20,26 @@ type system struct {
 	Bios      bios.Bios              `json:"bios"`
 	RAM       ram.RAM                `json:"ram"`
 	Disks     disk.Disks             `json:"disks"`
+	Drives    drive.Drives           `json:"drives"`
 	Network   network.NetworkDevices `json:"network"`
-	Processes process.Processes      `json:"processes"`
 	GPU       gpu.GPUs               `json:"gpu"`
 	Chassis   chassis.Chassis        `json:"chassis"`
+	Processes process.Processes      `json:"processes"`
 }
 
 func check() system {
-	start := time.Now()
 	sys := system{
 		Host:      host.Check(),
 		CPU:       cpu.Check(),
 		Bios:      bios.Check(),
 		RAM:       ram.Check(),
 		Disks:     disk.Check(),
+		Drives:    drive.Check(),
 		Network:   network.Check(),
 		GPU:       gpu.Check(),
 		Chassis:   chassis.Check(),
 		Processes: process.Check(),
 	}
-	elapsed := time.Since(start)
-	log.Printf("/ took %s", elapsed)
 	return sys
 }
 
