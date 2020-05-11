@@ -9,6 +9,7 @@ import (
 
 	"github.com/gofiber/fiber"
 	"github.com/gofiber/template"
+	"github.com/skip2/go-qrcode"
 
 	"github.com/juanhuttemann/nitr-api/bios"
 	"github.com/juanhuttemann/nitr-api/chassis"
@@ -17,6 +18,7 @@ import (
 	"github.com/juanhuttemann/nitr-api/drive"
 	"github.com/juanhuttemann/nitr-api/gpu"
 	"github.com/juanhuttemann/nitr-api/host"
+	"github.com/juanhuttemann/nitr-api/key"
 	"github.com/juanhuttemann/nitr-api/network"
 	"github.com/juanhuttemann/nitr-api/process"
 	"github.com/juanhuttemann/nitr-api/ram"
@@ -31,6 +33,7 @@ type User struct {
 }
 
 func init() {
+
 	database, _ := sql.Open("sqlite3", "./nitr.db")
 	statement, _ := database.Prepare("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT NOT NULL UNIQUE, password TEXT)")
 	statement.Exec()
@@ -56,21 +59,30 @@ func main() {
 				log.Fatal(err)
 			}
 			bind := fiber.Map{
-				"form": string(content),
+				"content": string(content),
 			}
 			c.Render("views/layout/default.mustache", bind)
 		}
 	})
 
 	app.Get("/panel", func(c *fiber.Ctx) {
-		content, err := ioutil.ReadFile("./views/panel.html")
-		if err != nil {
-			log.Fatal(err)
+		if c.Cookies("admin") == "admin" {
+
+			content, err := ioutil.ReadFile("./views/panel.mustache")
+			if err != nil {
+				log.Fatal(err)
+			}
+			bind := fiber.Map{
+				"content":  string(content),
+				"host":     host.Check().Name,
+				"os":       host.Check().OS,
+				"platform": host.Check().Platform,
+				"arch":     host.Check().Arch,
+			}
+			c.Render("views/layout/default.mustache", bind)
+		} else {
+			c.Redirect("/")
 		}
-		bind := fiber.Map{
-			"form": string(content),
-		}
-		c.Render("views/layout/default.mustache", bind)
 	})
 
 	app.Post("/", func(c *fiber.Ctx) {
@@ -97,7 +109,6 @@ func main() {
 			c.Cookie(cookie)
 			c.Redirect("/panel")
 		} else {
-			fmt.Println("Login fallido")
 			c.Redirect("/")
 		}
 	})
@@ -105,6 +116,14 @@ func main() {
 	app.Post("/logout", func(c *fiber.Ctx) {
 		c.ClearCookie()
 		c.Redirect("/")
+	})
+
+	app.Post("/code", func(c *fiber.Ctx) {
+		fmt.Println(key.String(12))
+		err := qrcode.WriteFile("https://example.org", qrcode.Medium, 256, "./assets/images/qr.png")
+		if err != nil {
+			fmt.Println(err)
+		}
 	})
 
 	api := app.Group("/api")
