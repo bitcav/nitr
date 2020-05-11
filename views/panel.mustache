@@ -16,7 +16,6 @@
     <img alt="UIkit 3" src="/images/logo_transparent_f.png" width="180" class="uk-margin-bottom">
   </div>
   <hr>
-
   <div class="uk-container" uk-grid>
     <div class="server" ukgrid>
       <form class="uk-form-horizontal uk-margin-large">
@@ -34,32 +33,58 @@
           </div>
         </div>
         <div class="uk-margin">
-          <label class="uk-form-label" for="arch">API KEY:</label>
+          <label class="uk-form-label" for="key">API KEY:</label>
           <div class="uk-form-controls">
-            <input class="uk-input" id="arch" type="text" placeholder="" disabled>
+            <input class="uk-input" id="key" type="text" placeholder="" disabled>
           </div>
         </div>
-          <button onclick="generateCode(event)" class="uk-button uk-button-primary uk-button-large"><span
-              uk-icon="bolt"></span> GENERATE API KEY
-          </button>
+        <button id="genBtn" class="uk-button uk-button-primary uk-button-large">
+          GENERATE
+          API KEY
+        </button>
       </form>
     </div>
     <div class="qrCode" uk-grid>
       <div>
-
-        <img src="/images/qr.png" alt="qr" uk-img style="max-width: 240;">
+        <img id="qr" src="" alt="qr" uk-img style="max-width: 240;">
       </div>
     </div>
 
     <script>
-      function generateCode(evt) {
-        evt.preventDefault();
-        fetch('/code', {
-            method: "POST"
-          })
-          .then(function (response) {
-            console.log(response)
-          })
+      $(document).ready(function () {
+        if ($('#qr').attr("src") === "data:image/png;base64, ") {
+          $('#qr').hide();
+        }
 
-      }
+        $('#genBtn').click(function (e) {
+          e.preventDefault();
+          fetch('/code', {
+              method: "POST"
+            })
+            .then(function (response) {
+              return response.json();
+            })
+            .then(function (data) {
+              $("#key").val(data.key)
+              var d = new Date();
+              $("#qr").removeAttr("src")
+              .attr("src", "data:image/png;base64, " + data.qrCode)
+              .show();
+              UIkit.notification({
+                message: 'restart the nitr-agent service to apply these changes',
+                status: 'danger',
+                pos: 'bottom-center',
+                timeout: 5000
+              });
+
+            });
+          var btn = $(this);
+          btn.prop('disabled', true)
+            .attr("uk-spinner", true)
+          setTimeout(function () {
+            btn.prop('disabled', false)
+              .removeAttr("uk-spinner")
+          }, 500);
+        });
+      })
     </script>

@@ -2,11 +2,13 @@ package main
 
 import (
 	"database/sql"
+	b64 "encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"time"
 
+	"github.com/fiberweb/apikey"
 	"github.com/gofiber/fiber"
 	"github.com/gofiber/template"
 	"github.com/skip2/go-qrcode"
@@ -32,10 +34,15 @@ type User struct {
 	Password string `form:"password" query:"password"`
 }
 
+type Key struct {
+	Key    string `json:"key"`
+	QrCode string `json:"qrCode"`
+}
+
 func init() {
 
 	database, _ := sql.Open("sqlite3", "./nitr.db")
-	statement, _ := database.Prepare("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT NOT NULL UNIQUE, password TEXT)")
+	statement, _ := database.Prepare("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT NOT NULL UNIQUE, password TEXT, apikey TEXT UNIQUE, qrcode TEXT UNIQUE)")
 	statement.Exec()
 	statement, _ = database.Prepare("INSERT INTO users (username, password) VALUES (?, ?)")
 	statement.Exec("admin", "admin")
@@ -67,17 +74,27 @@ func main() {
 
 	app.Get("/panel", func(c *fiber.Ctx) {
 		if c.Cookies("admin") == "admin" {
-
 			content, err := ioutil.ReadFile("./views/panel.mustache")
 			if err != nil {
 				log.Fatal(err)
 			}
+
+			database, _ := sql.Open("sqlite3", "./nitr.db")
+			rows, _ := database.Query("SELECT apikey, qrcode FROM users where username=?", "admin")
+			var apikey string
+			var qrcode string
+			for rows.Next() {
+				rows.Scan(&apikey, &qrcode)
+			}
+
 			bind := fiber.Map{
 				"content":  string(content),
 				"host":     host.Check().Name,
 				"os":       host.Check().OS,
 				"platform": host.Check().Platform,
 				"arch":     host.Check().Arch,
+				"apikey":   apikey,
+				"qrcode":   qrcode,
 			}
 			c.Render("views/layout/default.mustache", bind)
 		} else {
@@ -119,14 +136,32 @@ func main() {
 	})
 
 	app.Post("/code", func(c *fiber.Ctx) {
-		fmt.Println(key.String(12))
-		err := qrcode.WriteFile("https://example.org", qrcode.Medium, 256, "./assets/images/qr.png")
+		apikey := key.String(12)
+		png, err := qrcode.Encode(apikey, qrcode.Medium, 256)
+		uEncQr := b64.StdEncoding.EncodeToString(png)
+		database, _ := sql.Open("sqlite3", "./nitr.db")
+		statement, _ := database.Prepare("UPDATE users SET apikey=(?), qrcode=(?) where username=(?)")
+		statement.Exec(apikey, uEncQr, "admin")
+
 		if err != nil {
 			fmt.Println(err)
 		}
+		c.JSON(Key{
+			Key:    apikey,
+			QrCode: uEncQr,
+		})
 	})
 
 	api := app.Group("/api")
+
+	database, _ := sql.Open("sqlite3", "./nitr.db")
+	rows, _ := database.Query("SELECT apikey FROM users where username=?", "admin")
+	var apiKey string
+	for rows.Next() {
+		rows.Scan(&apiKey)
+	}
+
+	api.Use(apikey.New(apikey.Config{Key: apiKey}))
 
 	v1 := api.Group("/v1")
 
