@@ -4,7 +4,8 @@ go 1.14
 
 require (
 	github.com/fiberweb/apikey v1.0.0
-	github.com/gofiber/fiber v1.9.5
+	github.com/gofiber/fiber v1.9.6
+	github.com/gofiber/session v1.0.0
 	github.com/gofiber/template v1.1.0
 	github.com/jaypipes/ghw v0.6.0
 	github.com/klauspost/compress v1.10.5 // indirect

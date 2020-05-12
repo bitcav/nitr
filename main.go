@@ -11,6 +11,8 @@ import (
 	"github.com/juanhuttemann/nitr-api/nitrdb"
 
 	"github.com/gofiber/fiber"
+	"github.com/gofiber/session"
+
 	"github.com/gofiber/template"
 	"github.com/skip2/go-qrcode"
 
@@ -31,15 +33,18 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-type User struct {
+type LoginForm struct {
 	Username string `form:"username" query:"username"`
 	Password string `form:"password" query:"password"`
+	Remember string `form:"remember" query:"remember"`
 }
 
 type Key struct {
 	Key    string `json:"key"`
 	QrCode string `json:"qrCode"`
 }
+
+var sessionID string
 
 func init() {
 	if _, err := os.Stat("nitr.db"); err != nil {
@@ -63,12 +68,15 @@ func main() {
 		DisableStartupMessage: true,
 	})
 
+	sessions := session.New()
+
 	app.Settings.TemplateEngine = template.Mustache()
 
 	app.Static("/", "assets")
 
 	app.Get("/", func(c *fiber.Ctx) {
-		if c.Cookies("admin") == "admin" {
+		store := sessions.Get(c)
+		if store.Get("UserID") == "1" || c.Cookies("remember") == "1" {
 			c.Redirect("/panel")
 		} else {
 			content, err := ioutil.ReadFile("./views/login.html")
@@ -83,7 +91,8 @@ func main() {
 	})
 
 	app.Get("/panel", func(c *fiber.Ctx) {
-		if c.Cookies("admin") == "admin" {
+		store := sessions.Get(c)
+		if store.Get("UserID") == "1" || c.Cookies("remember") == "1" {
 			content, err := ioutil.ReadFile("./views/panel.mustache")
 			if err != nil {
 				log.Fatal(err)
@@ -114,9 +123,9 @@ func main() {
 	})
 
 	app.Post("/", func(c *fiber.Ctx) {
-		u := new(User)
+		login := new(LoginForm)
 
-		if err := c.BodyParser(u); err != nil {
+		if err := c.BodyParser(login); err != nil {
 			log.Fatal(err)
 		}
 		db, err := bolt.Open("nitr.db", 0600, nil)
@@ -127,12 +136,17 @@ func main() {
 		}
 
 		nitrUser := nitrdb.GetUserByID(db, "1")
-		if (u.Username == nitrUser.Username) && (u.Password == nitrUser.Password) {
-			cookie := new(fiber.Cookie)
-			cookie.Name = "admin"
-			cookie.Value = "admin"
-			cookie.Expires = time.Now().Add(24 * time.Hour)
-			c.Cookie(cookie)
+		if (login.Username == nitrUser.Username) && (login.Password == nitrUser.Password) {
+			store := sessions.Get(c)
+			defer store.Save()
+			store.Set("UserID", "1")
+			if login.Remember == "on" {
+				cookie := new(fiber.Cookie)
+				cookie.Name = "remember"
+				cookie.Value = "1"
+				cookie.Expires = time.Now().Add(48 * time.Hour)
+				c.Cookie(cookie)
+			}
 			c.Redirect("/panel")
 		} else {
 			c.Redirect("/")
