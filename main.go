@@ -3,12 +3,13 @@ package main
 import (
 	b64 "encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"time"
 
+	rice "github.com/GeertJohan/go.rice"
 	"github.com/fiberweb/apikey"
+	"github.com/hoisie/mustache"
 	"github.com/juanhuttemann/nitr-api/nitrdb"
 
 	"github.com/gofiber/fiber"
@@ -87,7 +88,7 @@ func main() {
 	cfg := logger.Config{
 		Output:     logFile,
 		TimeFormat: "2006/01/02 15:04:05",
-		Format:     "${time} - ${method} ${path} - ${ip}",
+		Format:     "${time} - ${method} ${path} - ${ip}\n",
 	}
 
 	app.Use(logger.New(cfg))
@@ -96,27 +97,48 @@ func main() {
 
 	app.Settings.TemplateEngine = template.Mustache()
 
+	if err != nil {
+		fmt.Println(err)
+	}
 	app.Static("/", "assets")
+
+	app.Get("/favicon", func(c *fiber.Ctx) {
+		favicon, err := rice.MustFindBox("app/assets/images/").HTTPBox().String("favicon.png")
+		checkError(err)
+		c.Send(favicon)
+	})
+
+	app.Get("/logo", func(c *fiber.Ctx) {
+		logo, err := rice.MustFindBox("app/assets/images/").HTTPBox().String("logo.png")
+		checkError(err)
+		c.Send(logo)
+	})
 
 	app.Get("/", func(c *fiber.Ctx) {
 		store := sessions.Get(c)
 		if store.Get("UserID") == "1" || c.Cookies("remember") == "1" {
 			c.Redirect("/panel")
 		} else {
-			content, err := ioutil.ReadFile("./views/login.html")
+			content, err := rice.MustFindBox("app/views").HTTPBox().String("login.html")
+			checkError(err)
+
+			layout, err := rice.MustFindBox("app/views/layout").HTTPBox().String("default.mustache")
 			checkError(err)
 
 			bind := fiber.Map{
 				"content": string(content),
 			}
-			c.Render("views/layout/default.mustache", bind)
+			c.Type("html")
+			c.Send(mustache.Render(layout, bind))
 		}
 	})
 
 	app.Get("/panel", func(c *fiber.Ctx) {
 		store := sessions.Get(c)
 		if store.Get("UserID") == "1" || c.Cookies("remember") == "1" {
-			content, err := ioutil.ReadFile("./views/panel.mustache")
+			content, err := rice.MustFindBox("app/views").HTTPBox().String("panel.html")
+			checkError(err)
+			layout, err := rice.MustFindBox("app/views/layout").HTTPBox().String("default.mustache")
 			checkError(err)
 
 			db, err := bolt.Open("nitr.db", 0600, nil)
@@ -135,7 +157,9 @@ func main() {
 				"apikey":   nitrUser.Apikey,
 				"qrCode":   nitrUser.QrCode,
 			}
-			c.Render("views/layout/default.mustache", bind)
+
+			c.Type("html")
+			c.Send(mustache.Render(layout, bind))
 		} else {
 			c.Redirect("/")
 		}
