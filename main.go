@@ -194,28 +194,34 @@ func main() {
 	})
 
 	app.Post("/logout", func(c *fiber.Ctx) {
-		c.ClearCookie()
-		c.Redirect("/")
+		store := sessions.Get(c)
+		if store.Get("UserID") == "1" || c.Cookies("remember") == "1" {
+			c.ClearCookie()
+			c.Redirect("/")
+		}
 	})
 
 	app.Post("/code", func(c *fiber.Ctx) {
-		apikey := key.String(12)
-		png, err := qrcode.Encode(apikey, qrcode.Medium, 256)
-		uEncQr := b64.StdEncoding.EncodeToString(png)
+		store := sessions.Get(c)
+		if store.Get("UserID") == "1" || c.Cookies("remember") == "1" {
+			apikey := key.String(12)
+			png, err := qrcode.Encode(apikey, qrcode.Medium, 256)
+			uEncQr := b64.StdEncoding.EncodeToString(png)
 
-		db, err := bolt.Open("nitr.db", 0600, nil)
-		defer db.Close()
+			db, err := bolt.Open("nitr.db", 0600, nil)
+			defer db.Close()
 
-		checkError(err)
+			checkError(err)
 
-		user := nitrdb.User{Username: "admin", Password: "admin", Apikey: apikey, QrCode: uEncQr}
-		err = nitrdb.SetUserData(db, "1", user)
-		checkError(err)
+			user := nitrdb.User{Username: "admin", Password: "admin", Apikey: apikey, QrCode: uEncQr}
+			err = nitrdb.SetUserData(db, "1", user)
+			checkError(err)
 
-		c.JSON(Key{
-			Key:    apikey,
-			QrCode: uEncQr,
-		})
+			c.JSON(Key{
+				Key:    apikey,
+				QrCode: uEncQr,
+			})
+		}
 	})
 
 	api := app.Group("/api")
