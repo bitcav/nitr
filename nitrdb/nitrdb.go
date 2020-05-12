@@ -65,3 +65,15 @@ func GetUserByID(db *bolt.DB, id string) User {
 	}
 	return userData
 }
+
+func GetApiKey() string {
+	db, err := bolt.Open("nitr.db", 0600, nil)
+
+	if err != nil {
+		fmt.Errorf("could not open db, %v", err)
+	}
+	nitrUser := GetUserByID(db, "1")
+	db.Close()
+	return nitrUser.Apikey
+
+}

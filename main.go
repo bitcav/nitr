@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/fiberweb/apikey"
 	"github.com/juanhuttemann/nitr-api/nitrdb"
 
 	"github.com/gofiber/fiber"
@@ -121,7 +122,6 @@ func main() {
 			c.Redirect("/")
 		}
 	})
-
 	app.Post("/", func(c *fiber.Ctx) {
 		login := new(LoginForm)
 
@@ -183,6 +183,7 @@ func main() {
 	})
 
 	api := app.Group("/api")
+	api.Use(apikey.New(apikey.Config{Key: nitrdb.GetApiKey()}))
 
 	v1 := api.Group("/v1")
 
