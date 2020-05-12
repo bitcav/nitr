@@ -1,12 +1,14 @@
 package main
 
 import (
-	"database/sql"
 	b64 "encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 	"time"
+
+	"github.com/juanhuttemann/nitr-api/nitrdb"
 
 	"github.com/gofiber/fiber"
 	"github.com/gofiber/template"
@@ -24,6 +26,7 @@ import (
 	"github.com/juanhuttemann/nitr-api/process"
 	"github.com/juanhuttemann/nitr-api/ram"
 	"github.com/juanhuttemann/nitr-api/system"
+	bolt "go.etcd.io/bbolt"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -39,16 +42,19 @@ type Key struct {
 }
 
 func init() {
-	db, err := nitrdb.setupDB()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	user := User{Username: "admin", Password: "admin"}
-	err = nitrdb.addUser(db, "1", user)
-	if err != nil {
-		log.Fatal(err)
+	if _, err := os.Stat("nitr.db"); err != nil {
+		fmt.Println("Creating database...")
+		db, err := nitrdb.SetupDB()
+		defer db.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("Adding user...")
+		user := nitrdb.User{Username: "admin", Password: "admin", Apikey: ""}
+		err = nitrdb.SetUserData(db, "1", user)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 
@@ -83,13 +89,14 @@ func main() {
 				log.Fatal(err)
 			}
 
-			database, _ := sql.Open("sqlite3", "./nitr.db")
-			rows, _ := database.Query("SELECT apikey, qrcode FROM users where username=?", "admin")
-			var apikey string
-			var qrcode string
-			for rows.Next() {
-				rows.Scan(&apikey, &qrcode)
+			db, err := bolt.Open("nitr.db", 0600, nil)
+			defer db.Close()
+
+			if err != nil {
+				fmt.Errorf("could not open db, %v", err)
 			}
+
+			nitrUser := nitrdb.GetUserByID(db, "1")
 
 			bind := fiber.Map{
 				"content":  string(content),
@@ -97,8 +104,8 @@ func main() {
 				"os":       host.Check().OS,
 				"platform": host.Check().Platform,
 				"arch":     host.Check().Arch,
-				"apikey":   apikey,
-				"qrcode":   qrcode,
+				"apikey":   nitrUser.Apikey,
+				"qrCode":   nitrUser.QrCode,
 			}
 			c.Render("views/layout/default.mustache", bind)
 		} else {
@@ -112,17 +119,15 @@ func main() {
 		if err := c.BodyParser(u); err != nil {
 			log.Fatal(err)
 		}
+		db, err := bolt.Open("nitr.db", 0600, nil)
+		defer db.Close()
 
-		database, _ := sql.Open("sqlite3", "./nitr.db")
-		rows, _ := database.Query("SELECT id, username, password FROM users where username=?", u.Username)
-		var id int
-		var username string
-		var password string
-		for rows.Next() {
-			rows.Scan(&id, &username, &password)
+		if err != nil {
+			fmt.Errorf("could not open db, %v", err)
 		}
 
-		if (u.Username == username) && (u.Password == password) {
+		nitrUser := nitrdb.GetUserByID(db, "1")
+		if (u.Username == nitrUser.Username) && (u.Password == nitrUser.Password) {
 			cookie := new(fiber.Cookie)
 			cookie.Name = "admin"
 			cookie.Value = "admin"
@@ -143,13 +148,20 @@ func main() {
 		apikey := key.String(12)
 		png, err := qrcode.Encode(apikey, qrcode.Medium, 256)
 		uEncQr := b64.StdEncoding.EncodeToString(png)
-		database, _ := sql.Open("sqlite3", "./nitr.db")
-		statement, _ := database.Prepare("UPDATE users SET apikey=(?), qrcode=(?) where username=(?)")
-		statement.Exec(apikey, uEncQr, "admin")
+
+		db, err := bolt.Open("nitr.db", 0600, nil)
+		defer db.Close()
 
 		if err != nil {
-			fmt.Println(err)
+			fmt.Errorf("could not open db, %v", err)
 		}
+
+		user := nitrdb.User{Username: "admin", Password: "admin", Apikey: apikey, QrCode: uEncQr}
+		err = nitrdb.SetUserData(db, "1", user)
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		c.JSON(Key{
 			Key:    apikey,
 			QrCode: uEncQr,
@@ -157,15 +169,6 @@ func main() {
 	})
 
 	api := app.Group("/api")
-
-	/* 	database, _ := sql.Open("sqlite3", "./nitr.db")
-	   	rows, _ := database.Query("SELECT apikey FROM users where username=?", "admin")
-	   	var apiKey string
-	   	for rows.Next() {
-	   		rows.Scan(&apiKey)
-	   	}
-
-	   	api.Use(apikey.New(apikey.Config{Key: apiKey})) */
 
 	v1 := api.Group("/v1")
 

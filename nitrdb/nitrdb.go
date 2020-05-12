@@ -12,6 +12,7 @@ type User struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 	Apikey   string `json:"apikey"`
+	QrCode   string `json:"qrCode"`
 }
 
 func SetupDB() (*bolt.DB, error) {
@@ -32,7 +33,7 @@ func SetupDB() (*bolt.DB, error) {
 	return db, nil
 }
 
-func AddUser(db *bolt.DB, id string, user User) error {
+func SetUserData(db *bolt.DB, id string, user User) error {
 	userBytes, err := json.Marshal(user)
 	if err != nil {
 		return fmt.Errorf("could not marshal entry json: %v", err)
