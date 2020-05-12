@@ -30,8 +30,6 @@ import (
 	"github.com/juanhuttemann/nitr-api/ram"
 	"github.com/juanhuttemann/nitr-api/system"
 	bolt "go.etcd.io/bbolt"
-
-	_ "github.com/mattn/go-sqlite3"
 )
 
 type LoginForm struct {
