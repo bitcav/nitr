@@ -43,22 +43,23 @@ type Key struct {
 	QrCode string `json:"qrCode"`
 }
 
-var sessionID string
-
+func checkError(e error) {
+	if e != nil {
+		fmt.Println(e)
+	}
+}
 func init() {
 	if _, err := os.Stat("nitr.db"); err != nil {
 		fmt.Println("Creating database...")
 		db, err := nitrdb.SetupDB()
 		defer db.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
+		checkError(err)
+
 		fmt.Println("Adding user...")
 		user := nitrdb.User{Username: "admin", Password: "admin", Apikey: ""}
 		err = nitrdb.SetUserData(db, "1", user)
-		if err != nil {
-			log.Fatal(err)
-		}
+		checkError(err)
+
 	}
 }
 
@@ -79,9 +80,8 @@ func main() {
 			c.Redirect("/panel")
 		} else {
 			content, err := ioutil.ReadFile("./views/login.html")
-			if err != nil {
-				log.Fatal(err)
-			}
+			checkError(err)
+
 			bind := fiber.Map{
 				"content": string(content),
 			}
@@ -93,16 +93,12 @@ func main() {
 		store := sessions.Get(c)
 		if store.Get("UserID") == "1" || c.Cookies("remember") == "1" {
 			content, err := ioutil.ReadFile("./views/panel.mustache")
-			if err != nil {
-				log.Fatal(err)
-			}
+			checkError(err)
 
 			db, err := bolt.Open("nitr.db", 0600, nil)
 			defer db.Close()
 
-			if err != nil {
-				fmt.Errorf("could not open db, %v", err)
-			}
+			checkError(err)
 
 			nitrUser := nitrdb.GetUserByID(db, "1")
 
@@ -129,9 +125,7 @@ func main() {
 		db, err := bolt.Open("nitr.db", 0600, nil)
 		defer db.Close()
 
-		if err != nil {
-			fmt.Errorf("could not open db, %v", err)
-		}
+		checkError(err)
 
 		nitrUser := nitrdb.GetUserByID(db, "1")
 		if (login.Username == nitrUser.Username) && (login.Password == nitrUser.Password) {
@@ -164,15 +158,11 @@ func main() {
 		db, err := bolt.Open("nitr.db", 0600, nil)
 		defer db.Close()
 
-		if err != nil {
-			fmt.Errorf("could not open db, %v", err)
-		}
+		checkError(err)
 
 		user := nitrdb.User{Username: "admin", Password: "admin", Apikey: apikey, QrCode: uEncQr}
 		err = nitrdb.SetUserData(db, "1", user)
-		if err != nil {
-			log.Fatal(err)
-		}
+		checkError(err)
 
 		c.JSON(Key{
 			Key:    apikey,
