@@ -12,6 +12,7 @@ import (
 	"github.com/juanhuttemann/nitr-api/nitrdb"
 
 	"github.com/gofiber/fiber"
+	"github.com/gofiber/logger"
 	"github.com/gofiber/session"
 
 	"github.com/gofiber/template"
@@ -45,17 +46,26 @@ type Key struct {
 
 func checkError(e error) {
 	if e != nil {
-		fmt.Println(e)
+		log.Println(e)
 	}
 }
+
 func init() {
+	logFile, err := os.OpenFile("log.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("error opening file: %v", err)
+	}
+	defer logFile.Close()
+
+	log.SetOutput(logFile)
+
 	if _, err := os.Stat("nitr.db"); err != nil {
-		fmt.Println("Creating database...")
+		log.Println("Database created")
 		db, err := nitrdb.SetupDB()
 		defer db.Close()
 		checkError(err)
 
-		fmt.Println("Adding user...")
+		log.Println("Adding default user")
 		user := nitrdb.User{Username: "admin", Password: "admin", Apikey: ""}
 		err = nitrdb.SetUserData(db, "1", user)
 		checkError(err)
@@ -67,6 +77,20 @@ func main() {
 	app := fiber.New(&fiber.Settings{
 		DisableStartupMessage: true,
 	})
+
+	logFile, err := os.OpenFile("log.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("error opening file: %v", err)
+	}
+
+	defer logFile.Close()
+	cfg := logger.Config{
+		Output:     logFile,
+		TimeFormat: "2006/01/02 15:04:05",
+		Format:     "${time} - ${method} ${path} - ${ip}",
+	}
+
+	app.Use(logger.New(cfg))
 
 	sessions := session.New()
 
