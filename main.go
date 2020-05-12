@@ -8,7 +8,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/fiberweb/apikey"
 	"github.com/gofiber/fiber"
 	"github.com/gofiber/template"
 	"github.com/skip2/go-qrcode"
@@ -40,12 +39,17 @@ type Key struct {
 }
 
 func init() {
+	db, err := nitrdb.setupDB()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
 
-	database, _ := sql.Open("sqlite3", "./nitr.db")
-	statement, _ := database.Prepare("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT NOT NULL UNIQUE, password TEXT, apikey TEXT UNIQUE, qrcode TEXT UNIQUE)")
-	statement.Exec()
-	statement, _ = database.Prepare("INSERT INTO users (username, password) VALUES (?, ?)")
-	statement.Exec("admin", "admin")
+	user := User{Username: "admin", Password: "admin"}
+	err = nitrdb.addUser(db, "1", user)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func main() {
@@ -154,14 +158,14 @@ func main() {
 
 	api := app.Group("/api")
 
-	database, _ := sql.Open("sqlite3", "./nitr.db")
-	rows, _ := database.Query("SELECT apikey FROM users where username=?", "admin")
-	var apiKey string
-	for rows.Next() {
-		rows.Scan(&apiKey)
-	}
+	/* 	database, _ := sql.Open("sqlite3", "./nitr.db")
+	   	rows, _ := database.Query("SELECT apikey FROM users where username=?", "admin")
+	   	var apiKey string
+	   	for rows.Next() {
+	   		rows.Scan(&apiKey)
+	   	}
 
-	api.Use(apikey.New(apikey.Config{Key: apiKey}))
+	   	api.Use(apikey.New(apikey.Config{Key: apiKey})) */
 
 	v1 := api.Group("/v1")
 
