@@ -204,6 +204,8 @@ func main() {
 
 			c.Type("html")
 			c.Send(mustache.Render(layout, bind))
+			log.Println("Session started")
+
 		} else {
 			c.Redirect("/")
 		}
@@ -242,6 +244,7 @@ func main() {
 		if store.Get("UserID") == "1" || c.Cookies("remember") == "1" {
 			c.ClearCookie()
 			c.Redirect("/")
+			log.Println("Session closed")
 		}
 	})
 
@@ -265,6 +268,7 @@ func main() {
 				Key:    apikey,
 				QrCode: uEncQr,
 			})
+			log.Println("New Api key generated")
 		}
 	})
 
@@ -303,6 +307,7 @@ Go to admin panel at http://localhost:%v
 `, port)
 
 	err = app.Listen(port)
+	log.Println("Starting server")
 	if err != nil {
 		fmt.Println(err, "\nCheck the port settings at config.ini file")
 	}
