@@ -15,5 +15,6 @@ require (
 	github.com/mitchellh/go-ps v1.0.0
 	github.com/shirou/gopsutil v2.20.4+incompatible
 	github.com/skip2/go-qrcode v0.0.0-20191027152451-9434209cb086
+	github.com/spf13/viper v1.7.0
 	go.etcd.io/bbolt v1.3.4
 )

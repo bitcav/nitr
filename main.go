@@ -31,6 +31,7 @@ import (
 	"github.com/juanhuttemann/nitr-api/process"
 	"github.com/juanhuttemann/nitr-api/ram"
 	"github.com/juanhuttemann/nitr-api/system"
+	"github.com/spf13/viper"
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -45,12 +46,6 @@ type Key struct {
 	QrCode string `json:"qrCode"`
 }
 
-func checkError(e error) {
-	if e != nil {
-		log.Println(e)
-	}
-}
-
 func init() {
 	logFile, err := os.OpenFile("log.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
@@ -60,17 +55,44 @@ func init() {
 
 	log.SetOutput(logFile)
 
+	if _, err := os.Stat("config.ini"); err != nil {
+		configFile, err := os.OpenFile("config.ini", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		logError(err)
+		defer configFile.Close()
+
+		_, err = configFile.WriteString(`# agent port
+port: 3000`)
+
+	}
+
+	runPath, err := os.Getwd()
+	logError(err)
+
+	viper.SetConfigName("config.ini")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath(runPath)
+	err = viper.ReadInConfig()
+	if err != nil {
+		logError(err)
+	}
+
 	if _, err := os.Stat("nitr.db"); err != nil {
 		log.Println("Database created")
 		db, err := nitrdb.SetupDB()
 		defer db.Close()
-		checkError(err)
+		logError(err)
 
 		log.Println("Adding default user")
 		user := nitrdb.User{Username: "admin", Password: "admin", Apikey: ""}
 		err = nitrdb.SetUserData(db, "1", user)
-		checkError(err)
+		logError(err)
 
+	}
+}
+
+func logError(e error) {
+	if e != nil {
+		log.Println(e)
 	}
 }
 
@@ -83,8 +105,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("error opening file: %v", err)
 	}
-
 	defer logFile.Close()
+	log.SetOutput(logFile)
+
 	cfg := logger.Config{
 		Output:     logFile,
 		TimeFormat: "2006/01/02 15:04:05",
@@ -104,13 +127,13 @@ func main() {
 
 	app.Get("/favicon", func(c *fiber.Ctx) {
 		favicon, err := rice.MustFindBox("app/assets/images/").HTTPBox().String("favicon.png")
-		checkError(err)
+		logError(err)
 		c.Send(favicon)
 	})
 
 	app.Get("/logo", func(c *fiber.Ctx) {
 		logo, err := rice.MustFindBox("app/assets/images/").HTTPBox().String("logo.png")
-		checkError(err)
+		logError(err)
 		c.Send(logo)
 	})
 
@@ -120,10 +143,10 @@ func main() {
 			c.Redirect("/panel")
 		} else {
 			content, err := rice.MustFindBox("app/views").HTTPBox().String("login.html")
-			checkError(err)
+			logError(err)
 
 			layout, err := rice.MustFindBox("app/views/layout").HTTPBox().String("default.mustache")
-			checkError(err)
+			logError(err)
 
 			bind := fiber.Map{
 				"content": string(content),
@@ -137,14 +160,14 @@ func main() {
 		store := sessions.Get(c)
 		if store.Get("UserID") == "1" || c.Cookies("remember") == "1" {
 			content, err := rice.MustFindBox("app/views").HTTPBox().String("panel.html")
-			checkError(err)
+			logError(err)
 			layout, err := rice.MustFindBox("app/views/layout").HTTPBox().String("default.mustache")
-			checkError(err)
+			logError(err)
 
 			db, err := bolt.Open("nitr.db", 0600, nil)
 			defer db.Close()
 
-			checkError(err)
+			logError(err)
 
 			nitrUser := nitrdb.GetUserByID(db, "1")
 
@@ -173,7 +196,7 @@ func main() {
 		db, err := bolt.Open("nitr.db", 0600, nil)
 		defer db.Close()
 
-		checkError(err)
+		logError(err)
 
 		nitrUser := nitrdb.GetUserByID(db, "1")
 		if (login.Username == nitrUser.Username) && (login.Password == nitrUser.Password) {
@@ -211,11 +234,11 @@ func main() {
 			db, err := bolt.Open("nitr.db", 0600, nil)
 			defer db.Close()
 
-			checkError(err)
+			logError(err)
 
 			user := nitrdb.User{Username: "admin", Password: "admin", Apikey: apikey, QrCode: uEncQr}
 			err = nitrdb.SetUserData(db, "1", user)
-			checkError(err)
+			logError(err)
 
 			c.JSON(Key{
 				Key:    apikey,
@@ -241,12 +264,23 @@ func main() {
 	v1.Get("/processes", process.Data)
 	v1.Get("/ram", ram.Data)
 
-	fmt.Println(`                 _  __       
+	port := viper.Get("port")
+	if port == nil {
+		port = 3000
+	}
+
+	fmt.Printf(`                 _  __       
          ____   (_)/ /_ _____
    ____ / __ \ / // __// ___/
  _____ / / / // // /_ / /    
    __ /_/ /_//_/ \__//_/ v0.1.0b     
-Go to admin panel at http://localhost:3000/
-`)
-	app.Listen(3000)
+
+Go to admin panel at http://localhost:%v
+
+`, port)
+	err = app.Listen(port)
+	if err != nil {
+		fmt.Println(err, "\nCheck the port settings at config.ini file")
+	}
+	logError(err)
 }
