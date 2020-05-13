@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
+	"runtime"
 	"time"
 
 	rice "github.com/GeertJohan/go.rice"
@@ -94,6 +96,25 @@ func logError(e error) {
 	if e != nil {
 		log.Println(e)
 	}
+}
+
+func openbrowser(url string) {
+	var err error
+
+	switch runtime.GOOS {
+	case "linux":
+		err = exec.Command("xdg-open", url).Start()
+	case "windows":
+		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
+	case "darwin":
+		err = exec.Command("open", url).Start()
+	default:
+		err = fmt.Errorf("unsupported platform")
+	}
+	if err != nil {
+		log.Fatal(err)
+	}
+
 }
 
 func main() {
@@ -269,6 +290,8 @@ func main() {
 		port = 3000
 	}
 
+	openbrowser("http://localhost:3000")
+
 	fmt.Printf(`                 _  __       
          ____   (_)/ /_ _____
    ____ / __ \ / // __// ___/
@@ -278,6 +301,7 @@ func main() {
 Go to admin panel at http://localhost:%v
 
 `, port)
+
 	err = app.Listen(port)
 	if err != nil {
 		fmt.Println(err, "\nCheck the port settings at config.ini file")
