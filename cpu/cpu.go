@@ -18,7 +18,7 @@ type CPU struct {
 	UsageEach []float64 `json:"usageEach"`
 }
 
-func cpuUsage() float64 {
+func CpuUsage() float64 {
 	duration := 500 * time.Millisecond
 	cpuUsage, err := cpu.Percent(duration, false)
 	if err != nil {
@@ -77,7 +77,7 @@ func Check() CPU {
 		Cores:     cores(),
 		Threads:   threads(),
 		Frecuency: frecuency(),
-		Usage:     cpuUsage(),
+		Usage:     CpuUsage(),
 		UsageEach: cpuUsageEach(),
 	}
 }

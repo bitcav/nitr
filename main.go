@@ -12,7 +12,11 @@ import (
 	rice "github.com/GeertJohan/go.rice"
 	"github.com/fiberweb/apikey"
 	"github.com/hoisie/mustache"
+	"github.com/juanhuttemann/nitr-api/baseboard"
 	"github.com/juanhuttemann/nitr-api/nitrdb"
+	"github.com/juanhuttemann/nitr-api/overview"
+	"github.com/juanhuttemann/nitr-api/product"
+	"github.com/juanhuttemann/nitr-api/system"
 
 	"github.com/gofiber/fiber"
 	"github.com/gofiber/logger"
@@ -32,7 +36,6 @@ import (
 	"github.com/juanhuttemann/nitr-api/network"
 	"github.com/juanhuttemann/nitr-api/process"
 	"github.com/juanhuttemann/nitr-api/ram"
-	"github.com/juanhuttemann/nitr-api/system"
 	"github.com/spf13/viper"
 	bolt "go.etcd.io/bbolt"
 )
@@ -277,7 +280,7 @@ func main() {
 
 	v1 := api.Group("/v1")
 
-	v1.Get("/", system.Data)
+	v1.Get("/", overview.Data)
 	v1.Get("/cpu", cpu.Data)
 	v1.Get("/bios", bios.Data)
 	v1.Get("/chassis", chassis.Data)
@@ -288,6 +291,9 @@ func main() {
 	v1.Get("/network", network.Data)
 	v1.Get("/processes", process.Data)
 	v1.Get("/ram", ram.Data)
+	v1.Get("/baseboard", baseboard.Data)
+	v1.Get("/product", product.Data)
+	v1.Get("/system", system.Data)
 
 	port := viper.Get("port")
 	if port == nil {

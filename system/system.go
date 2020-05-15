@@ -2,6 +2,7 @@ package system
 
 import (
 	"github.com/gofiber/fiber"
+	"github.com/juanhuttemann/nitr-api/baseboard"
 	"github.com/juanhuttemann/nitr-api/bios"
 	"github.com/juanhuttemann/nitr-api/chassis"
 	"github.com/juanhuttemann/nitr-api/cpu"
@@ -11,6 +12,7 @@ import (
 	"github.com/juanhuttemann/nitr-api/host"
 	"github.com/juanhuttemann/nitr-api/network"
 	"github.com/juanhuttemann/nitr-api/process"
+	"github.com/juanhuttemann/nitr-api/product"
 	"github.com/juanhuttemann/nitr-api/ram"
 )
 
@@ -23,6 +25,8 @@ type system struct {
 	Drives    drive.Drives           `json:"drives"`
 	Network   network.NetworkDevices `json:"network"`
 	GPU       gpu.GPUs               `json:"gpu"`
+	BaseBoard baseboard.BaseBoard    `json:"baseboard"`
+	Product   product.Product        `json:"product"`
 	Chassis   chassis.Chassis        `json:"chassis"`
 	Processes process.Processes      `json:"processes"`
 }
@@ -39,6 +43,8 @@ func check() system {
 		GPU:       gpu.Check(),
 		Chassis:   chassis.Check(),
 		Processes: process.Check(),
+		BaseBoard: baseboard.Check(),
+		Product:   product.Check(),
 	}
 	return sys
 }
