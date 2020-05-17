@@ -14,6 +14,7 @@ require (
 	github.com/gofiber/websocket v0.3.0
 	github.com/hoisie/mustache v0.0.0-20160804235033-6375acf62c69
 	github.com/jaypipes/ghw v0.6.0
+	github.com/jaypipes/pcidb v0.5.0
 	github.com/klauspost/compress v1.10.5 // indirect
 	github.com/mitchellh/go-ps v1.0.0
 	github.com/shirou/gopsutil v2.20.4+incompatible

@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
-	"runtime"
 	"strings"
 	"time"
 
@@ -14,10 +12,12 @@ import (
 	"github.com/fiberweb/apikey"
 	"github.com/hoisie/mustache"
 	"github.com/juanhuttemann/nitr-api/baseboard"
+	"github.com/juanhuttemann/nitr-api/devices"
 	"github.com/juanhuttemann/nitr-api/nitrdb"
 	"github.com/juanhuttemann/nitr-api/overview"
 	"github.com/juanhuttemann/nitr-api/product"
 	"github.com/juanhuttemann/nitr-api/system"
+	"github.com/juanhuttemann/nitr-api/utils"
 
 	"github.com/gofiber/embed"
 	"github.com/gofiber/fiber"
@@ -36,7 +36,6 @@ import (
 	"github.com/juanhuttemann/nitr-api/drive"
 	"github.com/juanhuttemann/nitr-api/gpu"
 	"github.com/juanhuttemann/nitr-api/host"
-	"github.com/juanhuttemann/nitr-api/key"
 	"github.com/juanhuttemann/nitr-api/network"
 	"github.com/juanhuttemann/nitr-api/process"
 	"github.com/juanhuttemann/nitr-api/ram"
@@ -44,38 +43,39 @@ import (
 	bolt "go.etcd.io/bbolt"
 )
 
-type LoginForm struct {
+type loginForm struct {
 	Username string `form:"username"`
 	Password string `form:"password"`
 	Remember string `form:"remember"`
 }
 
-type PasswordForm struct {
+type passwordForm struct {
 	CurrentPassword    string `form:"currentPassword"`
 	NewPassword        string `form:"newPassword"`
 	RepeateNewPassword string `form:"repeatNewPassword"`
 }
 
-type Key struct {
+type apiKeyForm struct {
 	Key    string `json:"key"`
 	QrCode string `json:"qrCode"`
 }
 
 func init() {
+	//Config file initial setup
 	if _, err := os.Stat("config.ini"); err != nil {
 		configFile, err := os.OpenFile("config.ini", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 		logError(err)
 		defer configFile.Close()
 
-		defaultConfigOpts := []string{"port: 8000",
+		defaultConfigOpts := []string{
+			"port: 8000",
 			"openBrowserOnStartUp: true",
 			"saveLogs: false",
 		}
 
 		defaultConfig := strings.Join(defaultConfigOpts, "\n")
-
 		_, err = configFile.WriteString(defaultConfig)
-
+		logError(err)
 	}
 
 	runPath, err := os.Getwd()
@@ -89,6 +89,7 @@ func init() {
 		logError(err)
 	}
 
+	//DB Setup
 	if _, err := os.Stat("nitr.db"); err != nil {
 		log.Println("Database created")
 		db, err := nitrdb.SetupDB()
@@ -99,32 +100,12 @@ func init() {
 		user := nitrdb.User{Username: "admin", Password: "admin", Apikey: ""}
 		err = nitrdb.SetUserData(db, "1", user)
 		logError(err)
-
 	}
 }
 
 func logError(e error) {
 	if e != nil {
 		log.Println(e)
-	}
-}
-
-func openbrowser(domain, port string) {
-	url := domain + ":" + port
-	var err error
-
-	switch runtime.GOOS {
-	case "linux":
-		err = exec.Command("xdg-open", url).Start()
-	case "windows":
-		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
-	case "darwin":
-		err = exec.Command("open", url).Start()
-	default:
-		err = fmt.Errorf("unsupported platform")
-	}
-	if err != nil {
-		log.Fatal(err)
 	}
 }
 
@@ -157,6 +138,7 @@ func main() {
 	}
 
 	app.Settings.TemplateEngine = template.Mustache()
+
 	sessions := session.New()
 
 	app.Use(recover.New(recover.Config{
@@ -165,10 +147,6 @@ func main() {
 			c.SendStatus(500)
 		},
 	}))
-
-	app.Get("/shutdown", func(c *fiber.Ctx) {
-		app.Shutdown()
-	})
 
 	//API Config
 	api := app.Group("/api")
@@ -182,6 +160,7 @@ func main() {
 	v1.Get("/chassis", chassis.Data)
 	v1.Get("/disks", disk.Data)
 	v1.Get("/drives", drive.Data)
+	v1.Get("/devices", devices.Data)
 	v1.Get("/gpu", gpu.Data)
 	v1.Get("/host", host.Data)
 	v1.Get("/network", network.Data)
@@ -210,7 +189,7 @@ func main() {
 
 	//Login Submit
 	app.Post("/", func(c *fiber.Ctx) {
-		login := new(LoginForm)
+		login := new(loginForm)
 
 		if err := c.BodyParser(login); err != nil {
 			log.Fatal(err)
@@ -286,7 +265,7 @@ func main() {
 
 	//Generate new API Key
 	app.Post("/generate", func(c *fiber.Ctx) {
-		newAPIKey := key.String(12)
+		newAPIKey := utils.RandString(12)
 		png, err := qrcode.Encode(newAPIKey, qrcode.Medium, 256)
 		uEncQr := b64.StdEncoding.EncodeToString(png)
 
@@ -299,7 +278,7 @@ func main() {
 		err = nitrdb.SetUserData(db, "1", user)
 		logError(err)
 
-		c.JSON(Key{
+		c.JSON(apiKeyForm{
 			Key:    newAPIKey,
 			QrCode: uEncQr,
 		})
@@ -320,7 +299,7 @@ func main() {
 
 	//New Password Submit
 	app.Post("/password", func(c *fiber.Ctx) {
-		password := new(PasswordForm)
+		password := new(passwordForm)
 
 		if err := c.BodyParser(password); err != nil {
 			log.Fatal(err)
@@ -367,18 +346,11 @@ func main() {
 
 	openBrowser := viper.GetBool("openBrowserOnStartUp")
 	if openBrowser {
-		openbrowser("http://localhost", port)
+		utils.OpenBrowser("http://localhost", port)
 	}
 
-	fmt.Printf(`                 _  __       
-         ____   (_)/ /_ _____
-   ____ / __ \ / // __// ___/
- _____ / / / // // /_ / /    
-   __ /_/ /_//_/ \__//_/ v0.1.0b     
-
-Go to admin panel at http://localhost:%v
-
-`, port)
+	//Server startup
+	utils.StartMessage(port)
 
 	err := app.Listen(port)
 	log.Println("Starting server")
