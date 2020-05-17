@@ -21,6 +21,7 @@ import (
 	"github.com/gofiber/embed"
 	"github.com/gofiber/fiber"
 	"github.com/gofiber/logger"
+	"github.com/gofiber/recover"
 	"github.com/gofiber/session"
 	"github.com/gofiber/websocket"
 
@@ -155,6 +156,17 @@ func main() {
 	app.Settings.TemplateEngine = template.Mustache()
 	sessions := session.New()
 
+	app.Use(recover.New(recover.Config{
+		Handler: func(c *fiber.Ctx, err error) {
+			c.SendString(err.Error())
+			c.SendStatus(500)
+		},
+	}))
+
+	app.Get("/shutdown", func(c *fiber.Ctx) {
+		app.Shutdown()
+	})
+
 	//API Config
 	api := app.Group("/api")
 	v1 := api.Group("/v1")
@@ -270,8 +282,8 @@ func main() {
 
 	//Generate new API Key
 	app.Post("/generate", func(c *fiber.Ctx) {
-		apikey := key.String(12)
-		png, err := qrcode.Encode(apikey, qrcode.Medium, 256)
+		newAPIKey := key.String(12)
+		png, err := qrcode.Encode(newAPIKey, qrcode.Medium, 256)
 		uEncQr := b64.StdEncoding.EncodeToString(png)
 
 		db, err := bolt.Open("nitr.db", 0600, nil)
@@ -279,14 +291,15 @@ func main() {
 		logError(err)
 
 		nitrUser := nitrdb.GetUserByID(db, "1")
-		user := nitrdb.User{Username: nitrUser.Username, Password: nitrUser.Password, Apikey: apikey, QrCode: uEncQr}
+		user := nitrdb.User{Username: nitrUser.Username, Password: nitrUser.Password, Apikey: newAPIKey, QrCode: uEncQr}
 		err = nitrdb.SetUserData(db, "1", user)
 		logError(err)
 
 		c.JSON(Key{
-			Key:    apikey,
+			Key:    newAPIKey,
 			QrCode: uEncQr,
 		})
+
 		log.Println("New Api key generated")
 	})
 
@@ -320,7 +333,6 @@ func main() {
 			user := nitrdb.User{Username: nitrUser.Username, Password: password.NewPassword, Apikey: nitrUser.Apikey, QrCode: nitrUser.QrCode}
 			err = nitrdb.SetUserData(db, "1", user)
 			logError(err)
-			c.ClearCookie()
 			c.SendStatus(200)
 		} else {
 			c.SendStatus(304)
@@ -365,6 +377,7 @@ Go to admin panel at http://localhost:%v
 
 	err = app.Listen(port)
 	log.Println("Starting server")
+
 	if err != nil {
 		fmt.Println(err, "\nCheck the port settings at config.ini file")
 	}

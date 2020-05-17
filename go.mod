@@ -8,6 +8,7 @@ require (
 	github.com/gofiber/embed v0.0.9
 	github.com/gofiber/fiber v1.9.6
 	github.com/gofiber/logger v0.0.6
+	github.com/gofiber/recover v0.0.5
 	github.com/gofiber/session v1.0.0
 	github.com/gofiber/template v1.1.0
 	github.com/gofiber/websocket v0.3.0
