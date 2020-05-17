@@ -13,6 +13,7 @@ import (
 	"github.com/hoisie/mustache"
 	"github.com/juanhuttemann/nitr-api/baseboard"
 	"github.com/juanhuttemann/nitr-api/devices"
+	"github.com/juanhuttemann/nitr-api/internet"
 	"github.com/juanhuttemann/nitr-api/nitrdb"
 	"github.com/juanhuttemann/nitr-api/overview"
 	"github.com/juanhuttemann/nitr-api/product"
@@ -163,6 +164,7 @@ func main() {
 	v1.Get("/devices", devices.Data)
 	v1.Get("/gpu", gpu.Data)
 	v1.Get("/host", host.Data)
+	v1.Get("/internet", internet.Data)
 	v1.Get("/network", network.Data)
 	v1.Get("/processes", process.Data)
 	v1.Get("/ram", ram.Data)
