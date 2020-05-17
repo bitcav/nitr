@@ -61,21 +61,13 @@ type Key struct {
 }
 
 func init() {
-	logFile, err := os.OpenFile("log.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatalf("error opening file: %v", err)
-	}
-	defer logFile.Close()
-
-	log.SetOutput(logFile)
-
 	if _, err := os.Stat("config.ini"); err != nil {
 		configFile, err := os.OpenFile("config.ini", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 		logError(err)
 		defer configFile.Close()
 
-		_, err = configFile.WriteString(`# agent port
-port: 3000`)
+		_, err = configFile.WriteString(`port: 8000
+openBrowserOnStartUp: true`)
 
 	}
 
@@ -139,20 +131,24 @@ func main() {
 		Root: rice.MustFindBox("app/assets").HTTPBox(),
 	}))
 
-	logFile, err := os.OpenFile("log.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatalf("error opening file: %v", err)
-	}
-	defer logFile.Close()
-	log.SetOutput(logFile)
+	saveLogs := viper.GetBool("saveLogs")
+	if saveLogs {
+		logFile, err := os.OpenFile("log.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		if err != nil {
+			log.Fatalf("error opening file: %v", err)
+		}
+		defer logFile.Close()
+		log.SetOutput(logFile)
 
-	cfg := logger.Config{
-		Output:     logFile,
-		TimeFormat: "2006/01/02 15:04:05",
-		Format:     "${time} - ${method} ${path} - ${ip}\n",
+		cfg := logger.Config{
+			Output:     logFile,
+			TimeFormat: "2006/01/02 15:04:05",
+			Format:     "${time} - ${method} ${path} - ${ip}\n",
+		}
+
+		app.Use(logger.New(cfg))
 	}
 
-	app.Use(logger.New(cfg))
 	app.Settings.TemplateEngine = template.Mustache()
 	sessions := session.New()
 
@@ -188,6 +184,7 @@ func main() {
 	v1.Get("/product", product.Data)
 	v1.Get("/system", system.Data)
 
+	//Login View
 	app.Get("/", func(c *fiber.Ctx) {
 		store := sessions.Get(c)
 		if store.Get("UserID") == "1" || c.Cookies("remember") == "1" {
@@ -334,6 +331,7 @@ func main() {
 			err = nitrdb.SetUserData(db, "1", user)
 			logError(err)
 			c.SendStatus(200)
+			log.Println("Password changed")
 		} else {
 			c.SendStatus(304)
 		}
@@ -375,7 +373,7 @@ Go to admin panel at http://localhost:%v
 
 `, port)
 
-	err = app.Listen(port)
+	err := app.Listen(port)
 	log.Println("Starting server")
 
 	if err != nil {
