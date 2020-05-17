@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"strings"
 	"time"
 
 	rice "github.com/GeertJohan/go.rice"
@@ -66,8 +67,14 @@ func init() {
 		logError(err)
 		defer configFile.Close()
 
-		_, err = configFile.WriteString(`port: 8000
-openBrowserOnStartUp: true`)
+		defaultConfigOpts := []string{"port: 8000",
+			"openBrowserOnStartUp: true",
+			"saveLogs: false",
+		}
+
+		defaultConfig := strings.Join(defaultConfigOpts, "\n")
+
+		_, err = configFile.WriteString(defaultConfig)
 
 	}
 
