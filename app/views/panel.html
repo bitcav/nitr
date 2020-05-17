@@ -5,6 +5,7 @@
 
   </div>
   <div class="uk-navbar-right">
+    <a href="/password" class="uk-button uk-button-secondary uk-margin-right">Change Password</a>
     <form action="/logout" method="POST" style="margin-block-end: 0;">
       <button class="uk-button uk-button-danger uk-margin-right">Logout</button>
     </form>
@@ -13,7 +14,7 @@
 
 <div class="uk-container uk-container-small uk-section">
   <div>
-    <img alt="nitr logo" src="/logo" width="180" class="uk-margin-bottom">
+    <img alt="nitr logo" src="/assets/images/logo.png" width="180" class="uk-margin-bottom">
   </div>
   <hr>
   <div class="uk-container" uk-grid>
@@ -58,7 +59,7 @@
 
         $('#genBtn').click(function (e) {
           e.preventDefault();
-          fetch('/code', {
+          fetch('/generate', {
               method: "POST"
             })
             .then(function (response) {

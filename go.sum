@@ -55,6 +55,7 @@ github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385 h1:clC1lXBpe2kTj2VHdaI
 github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385/go.mod h1:0vRUJqYpeSZifjYj7uP3BG/gKcuzL9xWVV/Y+cK33KM=
 github.com/fasthttp/session/v2 v2.0.2 h1:hoCr7xM+wXjkp0uwFna9G0k9ZUZNDUM5/SzgAlXqjvw=
 github.com/fasthttp/session/v2 v2.0.2/go.mod h1:u9Z1Tn1V9XLAZKHM6bjHFsinVC5/KEn2M1rllhcjFgc=
+github.com/fasthttp/websocket v1.4.2 h1:AU/zSiIIAuJjBMf5o+vO0syGOnEfvZRu40xIhW/3RuM=
 github.com/fasthttp/websocket v1.4.2/go.mod h1:smsv/h4PBEBaU0XDTY5UwJTpZv69fQ0FfcLJr21mA6Y=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
 github.com/fiberweb/apikey v1.0.0 h1:ZWfYHHoBoIg98otG8mRY7SFBBltXVeM8OUlMM26VIx8=
@@ -71,6 +72,8 @@ github.com/go-ole/go-ole v1.2.4/go.mod h1:XCwSNxSkXRo4vlyPy93sltvi/qJq0jqQhjqQNI
 github.com/go-redis/redis/v7 v7.2.0/go.mod h1:JDNMw23GTyLNC4GZu9njt15ctBQVn7xjRfnwdHj/Dcg=
 github.com/go-sql-driver/mysql v1.5.0/go.mod h1:DCzpHaOWr8IXmIStZouvnhqoel9Qv2LBy8hT2VhHyBg=
 github.com/go-stack/stack v1.8.0/go.mod h1:v0f6uXyyMGvRgIKkXu+yp6POWl0qKG85gN/melR3HDY=
+github.com/gofiber/embed v0.0.9 h1:JJOy/5Gfio5xxHnzZqbV6EhegZvLclPsnlFGg9IWyfk=
+github.com/gofiber/embed v0.0.9/go.mod h1:ODnPC/Gp/N1ZBp5cs7RM7/QtPE2EZ1PEhuBeYITaUl8=
 github.com/gofiber/fiber v1.8.32/go.mod h1:JD9ZZgxqitISS6yDcKP26BKR6Ul+z6UrZX7WlalC1sE=
 github.com/gofiber/fiber v1.9.3/go.mod h1:o2YQgwJW8+Z16x8MTos4nYn8PD1RJpzu9fojiGqjSjI=
 github.com/gofiber/fiber v1.9.6 h1:HtzOdbdNn/K/NlMMLbCNkiI79Ft0zjio7STcgY/Rox0=
@@ -82,6 +85,8 @@ github.com/gofiber/session v1.0.0/go.mod h1:d5rCV84pMB/GpebKSe3uf8Jt4idPcAV618V4
 github.com/gofiber/template v1.0.0/go.mod h1:+bij+R0NI6urTg2jtQvPj5wb2uWMxW9eYGsAN3QhnP0=
 github.com/gofiber/template v1.1.0 h1:FAvuH6BAd5ExXGW2Elx+eVdrwQYLMCpMixeBIoPLshk=
 github.com/gofiber/template v1.1.0/go.mod h1:+bij+R0NI6urTg2jtQvPj5wb2uWMxW9eYGsAN3QhnP0=
+github.com/gofiber/websocket v0.3.0 h1:xIwnxHyvJMEqwLgbKm03XWrk76gGNi8PUYjIe5kw6mg=
+github.com/gofiber/websocket v0.3.0/go.mod h1:YtU/XbIdFOLSvpqX2dQSMlUs8P/CZ3DfrjWupKhh6/8=
 github.com/gogo/protobuf v1.1.1/go.mod h1:r8qH/GZQm5c6nD/R0oafs1akxWv10x8SbQlK7atdtwQ=
 github.com/gogo/protobuf v1.2.1/go.mod h1:hp+jE20tsWTFYpLwKvXlhS1hjn+gTNwPg2I6zVXpSg4=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b/go.mod h1:SBH7ygxi8pfUlaOkMMuAQtPIUF8ecWP5IEl/CR7VP2Q=

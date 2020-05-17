@@ -18,9 +18,11 @@ import (
 	"github.com/juanhuttemann/nitr-api/product"
 	"github.com/juanhuttemann/nitr-api/system"
 
+	"github.com/gofiber/embed"
 	"github.com/gofiber/fiber"
 	"github.com/gofiber/logger"
 	"github.com/gofiber/session"
+	"github.com/gofiber/websocket"
 
 	"github.com/gofiber/template"
 	"github.com/skip2/go-qrcode"
@@ -41,9 +43,15 @@ import (
 )
 
 type LoginForm struct {
-	Username string `form:"username" query:"username"`
-	Password string `form:"password" query:"password"`
-	Remember string `form:"remember" query:"remember"`
+	Username string `form:"username"`
+	Password string `form:"password"`
+	Remember string `form:"remember"`
+}
+
+type PasswordForm struct {
+	CurrentPassword    string `form:"currentPassword"`
+	NewPassword        string `form:"newPassword"`
+	RepeateNewPassword string `form:"repeatNewPassword"`
 }
 
 type Key struct {
@@ -101,7 +109,8 @@ func logError(e error) {
 	}
 }
 
-func openbrowser(url string) {
+func openbrowser(domain, port string) {
+	url := domain + ":" + port
 	var err error
 
 	switch runtime.GOOS {
@@ -117,13 +126,17 @@ func openbrowser(url string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 }
 
 func main() {
+	//App Config
 	app := fiber.New(&fiber.Settings{
 		DisableStartupMessage: true,
 	})
+
+	app.Use("/assets", embed.New(embed.Config{
+		Root: rice.MustFindBox("app/assets").HTTPBox(),
+	}))
 
 	logFile, err := os.OpenFile("log.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
@@ -139,80 +152,47 @@ func main() {
 	}
 
 	app.Use(logger.New(cfg))
-
+	app.Settings.TemplateEngine = template.Mustache()
 	sessions := session.New()
 
-	app.Settings.TemplateEngine = template.Mustache()
+	//API Config
+	api := app.Group("/api")
+	v1 := api.Group("/v1")
+	v1.Use(apikey.New(apikey.Config{Key: nitrdb.GetApiKey()}))
 
-	if err != nil {
-		fmt.Println(err)
-	}
-	app.Static("/", "assets")
-
-	app.Get("/favicon", func(c *fiber.Ctx) {
-		favicon, err := rice.MustFindBox("app/assets/images/").HTTPBox().String("favicon.png")
-		logError(err)
-		c.Send(favicon)
-	})
-
-	app.Get("/logo", func(c *fiber.Ctx) {
-		logo, err := rice.MustFindBox("app/assets/images/").HTTPBox().String("logo.png")
-		logError(err)
-		c.Send(logo)
-	})
+	//nitr API Endpoints
+	v1.Get("/", overview.Data)
+	v1.Get("/cpu", cpu.Data)
+	v1.Get("/bios", bios.Data)
+	v1.Get("/chassis", chassis.Data)
+	v1.Get("/disks", disk.Data)
+	v1.Get("/drives", drive.Data)
+	v1.Get("/gpu", gpu.Data)
+	v1.Get("/host", host.Data)
+	v1.Get("/network", network.Data)
+	v1.Get("/processes", process.Data)
+	v1.Get("/ram", ram.Data)
+	v1.Get("/baseboard", baseboard.Data)
+	v1.Get("/product", product.Data)
+	v1.Get("/system", system.Data)
 
 	app.Get("/", func(c *fiber.Ctx) {
 		store := sessions.Get(c)
 		if store.Get("UserID") == "1" || c.Cookies("remember") == "1" {
 			c.Redirect("/panel")
 		} else {
-			content, err := rice.MustFindBox("app/views").HTTPBox().String("login.html")
+			content, err := rice.MustFindBox("app/views").HTTPBox().String("login.mustache")
 			logError(err)
 
 			layout, err := rice.MustFindBox("app/views/layout").HTTPBox().String("default.mustache")
 			logError(err)
 
-			bind := fiber.Map{
-				"content": string(content),
-			}
 			c.Type("html")
-			c.Send(mustache.Render(layout, bind))
+			c.Send(mustache.RenderInLayout(content, layout))
 		}
 	})
 
-	app.Get("/panel", func(c *fiber.Ctx) {
-		store := sessions.Get(c)
-		if store.Get("UserID") == "1" || c.Cookies("remember") == "1" {
-			content, err := rice.MustFindBox("app/views").HTTPBox().String("panel.html")
-			logError(err)
-			layout, err := rice.MustFindBox("app/views/layout").HTTPBox().String("default.mustache")
-			logError(err)
-
-			db, err := bolt.Open("nitr.db", 0600, nil)
-			defer db.Close()
-
-			logError(err)
-
-			nitrUser := nitrdb.GetUserByID(db, "1")
-
-			bind := fiber.Map{
-				"content":  string(content),
-				"host":     host.Check().Name,
-				"os":       host.Check().OS,
-				"platform": host.Check().Platform,
-				"arch":     host.Check().Arch,
-				"apikey":   nitrUser.Apikey,
-				"qrCode":   nitrUser.QrCode,
-			}
-
-			c.Type("html")
-			c.Send(mustache.Render(layout, bind))
-			log.Println("Session started")
-
-		} else {
-			c.Redirect("/")
-		}
-	})
+	//Login Submit
 	app.Post("/", func(c *fiber.Ctx) {
 		login := new(LoginForm)
 
@@ -242,65 +222,136 @@ func main() {
 		}
 	})
 
-	app.Post("/logout", func(c *fiber.Ctx) {
+	//Auth middleware
+	app.Use(func(c *fiber.Ctx) {
 		store := sessions.Get(c)
 		if store.Get("UserID") == "1" || c.Cookies("remember") == "1" {
-			c.ClearCookie()
+			c.Next()
+		} else {
 			c.Redirect("/")
-			log.Println("Session closed")
 		}
 	})
 
-	app.Post("/code", func(c *fiber.Ctx) {
-		store := sessions.Get(c)
-		if store.Get("UserID") == "1" || c.Cookies("remember") == "1" {
-			apikey := key.String(12)
-			png, err := qrcode.Encode(apikey, qrcode.Medium, 256)
-			uEncQr := b64.StdEncoding.EncodeToString(png)
+	//Panel View
+	app.Get("/panel", func(c *fiber.Ctx) {
+		content, err := rice.MustFindBox("app/views").HTTPBox().String("panel.html")
+		logError(err)
+		layout, err := rice.MustFindBox("app/views/layout").HTTPBox().String("default.mustache")
+		logError(err)
 
-			db, err := bolt.Open("nitr.db", 0600, nil)
-			defer db.Close()
+		db, err := bolt.Open("nitr.db", 0600, nil)
+		defer db.Close()
 
+		logError(err)
+
+		nitrUser := nitrdb.GetUserByID(db, "1")
+
+		bind := fiber.Map{
+			"content":  string(content),
+			"host":     host.Check().Name,
+			"os":       host.Check().OS,
+			"platform": host.Check().Platform,
+			"arch":     host.Check().Arch,
+			"apikey":   nitrUser.Apikey,
+			"qrCode":   nitrUser.QrCode,
+		}
+
+		c.Type("html")
+		c.Send(mustache.Render(layout, bind))
+		log.Println("Session started")
+	})
+
+	//Panel Logout
+	app.Post("/logout", func(c *fiber.Ctx) {
+		c.ClearCookie()
+		c.Redirect("/")
+		log.Println("Session closed")
+	})
+
+	//Generate new API Key
+	app.Post("/generate", func(c *fiber.Ctx) {
+		apikey := key.String(12)
+		png, err := qrcode.Encode(apikey, qrcode.Medium, 256)
+		uEncQr := b64.StdEncoding.EncodeToString(png)
+
+		db, err := bolt.Open("nitr.db", 0600, nil)
+		defer db.Close()
+		logError(err)
+
+		nitrUser := nitrdb.GetUserByID(db, "1")
+		user := nitrdb.User{Username: nitrUser.Username, Password: nitrUser.Password, Apikey: apikey, QrCode: uEncQr}
+		err = nitrdb.SetUserData(db, "1", user)
+		logError(err)
+
+		c.JSON(Key{
+			Key:    apikey,
+			QrCode: uEncQr,
+		})
+		log.Println("New Api key generated")
+	})
+
+	//Change Password View
+	app.Get("/password", func(c *fiber.Ctx) {
+		content, err := rice.MustFindBox("app/views").HTTPBox().String("password.html")
+		logError(err)
+		layout, err := rice.MustFindBox("app/views/layout").HTTPBox().String("default.mustache")
+		logError(err)
+
+		c.Type("html")
+		c.Send(mustache.RenderInLayout(content, layout))
+	})
+
+	//New Password Submit
+	app.Post("/password", func(c *fiber.Ctx) {
+		password := new(PasswordForm)
+
+		if err := c.BodyParser(password); err != nil {
+			log.Fatal(err)
+		}
+
+		db, err := bolt.Open("nitr.db", 0600, nil)
+		defer db.Close()
+
+		logError(err)
+
+		nitrUser := nitrdb.GetUserByID(db, "1")
+		if password.CurrentPassword == nitrUser.Password {
 			logError(err)
-
-			user := nitrdb.User{Username: "admin", Password: "admin", Apikey: apikey, QrCode: uEncQr}
+			user := nitrdb.User{Username: nitrUser.Username, Password: password.NewPassword, Apikey: nitrUser.Apikey, QrCode: nitrUser.QrCode}
 			err = nitrdb.SetUserData(db, "1", user)
 			logError(err)
-
-			c.JSON(Key{
-				Key:    apikey,
-				QrCode: uEncQr,
-			})
-			log.Println("New Api key generated")
+			c.ClearCookie()
+			c.SendStatus(200)
+		} else {
+			c.SendStatus(304)
 		}
 	})
 
-	api := app.Group("/api")
-	api.Use(apikey.New(apikey.Config{Key: nitrdb.GetApiKey()}))
+	app.Get("/ws", websocket.New(func(c *websocket.Conn) {
+		for {
+			mt, msg, err := c.ReadMessage()
+			if err != nil {
+				log.Println("read:", err)
+				break
+			}
+			log.Printf("recv: %s", msg)
+			err = c.WriteMessage(mt, msg)
+			if err != nil {
+				log.Println("write:", err)
+				break
+			}
+		}
+	}))
 
-	v1 := api.Group("/v1")
-
-	v1.Get("/", overview.Data)
-	v1.Get("/cpu", cpu.Data)
-	v1.Get("/bios", bios.Data)
-	v1.Get("/chassis", chassis.Data)
-	v1.Get("/disks", disk.Data)
-	v1.Get("/drives", drive.Data)
-	v1.Get("/gpu", gpu.Data)
-	v1.Get("/host", host.Data)
-	v1.Get("/network", network.Data)
-	v1.Get("/processes", process.Data)
-	v1.Get("/ram", ram.Data)
-	v1.Get("/baseboard", baseboard.Data)
-	v1.Get("/product", product.Data)
-	v1.Get("/system", system.Data)
-
-	port := viper.Get("port")
-	if port == nil {
-		port = 3000
+	port := viper.GetString("port")
+	if port == "" {
+		port = "3000"
 	}
 
-	openbrowser("http://localhost:3000")
+	openBrowser := viper.GetBool("openBrowserOnStartUp")
+	if openBrowser {
+		openbrowser("http://localhost", port)
+	}
 
 	fmt.Printf(`                 _  __       
          ____   (_)/ /_ _____
