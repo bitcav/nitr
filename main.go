@@ -99,7 +99,10 @@ func init() {
 		logError(err)
 
 		log.Println("Adding default user")
-		user := nitrdb.User{Username: "admin", Password: "admin", Apikey: ""}
+		APIKey := utils.RandString(12)
+		png, err := qrcode.Encode(APIKey, qrcode.Medium, 256)
+		uEncQr := b64.StdEncoding.EncodeToString(png)
+		user := nitrdb.User{Username: "admin", Password: "admin", Apikey: APIKey, QrCode: uEncQr}
 		err = nitrdb.SetUserData(db, "1", user)
 		logError(err)
 	}

@@ -17,11 +17,14 @@
 <body>
   {{{content}}}
 </body>
-
+<script src="/assets/js/clipboard.min.js"></script>
+<script src="/assets/js/panel.js"></script>
+<script src="/assets/js/password.js"></script>
 <script>
-  $( "#hostname" ).val( "{{{host}}}");
-  $( "#platform" ).val( "{{{platform}}}" +"/"+ "{{{arch}}}");
+  $("#hostname").val("{{{host}}}");
+  $("#platform").val("{{{platform}}}" + "/" + "{{{arch}}}");
   $("#key").val("{{{apikey}}}")
   $("#qr").removeAttr("src").attr("src", "data:image/png;base64, " + "{{{qrCode}}}");
 </script>
+
 </html>

@@ -24,19 +24,23 @@
         <div class="uk-margin">
           <label class="uk-form-label" for="hostname">NAME:</label>
           <div class="uk-form-controls">
-            <input class="uk-input" id="hostname" type="text" placeholder="" disabled>
+            <input class="uk-input" id="hostname" type="text" placeholder="" readonly=readonly>
           </div>
         </div>
         <div class="uk-margin">
           <label class="uk-form-label" for="platform">PLATFORM:</label>
           <div class="uk-form-controls">
-            <input class="uk-input" id="platform" type="text" placeholder="" disabled>
+            <input class="uk-input" id="platform" type="text" placeholder="" readonly=readonly>
           </div>
         </div>
         <div class="uk-margin">
           <label class="uk-form-label" for="key">API KEY:</label>
           <div class="uk-form-controls">
-            <input class="uk-input" id="key" type="text" placeholder="" disabled>
+            <div class="uk-inline">
+              <button type="button" data-clipboard-target="#key" class="uk-form-icon uk-form-icon-flip copy"
+                uk-icon="icon: copy" uk-tooltip="title: Copy;"></button>
+              <input class="uk-input" id="key" type="text" placeholder="" readonly=readonly>
+            </div>
           </div>
         </div>
         <button id="genBtn" class="uk-button uk-button-primary uk-button-large">
@@ -50,43 +54,5 @@
         <img id="qr" src="" alt="qr" uk-img style="max-width: 240;">
       </div>
     </div>
-
-    <script>
-      $(document).ready(function () {
-        if ($('#qr').attr("src") === "data:image/png;base64, ") {
-          $('#qr').hide();
-        }
-
-        $('#genBtn').click(function (e) {
-          e.preventDefault();
-          fetch('/generate', {
-              method: "POST"
-            })
-            .then(function (response) {
-              return response.json();
-            })
-            .then(function (data) {
-              $("#key").val(data.key)
-              var d = new Date();
-              $("#qr").removeAttr("src")
-                .attr("src", "data:image/png;base64, " + data.qrCode)
-                .show();
-              UIkit.notification({
-                message: 'restart the nitr-agent service to apply these changes',
-                status: 'danger',
-                pos: 'bottom-center',
-                timeout: 5000
-              });
-
-            });
-          var btn = $(this);
-          btn.prop('disabled', true)
-            .attr("uk-spinner", true)
-          setTimeout(function () {
-            btn.prop('disabled', false)
-              .removeAttr("uk-spinner")
-          }, 500);
-        });
-      })
-
-    </script>
+  </div>
+</div>
