@@ -21,7 +21,6 @@ $(document).ready(function () {
       })
       .then(function (data) {
         $("#key").val(data.key);
-        var d = new Date();
         $("#qr")
           .removeAttr("src")
           .attr("src", "data:image/png;base64, " + data.qrCode)
