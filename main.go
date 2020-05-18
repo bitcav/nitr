@@ -11,9 +11,11 @@ import (
 	rice "github.com/GeertJohan/go.rice"
 	"github.com/fiberweb/apikey"
 	"github.com/hoisie/mustache"
+	"github.com/juanhuttemann/nitr-api/bandwidth"
 	"github.com/juanhuttemann/nitr-api/baseboard"
 	"github.com/juanhuttemann/nitr-api/devices"
 	"github.com/juanhuttemann/nitr-api/internet"
+	"github.com/juanhuttemann/nitr-api/network"
 	"github.com/juanhuttemann/nitr-api/nitrdb"
 	"github.com/juanhuttemann/nitr-api/overview"
 	"github.com/juanhuttemann/nitr-api/product"
@@ -37,7 +39,6 @@ import (
 	"github.com/juanhuttemann/nitr-api/drive"
 	"github.com/juanhuttemann/nitr-api/gpu"
 	"github.com/juanhuttemann/nitr-api/host"
-	"github.com/juanhuttemann/nitr-api/network"
 	"github.com/juanhuttemann/nitr-api/process"
 	"github.com/juanhuttemann/nitr-api/ram"
 	"github.com/spf13/viper"
@@ -158,6 +159,7 @@ func main() {
 	v1.Get("/", overview.Data)
 	v1.Get("/cpu", cpu.Data)
 	v1.Get("/bios", bios.Data)
+	v1.Get("/bandwidth", bandwidth.Data)
 	v1.Get("/chassis", chassis.Data)
 	v1.Get("/disks", disk.Data)
 	v1.Get("/drives", drive.Data)
@@ -172,6 +174,7 @@ func main() {
 	v1.Get("/product", product.Data)
 	v1.Get("/system", system.Data)
 
+	bandwidth.Check()
 	//Login View
 	app.Get("/", func(c *fiber.Ctx) {
 		store := sessions.Get(c)
