@@ -19,7 +19,7 @@ type NetworkDeviceBandwidth struct {
 	TxPackets uint64 `json:"txPackets"`
 }
 
-func Check() []IfaceStats {
+func Check() []NetworkDeviceBandwidth {
 	p, err := procfs.NewDefaultFS()
 	if err != nil {
 		log.Fatalf("could not get process: %s", err)
@@ -32,9 +32,9 @@ func Check() []IfaceStats {
 	networks := network.Check()
 
 	//Round 1
-	var stats1 []IfaceStats
+	var stats1 []NetworkDeviceBandwidth
 	for _, netw := range networks {
-		stats1 = append(stats1, IfaceStats{
+		stats1 = append(stats1, NetworkDeviceBandwidth{
 			Name:      netw.Name,
 			RxBytes:   net[netw.Name].RxBytes,
 			TxBytes:   net[netw.Name].TxBytes,
@@ -51,9 +51,9 @@ func Check() []IfaceStats {
 	}
 
 	//Round 2
-	var stats2 []IfaceStats
+	var stats2 []NetworkDeviceBandwidth
 	for _, netw := range networks {
-		stats2 = append(stats2, IfaceStats{
+		stats2 = append(stats2, NetworkDeviceBandwidth{
 			Name:      netw.Name,
 			RxBytes:   net[netw.Name].RxBytes,
 			TxBytes:   net[netw.Name].TxBytes,
@@ -63,10 +63,10 @@ func Check() []IfaceStats {
 	}
 
 	//DIFF
-	var diffStats []IfaceStats
+	var diffStats []NetworkDeviceBandwidth
 
 	for i, netw := range networks {
-		diffStats = append(diffStats, IfaceStats{
+		diffStats = append(diffStats, NetworkDeviceBandwidth{
 			Name:      netw.Name,
 			RxBytes:   stats2[i].RxBytes - stats1[i].RxBytes,
 			TxBytes:   stats2[i].TxBytes - stats1[i].TxBytes,
