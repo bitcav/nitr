@@ -1,3 +1,5 @@
+// +build linux
+
 package bandwidth
 
 import (
@@ -5,17 +7,16 @@ import (
 	"log"
 	"time"
 
-	"github.com/gofiber/fiber"
 	"github.com/juanhuttemann/nitr-api/network"
 	"github.com/prometheus/procfs"
 )
 
-type IfaceStats struct {
-	Name      string
-	TxBytes   uint64
-	RxBytes   uint64
-	TxPackets uint64
-	RxPackets uint64
+type NetworkDeviceBandwidth struct {
+	Name      string `json:"name"`
+	RxBytes   uint64 `json:"rxBytes"`
+	TxBytes   uint64 `json:"txBytes"`
+	RxPackets uint64 `json:"rxPackets"`
+	TxPackets uint64 `json:"txPackets"`
 }
 
 func Check() []IfaceStats {
@@ -69,14 +70,10 @@ func Check() []IfaceStats {
 			Name:      netw.Name,
 			RxBytes:   stats2[i].RxBytes - stats1[i].RxBytes,
 			TxBytes:   stats2[i].TxBytes - stats1[i].TxBytes,
-			RxPackets: stats2[i].RxPackets - stats1[i].RxPackets,
-			TxPackets: stats2[i].TxPackets - stats1[i].TxPackets,
+			RxPackets: stats2[i].RxPackets,
+			TxPackets: stats2[i].TxPackets,
 		})
 	}
 
 	return diffStats
-}
-
-func Data(c *fiber.Ctx) {
-	c.JSON(Check())
 }

@@ -174,7 +174,6 @@ func main() {
 	v1.Get("/product", product.Data)
 	v1.Get("/system", system.Data)
 
-	bandwidth.Check()
 	//Login View
 	app.Get("/", func(c *fiber.Ctx) {
 		store := sessions.Get(c)

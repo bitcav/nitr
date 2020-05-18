@@ -199,9 +199,11 @@ func timeToNextTick() time.Duration {
 }
 
 type NetworkDeviceBandwidth struct {
-	Name string `json:"name"`
-	Rx   uint64 `json:"rx"`
-	Tx   uint64 `json:"tx"`
+	Name      string `json:"name"`
+	RxBytes   uint64 `json:"rxBytes"`
+	TxBytes   uint64 `json:"txBytes"`
+	RxPackets uint64 `json:"rxPackets"`
+	TxPackets uint64 `json:"txPackets"`
 }
 
 func Check() []NetworkDeviceBandwidth {
@@ -209,9 +211,11 @@ func Check() []NetworkDeviceBandwidth {
 	var networkDevices []NetworkDeviceBandwidth
 	for _, dev := range stats.NetDevStats {
 		n := NetworkDeviceBandwidth{
-			Name: dev.InterfaceName,
-			Rx:   dev.RxBytes,
-			Tx:   dev.TxBytes,
+			Name:      dev.InterfaceName,
+			RxBytes:   dev.RxBytes,
+			TxBytes:   dev.TxBytes,
+			RxPackets: dev.RxPkts,
+			TxPackets: dev.TxPkts,
 		}
 		networkDevices = append(networkDevices, n)
 
