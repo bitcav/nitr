@@ -27,7 +27,6 @@ import (
 	"github.com/gofiber/logger"
 	"github.com/gofiber/recover"
 	"github.com/gofiber/session"
-	"github.com/gofiber/websocket"
 
 	"github.com/gofiber/template"
 	"github.com/skip2/go-qrcode"
@@ -120,10 +119,12 @@ func main() {
 		DisableStartupMessage: true,
 	})
 
+	//In Memory Static Assets
 	app.Use("/assets", embed.New(embed.Config{
 		Root: rice.MustFindBox("app/assets").HTTPBox(),
 	}))
 
+	//Checks if logs saving is activated
 	saveLogs := viper.GetBool("saveLogs")
 	if saveLogs {
 		logFile, err := os.OpenFile("log.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
@@ -330,22 +331,7 @@ func main() {
 		}
 	})
 
-	app.Get("/ws", websocket.New(func(c *websocket.Conn) {
-		for {
-			mt, msg, err := c.ReadMessage()
-			if err != nil {
-				log.Println("read:", err)
-				break
-			}
-			log.Printf("recv: %s", msg)
-			err = c.WriteMessage(mt, msg)
-			if err != nil {
-				log.Println("write:", err)
-				break
-			}
-		}
-	}))
-
+	//Checks if custom port was set, otherwise sets default port
 	port := viper.GetString("port")
 	if port == "" {
 		port = "3000"
@@ -357,6 +343,7 @@ func main() {
 	}
 
 	//Server startup
+
 	utils.StartMessage(port)
 
 	err := app.Listen(port)
