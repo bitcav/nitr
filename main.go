@@ -63,9 +63,10 @@ type apiKeyForm struct {
 }
 
 type qr struct {
-	Name     string `json:"name"`
-	Platform string `json:"platform"`
-	Key      string `json:"key"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Port        string `json:"port"`
+	Key         string `json:"key"`
 }
 
 func init() {
@@ -108,10 +109,16 @@ func init() {
 
 		APIKey := utils.RandString(10)
 
+		port := viper.GetString("port")
+		if port == "" {
+			port = "3000"
+		}
+
 		qr := qr{
-			Name:     host.Check().Name,
-			Platform: host.Check().Platform,
-			Key:      APIKey,
+			Name:        host.Check().Name,
+			Description: host.Check().Platform,
+			Port:        port,
+			Key:         APIKey,
 		}
 
 		qrJSON, err := json.Marshal(qr)
@@ -294,10 +301,17 @@ func main() {
 	//Generate new API Key
 	app.Post("/generate", func(c *fiber.Ctx) {
 		newAPIKey := utils.RandString(10)
+
+		port := viper.GetString("port")
+		if port == "" {
+			port = "3000"
+		}
+
 		qr := qr{
-			Name:     host.Check().Name,
-			Platform: host.Check().Platform,
-			Key:      newAPIKey,
+			Name:        host.Check().Name,
+			Description: host.Check().Platform,
+			Port:        port,
+			Key:         newAPIKey,
 		}
 
 		qrJSON, err := json.Marshal(qr)
