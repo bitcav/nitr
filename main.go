@@ -98,7 +98,7 @@ func init() {
 		logError(err)
 
 		log.Println("Adding default user")
-		APIKey := utils.RandString(12)
+		APIKey := utils.RandString(10)
 		png, err := qrcode.Encode(APIKey, qrcode.Medium, 256)
 		uEncQr := b64.StdEncoding.EncodeToString(png)
 		user := nitrdb.User{Username: "admin", Password: "admin", Apikey: APIKey, QrCode: uEncQr}
@@ -273,7 +273,7 @@ func main() {
 
 	//Generate new API Key
 	app.Post("/generate", func(c *fiber.Ctx) {
-		newAPIKey := utils.RandString(12)
+		newAPIKey := utils.RandString(10)
 		png, err := qrcode.Encode(newAPIKey, qrcode.Medium, 256)
 		uEncQr := b64.StdEncoding.EncodeToString(png)
 
