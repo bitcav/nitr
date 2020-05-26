@@ -2,6 +2,7 @@ package main
 
 import (
 	b64 "encoding/base64"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -61,6 +62,12 @@ type apiKeyForm struct {
 	QrCode string `json:"qrCode"`
 }
 
+type qr struct {
+	Name     string `json:"name"`
+	Platform string `json:"platform"`
+	Key      string `json:"key"`
+}
+
 func init() {
 	//Config file initial setup
 	if _, err := os.Stat("config.ini"); err != nil {
@@ -98,8 +105,21 @@ func init() {
 		logError(err)
 
 		log.Println("Adding default user")
+
 		APIKey := utils.RandString(10)
-		png, err := qrcode.Encode(APIKey, qrcode.Medium, 256)
+
+		qr := qr{
+			Name:     host.Check().Name,
+			Platform: host.Check().Platform,
+			Key:      APIKey,
+		}
+
+		qrJSON, err := json.Marshal(qr)
+		if err != nil {
+			logError(err)
+		}
+
+		png, err := qrcode.Encode(string(qrJSON), qrcode.Medium, 256)
 		uEncQr := b64.StdEncoding.EncodeToString(png)
 		user := nitrdb.User{Username: "admin", Password: "admin", Apikey: APIKey, QrCode: uEncQr}
 		err = nitrdb.SetUserData(db, "1", user)
@@ -274,7 +294,17 @@ func main() {
 	//Generate new API Key
 	app.Post("/generate", func(c *fiber.Ctx) {
 		newAPIKey := utils.RandString(10)
-		png, err := qrcode.Encode(newAPIKey, qrcode.Medium, 256)
+		qr := qr{
+			Name:     host.Check().Name,
+			Platform: host.Check().Platform,
+			Key:      newAPIKey,
+		}
+
+		qrJSON, err := json.Marshal(qr)
+		if err != nil {
+			logError(err)
+		}
+		png, err := qrcode.Encode(string(qrJSON), qrcode.Medium, 256)
 		uEncQr := b64.StdEncoding.EncodeToString(png)
 
 		db, err := bolt.Open("nitr.db", 0600, nil)
