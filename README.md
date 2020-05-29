@@ -2,6 +2,7 @@
     <img alt="Nitr" height="125" src="https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/app/assets/images/logo.png" style="max-width:100%;">
     <br>
 </p>
+
 # nitr agent
 Nitr is a webserver that collects System and Hardware information and makes it accessible through an JSON API
 
