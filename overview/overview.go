@@ -2,9 +2,9 @@ package overview
 
 import (
 	"github.com/gofiber/fiber"
-	"github.com/juanhuttemann/nitr-api/cpu"
-	"github.com/juanhuttemann/nitr-api/host"
-	"github.com/juanhuttemann/nitr-api/ram"
+	"github.com/juanhuttemann/nitr-agent/cpu"
+	"github.com/juanhuttemann/nitr-agent/host"
+	"github.com/juanhuttemann/nitr-agent/ram"
 )
 
 type Overview struct {

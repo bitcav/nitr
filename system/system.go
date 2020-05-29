@@ -2,18 +2,18 @@ package system
 
 import (
 	"github.com/gofiber/fiber"
-	"github.com/juanhuttemann/nitr-api/baseboard"
-	"github.com/juanhuttemann/nitr-api/bios"
-	"github.com/juanhuttemann/nitr-api/chassis"
-	"github.com/juanhuttemann/nitr-api/cpu"
-	"github.com/juanhuttemann/nitr-api/disk"
-	"github.com/juanhuttemann/nitr-api/drive"
-	"github.com/juanhuttemann/nitr-api/gpu"
-	"github.com/juanhuttemann/nitr-api/host"
-	"github.com/juanhuttemann/nitr-api/network"
-	"github.com/juanhuttemann/nitr-api/process"
-	"github.com/juanhuttemann/nitr-api/product"
-	"github.com/juanhuttemann/nitr-api/ram"
+	"github.com/juanhuttemann/nitr-agent/baseboard"
+	"github.com/juanhuttemann/nitr-agent/bios"
+	"github.com/juanhuttemann/nitr-agent/chassis"
+	"github.com/juanhuttemann/nitr-agent/cpu"
+	"github.com/juanhuttemann/nitr-agent/disk"
+	"github.com/juanhuttemann/nitr-agent/drive"
+	"github.com/juanhuttemann/nitr-agent/gpu"
+	"github.com/juanhuttemann/nitr-agent/host"
+	"github.com/juanhuttemann/nitr-agent/network"
+	"github.com/juanhuttemann/nitr-agent/process"
+	"github.com/juanhuttemann/nitr-agent/product"
+	"github.com/juanhuttemann/nitr-agent/ram"
 )
 
 type system struct {

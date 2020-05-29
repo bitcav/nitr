@@ -7,7 +7,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/juanhuttemann/nitr-api/network"
+	"github.com/juanhuttemann/nitr-agent/network"
 	"github.com/prometheus/procfs"
 )
 
