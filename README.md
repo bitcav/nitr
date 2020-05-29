@@ -49,18 +49,19 @@ Access with default **username** and **password**: **Admin Admin**
 
 These endpoints allow you to get system and hardware information about your host.
 
-Example:
-```
-http://localhost:8000/api/v1/cpu?key=secret
-```
-
 ## Available Endpoints
 
 | Verb   | Endpoint                      | Action                       |
 |--------|-------------------------------|------------------------------|
 |GET     |'/cpu'                         | CPU Information              |
 
+## How to Use
 
+Example:
+```
+http://localhost:8000/api/v1/cpu
+```
+Call the above endpoint with ?key=secret in the URL or pass the x-api-key header with value secret you will get success response.
 
 ## Powered by
 
