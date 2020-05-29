@@ -10,6 +10,8 @@
 Nitr is a webserver that collects System and Hardware information and makes it accessible through an JSON API
 
 ### Building from source
+Note: go version 1.13 or higher is required building it from the source.
+
 #### Clone
 ```
 git clone git@github.com:juanhuttemann/nitr-agent.git
