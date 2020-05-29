@@ -41,7 +41,7 @@ Go to [http://localhost:8000](http://localhost:8000) in your web browser
 
 ![preview](https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/images/login-web.png)
 
-Access with default username and password: Admin Admin
+Access with default **username** and **password**: **Admin Admin**
 
 ![preview](https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/images/panel-web.png)
 
