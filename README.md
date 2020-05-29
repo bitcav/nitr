@@ -50,8 +50,9 @@ Access with default username and password: Admin Admin
 These endpoints allow you to get system and hardware information about your host.
 
 Example:
-
-localhost:8000/api/v1/cpu?key=secret
+```
+http://localhost:8000/api/v1/cpu?key=secret
+```
 
 ## Available Endpoints
 
