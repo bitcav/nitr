@@ -57,11 +57,13 @@ These endpoints allow you to get system and hardware information about your host
 
 ## How to Use
 
+Call the above endpoints with ?key=secret in the URL or pass the x-api-key header with value secret you will get success response.
+
 Example:
 ```
-http://localhost:8000/api/v1/cpu
+http://localhost:8000/api/v1/cpu?key=secret
 ```
-Call the above endpoint with ?key=secret in the URL or pass the x-api-key header with value secret you will get success response.
+
 
 ## Powered by
 
