@@ -44,3 +44,9 @@ Go to [http://localhost:8000](http://localhost:8000) in your web browser
 Access with default username and password: Admin Admin
 
 ![preview](https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/images/panel-web.png)
+
+## Powered by
+
+* [Fiber](https://gofiber.io/) - The web framework used
+* [bbolt](https://github.com/etcd-io/bbolt) - Database
+* [UIKit](https://getuikit.com/) - Styling
