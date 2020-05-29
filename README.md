@@ -27,7 +27,8 @@ nitr-agent.exe
 the server will start listening on port 8000 by default
 
 ### Accessing web panel
-Go to your web browser en open [http://localhost:8000](http://localhost:8000)
+Go to your web browser and open [http://localhost:8000](http://localhost:8000)
 ![preview](https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/images/login-web.png)
+
 Access with default username and password: Admin Admin
 ![preview](https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/images/panel-web.png)
