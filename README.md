@@ -4,9 +4,7 @@
 </p>
 
 [![Build Status](https://travis-ci.org/juanhuttemann/nitr-agent.svg?branch=master)](https://travis-ci.org/juanhuttemann/nitr-agent)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/juanhuttemann/nitr-agent/blob/master/LICENSE)
-
-
+[![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/juanhuttemann/nitr-agent/blob/master/LICENSE)
 
 # nitr agent
 Nitr is a webserver that collects System and Hardware information and makes it accessible through an JSON API
