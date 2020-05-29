@@ -53,7 +53,7 @@ Example:
 
 localhost:8000/api/v1/cpu?key=secret
 
-##Available Endpoints
+## Available Endpoints
 
 | Verb   | Endpoint                      | Action                       |
 |--------|-------------------------------|------------------------------|
