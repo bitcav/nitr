@@ -161,6 +161,15 @@ http://localhost:8000/api/v1/host?key=secret
 #### Ram
 #### Baseboard
 #### Product
+| Key       | Data Type      | Description              |
+|-----------|----------------|--------------------------|
+| vendor    | string         | Product vendor           |
+| family    | string         | Product family           |
+| assetTag  | string         | Asset Tag                |
+| serial    | string         | Product serial           |
+| uuid      | string         | Product UUID             |
+| sku       | string         | Product SKU              |
+| version   | string         | Product Version          |
 
 ## Settings
 
