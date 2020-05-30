@@ -7,6 +7,7 @@ import (
 	"github.com/jaypipes/ghw"
 )
 
+//Drive properties
 type Drive struct {
 	Name      string        `json:"name"`
 	DriveType ghw.DriveType `json:"type"`
@@ -14,8 +15,7 @@ type Drive struct {
 	Serial    string        `json:"serial"`
 }
 
-type Drives []Drive
-
+//Check for Drive availability
 func Check() []Drive {
 	block, err := ghw.Block()
 	if err != nil {
@@ -34,6 +34,7 @@ func Check() []Drive {
 	return drvs
 }
 
+//Data returns JSON response of Drives
 func Data(c *fiber.Ctx) {
 	c.JSON(Check())
 }

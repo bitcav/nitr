@@ -9,6 +9,7 @@ import (
 	"github.com/shirou/gopsutil/cpu"
 )
 
+//CPU properties
 type CPU struct {
 	Brand     string    `json:"brand"`
 	Cores     uint32    `json:"cores"`
@@ -18,6 +19,7 @@ type CPU struct {
 	UsageEach []float64 `json:"usageEach"`
 }
 
+//CpuUsage returns the usage percentage of the CPU
 func CpuUsage() float64 {
 	duration := 500 * time.Millisecond
 	cpuUsage, err := cpu.Percent(duration, false)
@@ -71,6 +73,7 @@ func model() string {
 	return cpu.Processors[0].Model
 }
 
+//Check for CPU availability
 func Check() CPU {
 	return CPU{
 		Brand:     model(),
@@ -82,6 +85,7 @@ func Check() CPU {
 	}
 }
 
+//Data returns JSON response of the CPU
 func Data(c *fiber.Ctx) {
 	c.JSON(Check())
 }

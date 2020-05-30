@@ -22,7 +22,7 @@ type system struct {
 	Bios      bios.Bios              `json:"bios"`
 	RAM       ram.RAM                `json:"ram"`
 	Disks     disk.Disks             `json:"disks"`
-	Drives    drive.Drives           `json:"drives"`
+	Drives    []drive.Drive          `json:"drives"`
 	Network   network.NetworkDevices `json:"network"`
 	GPU       gpu.GPUs               `json:"gpu"`
 	BaseBoard baseboard.BaseBoard    `json:"baseboard"`
