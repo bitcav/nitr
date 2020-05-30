@@ -74,12 +74,12 @@ Call the above endpoints with ?key=secret in the URL or pass the x-api-key heade
 
 ### Examples:
 
-Requesting CPU Information
+#### Requesting CPU Information
 
 ```
 curl -X Get 'http://localhost:8000/api/v1/cpu' -H 'x-api-key:secret'
 ```
-Response
+JSON Response
 
 ```json
 {
@@ -100,6 +100,8 @@ Response
 	]
 }
 ```
+
+#### Requesting Host Info
 
 In the web browser
 
