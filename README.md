@@ -18,7 +18,7 @@ Note: go version 1.13 or higher is required building it from the source.
 
 #### Clone
 ```
-git clone git@github.com:juanhuttemann/nitr-agent.git
+git clone https://github.com/juanhuttemann/nitr-agent.git
 ```
 #### Build
 ```
