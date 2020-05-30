@@ -7,7 +7,7 @@
 [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/juanhuttemann/nitr-agent/blob/master/LICENSE)
 
 # nitr agent
-Nitr-agent is a crossplatform remote monitoring tool written in Golang, providing system and hardware information through an JSON API
+Nitr-agent is a crossplatform remote monitoring tool written in Golang, providing system and hardware information through a JSON API
 
 ### Building from source
 Note: go version 1.13 or higher is required building it from the source.
