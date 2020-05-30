@@ -62,7 +62,6 @@ These endpoints allow you to get system and hardware information about your host
 |GET     | /chassis                      | [Chassis](#chassis)          |
 |GET     | /disks                        | [Disks](#disks)              |
 |GET     | /drives                       | [Drives](#drives)            |
-|GET     | /devices                      | [Devices](#devices)          |
 |GET     | /gpu                          | [GPU](#gpu)                  |
 |GET     | /network                      | [Network](#network)          |
 |GET     | /processes                    | [Processes](#processes)      |
@@ -156,8 +155,24 @@ http://localhost:8000/api/v1/host?key=yourapikeyhere
 | serial    | string         | Chassis serial           |
 
 #### Disks
+*returns a json array of objects*
+| Key        | Data Type       | Description                      |
+|------------|-----------------|----------------------------------|
+| mountPoint | string          | Drive Letter or Mount Point      |
+| free       | integer         | Available disk space in bytes    |
+| size       | integer         | Total disk space in bytes        |
+| used       | integer         | Used disk space in bytes         |
+| percent    | float           | Disk usage percent               |
+
 #### Drives
-#### Devices
+*returns a json array of objects*
+| Key        | Data Type       | Description                      |
+|------------|-----------------|----------------------------------|
+| name       | string          | Drive name                       |
+| type       | string          | Drive type                       |
+| model      | string          | Drive model                      |
+| serial     | string          | Drive serial                     |
+
 #### GPU
 *returns a json object*
 | Key       | Data Type      | Description              |
