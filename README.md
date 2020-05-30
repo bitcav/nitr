@@ -101,6 +101,9 @@ Response
 }
 ```
 
+In the web browser
+
+![preview](https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/images/browser-api.png)
 
 ## Powered by
 
