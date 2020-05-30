@@ -60,8 +60,32 @@ These endpoints allow you to get system and hardware information about your host
 Call the above endpoints with ?key=secret in the URL or pass the x-api-key header with value secret you will get success response.
 
 Example:
+
+Requesting CPU Information
+
 ```
-http://localhost:8000/api/v1/cpu?key=secret
+curl -X Get 'http://localhost:8000/api/v1/cpu' -H 'x-api-key:secret'
+```
+Response
+
+```json
+{
+	"brand":"Intel(R) Core(TM) i7-4810MQ CPU @ 2.80GHz",
+	"cores":4,
+	"threads":8,
+	"frecuency":3800,
+	"usage":8.354430379674321,
+	"usageEach":[
+				9.803921568623954,
+				7.692307692348055,
+				4.166666666635087,
+				4.166666666698246,
+				6.122448979565321,
+				6.12244897961267,
+				4.081632653074482,
+				5.88235294118696
+	]
+}
 ```
 
 
@@ -69,4 +93,4 @@ http://localhost:8000/api/v1/cpu?key=secret
 
 * [Fiber](https://gofiber.io/) - The web framework used
 * [bbolt](https://github.com/etcd-io/bbolt) - Database
-* [UIKit](https://getuikit.com/) - Styling
+* [UIKit](https://getuikit.com/) - Front-End framework
