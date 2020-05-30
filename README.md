@@ -146,6 +146,12 @@ http://localhost:8000/api/v1/host?key=secret
 | txPackets | integer        | Total packets sent       |
 
 #### Chassis
+| Key       | Data Type      | Description              |
+|-----------|----------------|--------------------------|
+| type      | string         | Type                     |
+| vendor    | string         | Chassis vendor           |
+| serial    | string         | Chassis serial           |
+
 #### Disks
 #### Drives
 #### Devices
