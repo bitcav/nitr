@@ -45,11 +45,11 @@ Access with default **username** and **password**: **admin admin**
 
 ![preview](https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/images/panel-web.png)
 
-# API endpoints
-
-These endpoints allow you to get system and hardware information about your host.
+# API
 
 ## Available Endpoints
+
+These endpoints allow you to get system and hardware information about your host.
 
 | Verb   | Endpoint                      | Action                       |
 |--------|-------------------------------|------------------------------|
@@ -59,7 +59,7 @@ These endpoints allow you to get system and hardware information about your host
 
 Call the above endpoints with ?key=secret in the URL or pass the x-api-key header with value secret you will get success response.
 
-Example:
+### Examples:
 
 Requesting CPU Information
 
