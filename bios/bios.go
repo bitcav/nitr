@@ -7,12 +7,14 @@ import (
 	"github.com/jaypipes/ghw"
 )
 
+//Bios properties
 type Bios struct {
 	Vendor  string `json:"vendor"`
 	Version string `json:"version"`
 	Date    string `json:"date"`
 }
 
+//Check for Bios availability
 func Check() Bios {
 	bios, err := ghw.BIOS()
 	if err != nil {
@@ -25,6 +27,7 @@ func Check() Bios {
 	}
 }
 
+//Data returns JSON response of the Bios
 func Data(c *fiber.Ctx) {
 	c.JSON(Check())
 }

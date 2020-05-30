@@ -28,7 +28,7 @@ type system struct {
 	BaseBoard baseboard.BaseBoard    `json:"baseboard"`
 	Product   product.Product        `json:"product"`
 	Chassis   chassis.Chassis        `json:"chassis"`
-	Processes process.Processes      `json:"processes"`
+	Processes []process.Process      `json:"processes"`
 }
 
 func check() system {

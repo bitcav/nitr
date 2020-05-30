@@ -8,6 +8,7 @@ import (
 	bolt "go.etcd.io/bbolt"
 )
 
+//User data
 type User struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
@@ -15,6 +16,7 @@ type User struct {
 	QrCode   string `json:"qrCode"`
 }
 
+//SetupDB creates nitr database with default values
 func SetupDB() (*bolt.DB, error) {
 	db, err := bolt.Open("nitr.db", 0600, nil)
 	if err != nil {
@@ -33,6 +35,7 @@ func SetupDB() (*bolt.DB, error) {
 	return db, nil
 }
 
+//SetUserData adds User data to nitr database with default values
 func SetUserData(db *bolt.DB, id string, user User) error {
 	userBytes, err := json.Marshal(user)
 	if err != nil {
@@ -49,6 +52,7 @@ func SetUserData(db *bolt.DB, id string, user User) error {
 	return err
 }
 
+//GetUserByID returns User by ID
 func GetUserByID(db *bolt.DB, id string) User {
 	var userData User
 	err := db.View(func(tx *bolt.Tx) error {
@@ -66,6 +70,7 @@ func GetUserByID(db *bolt.DB, id string) User {
 	return userData
 }
 
+//GetApiKey returns current User Api Key
 func GetApiKey() string {
 	db, err := bolt.Open("nitr.db", 0600, nil)
 
