@@ -158,6 +158,11 @@ http://localhost:8000/api/v1/host?key=yourapikeyhere
 #### GPU
 #### Network
 #### Processes
+| Key       | Data Type      | Description              |
+|-----------|----------------|--------------------------|
+| pid       | integer        | Process ID               |
+| name      | string         | Process Name             |
+
 #### Ram
 | Key       | Data Type      | Description              |
 |-----------|----------------|--------------------------|
