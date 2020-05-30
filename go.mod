@@ -1,6 +1,6 @@
 module github.com/juanhuttemann/nitr-agent
 
-go 1.14
+go 1.13
 
 require (
 	github.com/GeertJohan/go.rice v1.0.0
