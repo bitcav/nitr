@@ -1,4 +1,4 @@
-﻿<p align="center">
+﻿﻿<p align="center">
     <img alt="Nitr" height="125" src="https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/app/assets/images/logo.png" style="max-width:100%;">
     <br>
 </p>
@@ -24,7 +24,7 @@ cd nitr-agent
 go build
 ```
 
-### Using nitr-agent
+### Running
 
 **Linux**
 ```
@@ -55,19 +55,19 @@ These endpoints allow you to get system and hardware information about your host
 
 | Verb   | Endpoint                      | JSON Data                    |
 |--------|-------------------------------|------------------------------|
-|GET     | /cpu                          | CPU                          |
-|GET     | /bios                         | Bios                         |
-|GET     | /bandwidth                    | Bandwidth                    |
-|GET     | /chassis                      | Chassis                      |
-|GET     | /disks                        | Disks                        |
-|GET     | /drives                       | Drives                       |
-|GET     | /devices                      | Devices (Linux Only)         |
-|GET     | /gpu                          | GPU                          |
-|GET     | /network                      | Network                      |
-|GET     | /processes                    | Processes                    |
-|GET     | /ram                          | RAM                          |
-|GET     | /baseboard                    | Baseboard                    |
-|GET     | /product                      | Product                      |
+|GET     | /cpu                          | [CPU](#cpu)                  |
+|GET     | /bios                         | [Bios](#bios)                |
+|GET     | /bandwidth                    | [Bandwidth](#bandwidth)      |
+|GET     | /chassis                      | [Chassis](#chassis)          |
+|GET     | /disks                        | [Disks](#disks)              |
+|GET     | /drives                       | [Drives](#drives)            |
+|GET     | /devices                      | [Devices](#devices)          |
+|GET     | /gpu                          | [GPU](#gpu)                  |
+|GET     | /network                      | [Network](#network)          |
+|GET     | /processes                    | [Processes](#processes)      |
+|GET     | /ram                          | [RAM](#ram)                  |
+|GET     | /baseboard                    | [Baseboard](#baseboard)      |
+|GET     | /product                      | [Product](#product)          |
 
 
 ### How to Use
@@ -112,6 +112,21 @@ http://localhost:8000/api/v1/host?key=secret
 
 ![preview](https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/images/browser-api.png)
 
+### JSON Data References
+
+#### CPU  
+#### Bios
+#### Bandwidth
+#### Chassis
+#### Disks
+#### Drives
+#### Devices
+#### GPU
+#### Network
+#### Processes
+#### Ram
+#### Baseboard
+#### Product
 
 ## Settings
 
