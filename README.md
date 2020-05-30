@@ -1,3 +1,4 @@
+﻿
 ﻿﻿<p align="center">
     <img alt="Nitr" height="125" src="https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/app/assets/images/logo.png" style="max-width:100%;">
     <br>
@@ -77,11 +78,11 @@ Call the above endpoints with ?key=secret in the URL or pass the x-api-key heade
 #### Examples:
 
 - Requesting CPU Information.
-
+>In the terminal.
 ```
 curl -X Get 'http://localhost:8000/api/v1/cpu' -H 'x-api-key:secret'
 ```
-JSON Response:
+>JSON Response:
 
 ```json
 {
@@ -105,7 +106,8 @@ JSON Response:
 
 - Requesting Host Information.
 
-In the web browser
+>In the web browser.
+
 ```
 http://localhost:8000/api/v1/host?key=secret
 ```
@@ -114,7 +116,17 @@ http://localhost:8000/api/v1/host?key=secret
 
 ### JSON Data References
 
-#### CPU  
+#### CPU 
+
+| Key       | Data Type      | Description              |
+|-----------|----------------|--------------------------|
+| brand     | string         | CPU Brand                |
+| cores     | integer        | Amount of CPU cores      |
+| threads   | integer        | Amount of CPU threads    |
+| usage     | float          | CPU usage percentage     |
+| usageEach | Array of float | Usage percentage per CPU |
+
+
 #### Bios
 #### Bandwidth
 #### Chassis
