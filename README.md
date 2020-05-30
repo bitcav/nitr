@@ -1,4 +1,4 @@
-﻿
+﻿﻿
 ﻿﻿<p align="center">
     <img alt="Nitr" height="125" src="https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/app/assets/images/logo.png" style="max-width:100%;">
     <br>
@@ -117,7 +117,7 @@ http://localhost:8000/api/v1/host?key=yourapikeyhere
 ### JSON Data References
 
 #### CPU 
-
+*returns a json object*
 | Key       | Data Type      | Description              |
 |-----------|----------------|--------------------------|
 | brand     | string         | CPU Brand                |
@@ -128,6 +128,7 @@ http://localhost:8000/api/v1/host?key=yourapikeyhere
 
 
 #### Bios
+*returns a json object*
 
 | Key       | Data Type      | Description              |
 |-----------|----------------|--------------------------|
@@ -137,6 +138,7 @@ http://localhost:8000/api/v1/host?key=yourapikeyhere
 
 
 #### Bandwidth
+*returns a json array of objects*
 | Key       | Data Type      | Description              |
 |-----------|----------------|--------------------------|
 | name      | string         | Network Interface name   |
@@ -146,6 +148,7 @@ http://localhost:8000/api/v1/host?key=yourapikeyhere
 | txPackets | integer        | Total packets sent       |
 
 #### Chassis
+*returns a json object*
 | Key       | Data Type      | Description              |
 |-----------|----------------|--------------------------|
 | type      | string         | Type                     |
@@ -156,14 +159,31 @@ http://localhost:8000/api/v1/host?key=yourapikeyhere
 #### Drives
 #### Devices
 #### GPU
+*returns a json object*
+| Key       | Data Type      | Description              |
+|-----------|----------------|--------------------------|
+| brand     | string         | GPU Brand                |
+| model     | string         | GPU Model                |
+
 #### Network
+*returns a json array of objects*
+| Key       | Data Type       | Description                            |
+|-----------|-----------------|----------------------------------------|
+| name      | string          | Network Interface name                 |
+| addresses | Array of string | IPv4 and IPv6 list                     |
+| mac       | string          | MAC Address                            |
+| active    | boolean         | True if the Network Interface is Up    |
+
+
 #### Processes
+*returns a json array of objects*
 | Key       | Data Type      | Description              |
 |-----------|----------------|--------------------------|
 | pid       | integer        | Process ID               |
 | name      | string         | Process Name             |
 
 #### Ram
+*returns a json object*
 | Key       | Data Type      | Description              |
 |-----------|----------------|--------------------------|
 | total     | integer        | Total RAM in bytes       |
@@ -171,6 +191,7 @@ http://localhost:8000/api/v1/host?key=yourapikeyhere
 | usage     | integer        | Used RAM in bytes        |
 
 #### Baseboard
+*returns a json object*
 | Key       | Data Type      | Description              |
 |-----------|----------------|--------------------------|
 | vendor    | string         | Baseboard vendor         |
@@ -179,6 +200,7 @@ http://localhost:8000/api/v1/host?key=yourapikeyhere
 | version   | string         | Baseboard Version        |
 
 #### Product
+*returns a json object*
 | Key       | Data Type      | Description              |
 |-----------|----------------|--------------------------|
 | vendor    | string         | Product vendor           |
