@@ -73,14 +73,14 @@ These endpoints allow you to get system and hardware information about your host
 
 ### How to Use
 
-Call the above endpoints with ?key=secret in the URL or pass the x-api-key header with value secret you will get success response.
+Call the above endpoints with ?key=yourapikey in the URL or pass the x-api-key header with your api key as value and you will get success response.
 
 #### Examples:
 
 - Requesting CPU Information.
 >In the terminal.
 ```
-curl -X Get 'http://localhost:8000/api/v1/cpu' -H 'x-api-key:secret'
+curl -X Get 'http://localhost:8000/api/v1/cpu' -H 'x-api-key:yourapikeyheret'
 ```
 >JSON Response:
 
@@ -109,7 +109,7 @@ curl -X Get 'http://localhost:8000/api/v1/cpu' -H 'x-api-key:secret'
 >In the web browser.
 
 ```
-http://localhost:8000/api/v1/host?key=secret
+http://localhost:8000/api/v1/host?key=yourapikeyhere
 ```
 
 ![preview](https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/images/browser-api.png)
@@ -160,6 +160,13 @@ http://localhost:8000/api/v1/host?key=secret
 #### Processes
 #### Ram
 #### Baseboard
+| Key       | Data Type      | Description              |
+|-----------|----------------|--------------------------|
+| vendor    | string         | Baseboard vendor         |
+| assetTag  | string         | Asset Tag                |
+| serial    | string         | Baseboard serial         |
+| version   | string         | Baseboard Version        |
+
 #### Product
 | Key       | Data Type      | Description              |
 |-----------|----------------|--------------------------|
