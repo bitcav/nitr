@@ -53,19 +53,19 @@ These endpoints allow you to get system and hardware information about your host
 
 | Verb   | Endpoint                      | Data                         |
 |--------|-------------------------------|------------------------------|
-|GET     |'/cpu'                         | CPU                          |
-|GET     |'/bios'                        | Bios                         |
-|GET     |'/bandwidth'                   | Bandwidth                    |
-|GET     |'/chassis'                     | Chassis                      |
-|GET     |'/disks'                       | Disks                        |
-|GET     |'/drives'                      | Drives                       |
-|GET     |'/devices'                     | Devices (Linux Only)         |
-|GET     |'/gpu'                         | GPU                          |
-|GET     |'/network'                     | Network                      |
-|GET     |'/processes'                   | Processes                    |
-|GET     |'/ram'                         | RAM                          |
-|GET     |'/baseboard'                   | Baseboard                    |
-|GET     |'/product'                     | Product                      |
+|GET     | /cpu                          | CPU                          |
+|GET     | /bios                         | Bios                         |
+|GET     | /bandwidth                    | Bandwidth                    |
+|GET     | /chassis                      | Chassis                      |
+|GET     | /disks                        | Disks                        |
+|GET     | /drives                       | Drives                       |
+|GET     | /devices                      | Devices (Linux Only)         |
+|GET     | /gpu                          | GPU                          |
+|GET     | /network                      | Network                      |
+|GET     | /processes                    | Processes                    |
+|GET     | /ram                          | RAM                          |
+|GET     | /baseboard                    | Baseboard                    |
+|GET     | /product                      | Product                      |
 
 
 ## How to Use
