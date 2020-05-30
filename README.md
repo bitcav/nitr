@@ -1,4 +1,4 @@
-<p align="center">
+﻿<p align="center">
     <img alt="Nitr" height="125" src="https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/app/assets/images/logo.png" style="max-width:100%;">
     <br>
 </p>
@@ -7,7 +7,7 @@
 [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/juanhuttemann/nitr-agent/blob/master/LICENSE)
 
 # nitr agent
-Nitr is a webserver that collects System and Hardware information and makes it accessible through an JSON API
+Nitr-agent is a crossplatform monitoring tool written in Golang, providing system and hardware information through an JSON API
 
 ### Building from source
 Note: go version 1.13 or higher is required building it from the source.
@@ -45,13 +45,13 @@ Access with default **username** and **password**: **admin admin**
 
 ![preview](https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/images/panel-web.png)
 
-# API
+## API
 
-## Available Endpoints
+### Available Endpoints
 
 These endpoints allow you to get system and hardware information about your host.
 
-| Verb   | Endpoint                      | Data                         |
+| Verb   | Endpoint                      | JSON Data                    |
 |--------|-------------------------------|------------------------------|
 |GET     | /cpu                          | CPU                          |
 |GET     | /bios                         | Bios                         |
@@ -68,18 +68,18 @@ These endpoints allow you to get system and hardware information about your host
 |GET     | /product                      | Product                      |
 
 
-## How to Use
+### How to Use
 
 Call the above endpoints with ?key=secret in the URL or pass the x-api-key header with value secret you will get success response.
 
-### Examples:
+#### Examples:
 
-#### Requesting CPU Information
+- Requesting CPU Information.
 
 ```
 curl -X Get 'http://localhost:8000/api/v1/cpu' -H 'x-api-key:secret'
 ```
-JSON Response
+JSON Response:
 
 ```json
 {
@@ -101,11 +101,37 @@ JSON Response
 }
 ```
 
-#### Requesting Host Info
+- Requesting Host Information.
 
 In the web browser
+```
+http://localhost:8000/api/v1/host?key=secret
+```
 
 ![preview](https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/images/browser-api.png)
+
+
+## Settings
+
+
+###  Port
+
+By default, the web server starts on port 8000. We can provide a different value in the config.ini file:
+
+```
+port: 3000
+```       
+
+## Platform Support
+
+**Windows**
+
+Tested in Windows 10
+
+**Linux**
+
+Tested in Ubuntu Linux 20.04 LTS
+
 
 ## Powered by
 
