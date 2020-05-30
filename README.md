@@ -24,7 +24,7 @@ cd nitr-agent
 go build
 ```
 
-### Using Nitr Agent
+### Using nitr-agent
 
 **Linux**
 ```
