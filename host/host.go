@@ -8,6 +8,7 @@ import (
 	"github.com/shirou/gopsutil/host"
 )
 
+//HostInfo properties
 type HostInfo struct {
 	Name     string `json:"name"`
 	OS       string `json:"os"`
@@ -16,6 +17,7 @@ type HostInfo struct {
 	Uptime   uint64 `json:"uptime"`
 }
 
+//Check for HostInfo availability
 func Check() HostInfo {
 	host, err := host.Info()
 	if err != nil {
@@ -31,6 +33,7 @@ func Check() HostInfo {
 	}
 }
 
+//Data returns JSON response of the Host
 func Data(c *fiber.Ctx) {
 	c.JSON(Check())
 }

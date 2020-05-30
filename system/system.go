@@ -49,6 +49,7 @@ func check() system {
 	return sys
 }
 
+//Data returns JSON response of the entire System
 func Data(c *fiber.Ctx) {
 	c.JSON(check())
 }

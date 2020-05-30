@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+//OpenBrowser opens default web browser in specific domain
 func OpenBrowser(domain, port string) {
 	url := domain + ":" + port
 	var err error
@@ -42,10 +43,12 @@ func stringWithCharset(length int, charset string) string {
 	return string(b)
 }
 
+//RandString returns random string with specific length
 func RandString(length int) string {
 	return stringWithCharset(length, charset)
 }
 
+//StartMessage displays message on server start up
 func StartMessage(port string) {
 	fmt.Printf(`                 _  __       
          ____   (_)/ /_ _____

@@ -56,6 +56,7 @@ func Check() Setting {
 	return settings.Settings[0]
 }
 
+//Data returns JSON response of the Internet Bandwidth
 func Data(c *fiber.Ctx) {
 	c.JSON(Check())
 }
