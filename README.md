@@ -79,7 +79,7 @@ Call the above endpoints with ?key=yourapikey in the URL or pass the x-api-key h
 - Requesting CPU Information.
 >In the terminal.
 ```
-curl -X Get 'http://localhost:8000/api/v1/cpu' -H 'x-api-key:yourapikeyheret'
+curl -X Get 'http://localhost:8000/api/v1/cpu' -H 'x-api-key:yourapikeyhere'
 ```
 >JSON Response:
 
