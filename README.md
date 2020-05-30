@@ -159,6 +159,12 @@ http://localhost:8000/api/v1/host?key=yourapikeyhere
 #### Network
 #### Processes
 #### Ram
+| Key       | Data Type      | Description              |
+|-----------|----------------|--------------------------|
+| total     | integer        | Total RAM in bytes       |
+| free      | integer        | Free RAM in bytes        |
+| usage     | integer        | Used RAM in bytes        |
+
 #### Baseboard
 | Key       | Data Type      | Description              |
 |-----------|----------------|--------------------------|
