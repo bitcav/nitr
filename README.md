@@ -128,7 +128,23 @@ http://localhost:8000/api/v1/host?key=secret
 
 
 #### Bios
+
+| Key       | Data Type      | Description              |
+|-----------|----------------|--------------------------|
+| vendor    | string         | vendor                   |
+| version   | string         | Bios version             |
+| date      | string         | Bios last update         |
+
+
 #### Bandwidth
+| Key       | Data Type      | Description              |
+|-----------|----------------|--------------------------|
+| name      | string         | Network Interface name   |
+| rxBytes   | integer        | Amount of bytes received |
+| txBytes   | integer        | Amount of bytes sent     |
+| rxPackets | integer        | Total packets received   |
+| txPackets | integer        | Total packets sent       |
+
 #### Chassis
 #### Disks
 #### Drives
