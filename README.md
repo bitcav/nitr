@@ -132,7 +132,7 @@ http://localhost:8000/api/v1/host?key=yourapikeyhere
 
 | Key       | Data Type      | Description              |
 |-----------|----------------|--------------------------|
-| vendor    | string         | vendor                   |
+| vendor    | string         | Vendor                   |
 | version   | string         | Bios version             |
 | date      | string         | Bios last update         |
 
