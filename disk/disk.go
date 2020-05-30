@@ -5,7 +5,8 @@ import (
 	gdisk "github.com/shirou/gopsutil/disk"
 )
 
-type disk struct {
+//Disk properties
+type Disk struct {
 	Mountpoint string  `json:"mountPoint"`
 	Free       uint64  `json:"free"`
 	Size       uint64  `json:"size"`
@@ -13,16 +14,15 @@ type disk struct {
 	Percent    float64 `json:"percent"`
 }
 
-type Disks []disk
-
-func Check() []disk {
+//Check for Disks availability
+func Check() []Disk {
 	disks, _ := gdisk.Partitions(false)
-	var totalDisks []disk
+	var totalDisks []Disk
 
 	for _, d := range disks {
 		diskUsageOf, _ := gdisk.Usage(d.Mountpoint)
 		if d.Fstype != "squashfs" {
-			totalDisks = append(totalDisks, disk{
+			totalDisks = append(totalDisks, Disk{
 				Free:       diskUsageOf.Free,
 				Mountpoint: d.Mountpoint,
 				Percent:    diskUsageOf.UsedPercent,
@@ -35,6 +35,7 @@ func Check() []disk {
 	return totalDisks
 }
 
+//Data returns JSON response of the Disks
 func Data(c *fiber.Ctx) {
 	c.JSON(Check())
 }

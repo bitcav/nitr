@@ -21,10 +21,10 @@ type system struct {
 	CPU       cpu.CPU                `json:"cpu"`
 	Bios      bios.Bios              `json:"bios"`
 	RAM       ram.RAM                `json:"ram"`
-	Disks     disk.Disks             `json:"disks"`
+	Disks     []disk.Disk            `json:"disks"`
 	Drives    []drive.Drive          `json:"drives"`
 	Network   network.NetworkDevices `json:"network"`
-	GPU       gpu.GPUs               `json:"gpu"`
+	GPU       []gpu.GPU              `json:"gpu"`
 	BaseBoard baseboard.BaseBoard    `json:"baseboard"`
 	Product   product.Product        `json:"product"`
 	Chassis   chassis.Chassis        `json:"chassis"`
