@@ -250,7 +250,9 @@ Tested in Windows 10
 
 **Linux**
 
-Tested in Ubuntu Linux 20.04 LTS
+Tested in:
+- Ubuntu Linux 20.04 LTS
+- Debian Linux 10
 
 
 ## Powered by
