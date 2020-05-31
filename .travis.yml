@@ -9,15 +9,14 @@ install:
 script:
 - go get -t -v ./...
 - diff -u <(echo -n) <(gofmt -d .)
-- gox -os="linux windows" -arch="amd64" -output="nitr-agent.." -ldflags "-X main.Rev=`git
-  rev-parse --short HEAD`" -verbose ./...
+- gox -os="linux windows" -arch="amd64"
 deploy:
   edge: true
   provider: releases
   api_key: $GITHUB_TOKEN
   skip_cleanup: true
   file:
-  - nitr-agent.windows.amd64.exe
-  - nitr-agent.linux.amd64
+  - nitr-agent_windows_amd64.exe
+  - nitr-agent_linux_amd64
   draft: true
 
