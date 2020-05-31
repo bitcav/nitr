@@ -1,5 +1,27 @@
 language: go
-
 go:
 - 1.13.x
 - master
+
+before_install:
+  - go get github.com/mitchellh/gox
+
+install:
+  - # skip
+
+script:
+  - go get -t -v ./...
+  - diff -u <(echo -n) <(gofmt -d .)
+  - go vet $(go list ./... | grep -v /vendor/)
+  - go test -v -race ./...
+  - gox -os="linux windows" -arch="amd64" -output="nitr-agent.." -ldflags "-X main.Rev=`git rev-parse --short HEAD`" -verbose ./...
+
+deploy:
+  provider: releases
+  skip_cleanup: true
+  api_key:
+    secure: jYDqlgTsPyazRRGilo8SomzQ4/9VmFE6bf92x+GabldXfS/SMtGIu1sdLeSCZJumCLouGbhJt2foRiiQbOW+5Z6oE56+FPVx1/M8DY/RNCsiqQuaEI4ChIm03202Ymi3S9f9CZy6dMxKU2vwfk+e1rYkxxLoFP0oRqq0imvElJBkcyWV7upL5/WTtsD6fiH4RTBXOSfZdQE/qR5CVrYGPZwvjTJGbNDjzgkxkpNKevU32NiG8X8O/q1BgO9d8WUZBC1ctV+u5b60ipXNb/of7yT5lphRmkvQCgX/DOX2wRrHl2usysmQWRy5l5EsM7Lu9TKEpQ3uVwEFr5MK1k+TxaHxCNDxsUEsz+pqK+lAHEnszjtHJ51xwhgY1eJUAFEYwAsuHTnwGihNSD6PssVFyNbXXQTkp5OY1wewAZbT8SIsZZyMygsDnVWRQXXRuvdnbzIU98yUCS7l/jdmLW9n7BtHw4GXmItOjYfpY8pmSYtEiYeOzpgp5gV7zO4mUlIEC5gGaRl7u8cF5D/9NluUdQw0WerrM0ZrwABf78dy7DlSva5Ag+4MazqS7xt3dqL9VD4F5ZrMrWneulptBoNuQ3Hju6kpewCdTA9Gx2Qza5a5VzGrcqH7RbU0MheHW+UTYSpP3PWLc0/yaGoN6RADydpVcIIK2wI8sfQHONGZYtQ=
+  file:
+  - nitr-agent.windows.amd64.exe
+  - nitr-agent.darwin.amd64
+  - nitr-agent.linux.amd64
