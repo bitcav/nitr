@@ -4,7 +4,7 @@
     <br>
 </p>
 
-![Release](https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/app/assets/images/release.svg)
+![Release](https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/images/release.svg)
 [![Build Status](https://travis-ci.org/juanhuttemann/nitr-agent.svg?branch=master)](https://travis-ci.org/juanhuttemann/nitr-agent)
 [![Go Report Card](https://goreportcard.com/badge/github.com/juanhuttemann/nitr-agent)](https://goreportcard.com/report/github.com/juanhuttemann/nitr-agent)
 [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/juanhuttemann/nitr-agent/blob/master/LICENSE)
