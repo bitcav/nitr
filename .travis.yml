@@ -14,10 +14,8 @@ script:
 deploy:
   provider: releases
   skip_cleanup: true
-  api_key:
-    secure: h/3zCoWmcrAbNXPSyKroQ72WMmcxIm7JDUbbxHEYiNtFRL1rLbxLVsxquUNZYQKNaGE/OFvVcxoo9jrAM2T1pIASsX7GlC9ty08hoqA4qNDoPpUqId6wLmgwSZ8Y+sQmUXb/XVF40L4u9tWPKxXkfdme4+hrqURQ4gsayF3nnMjns91NATx6/KjzyB19z3dJh1HrLPwnrMUbAHZL8Fm9mLJJLfoXUSDuOW1jopTTHzjBKLINGYYX++58i83AbtQ+H7xLQteQI8YD/FfRFXUuAZUO+r7jmHGf4WGuwCXp+HgwGD7b7mDRZvEXDC4/O9vEMEyLxnY8LZhV6K+lBJz3vCyBOkcJ9RBsq0lchyMLsqwFudLAyZ0WF8xyK6SIHV9o6ERHCLxcXn32JoEVAZhZPTzz1L1ZvBXNcZ4xC2KX+Nlt9D9ccKPr2bZXvUh1wR4AyQLPFqbVhiESOP4CP/8rRgkTAydg529bxJsTYUQDcxEh2b3CMP5p2mZPLcA5c1+zdc5A+EgN16lxLWDm09GMym76Coyi5UNaJuHFuoYmHZHy/CCms5nYRShxuZuvZstIyaQ/1fTR7Wc56jngv4BFuKkFGSVUjHhCFKFF7eOWr3c8tY0EYJlKM2v1HBBSt51Wpb+wvD3aeEgfgxEZrrEuoCH0D78/z7rJev995kzj918=
+  github-toke: $GITHUB_TOKEN
   file:
   - nitr-agent.windows.amd64.exe
-  - nitr-agent.darwin.amd64
   - nitr-agent.linux.amd64
 
