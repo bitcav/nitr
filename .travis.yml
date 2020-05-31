@@ -13,6 +13,11 @@ deploy:
   edge: true
   provider: releases
   api_key: $GITHUB_TOKEN
+  on:
+  repo: juanhuttemann/nitr-agent
+  branches:    
+    only:      
+        - master 
   skip_cleanup: true
   file:
   - nitr-agent_windows_amd64.exe
