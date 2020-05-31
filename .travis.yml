@@ -15,7 +15,7 @@ deploy:
   provider: releases
   skip_cleanup: true
   edge: true
-  github-token: $GITHUB_TOKEN
+  secure: $GITHUB_TOKEN
   file:
   - nitr-agent.windows.amd64.exe
   - nitr-agent.linux.amd64
