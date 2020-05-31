@@ -19,4 +19,5 @@ deploy:
   file:
   - nitr-agent.windows.amd64.exe
   - nitr-agent.linux.amd64
+  draft: true
 
