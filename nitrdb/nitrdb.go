@@ -75,7 +75,7 @@ func GetApiKey() string {
 	db, err := bolt.Open("nitr.db", 0600, nil)
 
 	if err != nil {
-		fmt.Errorf("could not open db, %v", err)
+		fmt.Println("could not open db")
 	}
 	nitrUser := GetUserByID(db, "1")
 	db.Close()
