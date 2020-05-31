@@ -14,7 +14,7 @@ script:
 deploy:
   provider: releases
   skip_cleanup: true
-  github-toke: $GITHUB_TOKEN
+  github-token: $GITHUB_TOKEN
   file:
   - nitr-agent.windows.amd64.exe
   - nitr-agent.linux.amd64
