@@ -12,10 +12,10 @@ script:
 - gox -os="linux windows" -arch="amd64" -output="nitr-agent.." -ldflags "-X main.Rev=`git
   rev-parse --short HEAD`" -verbose ./...
 deploy:
-  provider: releases
-  skip_cleanup: true
   edge: true
-  secure: $GITHUB_TOKEN
+  provider: releases
+  api_key: $GITHUB_TOKEN
+  skip_cleanup: true
   file:
   - nitr-agent.windows.amd64.exe
   - nitr-agent.linux.amd64
