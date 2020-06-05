@@ -21,7 +21,7 @@ nitr-agent is a cross-platform remote monitoring tool written in Golang, providi
 
 ### Download
 
-https://github.com/juanhuttemann/nitr-agent/releases
+https://github.com/juanhuttemann/nitr-agent/releases/latest
 
 ### Building from source
 Note: go version 1.13 or higher is required building it from the source.
