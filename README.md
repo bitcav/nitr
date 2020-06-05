@@ -239,14 +239,50 @@ http://localhost:8000/api/v1/host?key=yourapikeyhere
 
 ## Settings
 
+The following settings are located in the `config.ini` file
+  
 
-###  Port
+### Server Port
 
-By default, the web server starts on port 8000. We can provide a different value in the config.ini file:
+By default, the web server starts on port 8000.
+
 
 ```
+
 port: 3000
-```       
+
+```
+
+### Open Browser on Startup
+
+If true, opens your default web browser on server startup.
+
+
+```
+
+open_browser_on_startup: true
+
+```
+
+### Enabling Logs
+
+If true, logs are saved in `nitr.log` file, otherwise logs are printed out to console.
+
+
+```
+
+save_logs: true
+
+```
+
+### Enable SSL
+
+If true, server starts using HTTPS protocol.  Certificate and Key must be provided
+```
+ssl_enabled: true
+ssl_certificate: /path/to/file.crt
+ssl_certificate_key: /path/to/file.key
+```   
 
 ## Platform Support
 

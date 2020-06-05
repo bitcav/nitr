@@ -156,9 +156,9 @@ func main() {
 	}))
 
 	//Checks if logs saving is activated
-	saveLogs := viper.GetBool("saveLogs")
+	saveLogs := viper.GetBool("save_logs")
 	if saveLogs {
-		logFile, err := os.OpenFile("log.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		logFile, err := os.OpenFile("nitr.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 		if err != nil {
 			log.Fatalf("error opening file: %v", err)
 		}
