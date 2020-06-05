@@ -1,3 +1,3 @@
 *.db
-log.txt
+*.log
 config.ini

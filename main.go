@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	b64 "encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -78,8 +79,11 @@ func init() {
 
 		defaultConfigOpts := []string{
 			"port: 8000",
-			"openBrowserOnStartUp: true",
-			"saveLogs: false",
+			"open_browser_on_startup: true",
+			"save_logs: false",
+			"ssl_enabled: false",
+			"# ssl_certificate: /path/to/file.crt ",
+			"# ssl_certificate_key: /path/to/file.key",
 		}
 
 		defaultConfig := strings.Join(defaultConfigOpts, "\n")
@@ -152,9 +156,9 @@ func main() {
 	}))
 
 	//Checks if logs saving is activated
-	saveLogs := viper.GetBool("saveLogs")
+	saveLogs := viper.GetBool("save_logs")
 	if saveLogs {
-		logFile, err := os.OpenFile("log.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		logFile, err := os.OpenFile("nitr.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 		if err != nil {
 			log.Fatalf("error opening file: %v", err)
 		}
@@ -381,20 +385,47 @@ func main() {
 		port = "3000"
 	}
 
-	openBrowser := viper.GetBool("openBrowserOnStartUp")
-	if openBrowser {
-		utils.OpenBrowser("http://localhost", port)
-	}
-
 	//Server startup
+	sslEnabled := viper.GetBool("ssl_enabled")
+	if sslEnabled {
+		cert := viper.GetString("ssl_certificate")
+		key := viper.GetString("ssl_certificate_key")
 
-	utils.StartMessage(port)
+		cer, err := tls.LoadX509KeyPair(cert, key)
+		if err != nil {
+			log.Println("Invalid ssl certificate")
+			logError(err)
+		}
 
-	err := app.Listen(port)
-	log.Println("Starting server")
+		config := &tls.Config{Certificates: []tls.Certificate{cer}}
+		utils.StartMessage(port)
 
-	if err != nil {
-		fmt.Println(err, "\nCheck the port settings at config.ini file")
+		openBrowser := viper.GetBool("open_browser_on_startup")
+		if openBrowser {
+			utils.OpenBrowser("https://localhost", port)
+		}
+
+		log.Println("Starting server")
+
+		err = app.Listen(port, config)
+		if err != nil {
+			fmt.Println(err, "\nCheck settings at config.ini file")
+		}
+		logError(err)
+
+	} else {
+		openBrowser := viper.GetBool("open_browser_on_startup")
+		if openBrowser {
+			utils.OpenBrowser("http://localhost", port)
+		}
+
+		log.Println("Starting server")
+
+		err := app.Listen(port)
+		if err != nil {
+			fmt.Println(err, "\nCheck settings at config.ini file")
+		}
+		logError(err)
 	}
-	logError(err)
+
 }
