@@ -49,14 +49,14 @@ func RandString(length int) string {
 }
 
 //StartMessage displays message on server start up
-func StartMessage(port string) {
+func StartMessage(protocol, port string) {
 	fmt.Printf(`                 _  __       
          ____   (_)/ /_ _____
    ____ / __ \ / // __// ___/
  _____ / / / // // /_ / /    
    __ /_/ /_//_/ \__//_/ v0.1.0b     
 
-Go to admin panel at http://localhost:%v
+Go to admin panel at %v://localhost:%v
 
-`, port)
+`, protocol, port)
 }

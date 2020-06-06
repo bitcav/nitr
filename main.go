@@ -201,7 +201,7 @@ func main() {
 	v1.Get("/devices", devices.Data)
 	v1.Get("/gpu", gpu.Data)
 	v1.Get("/host", host.Data)
-	v1.Get("/internet", internet.Data)
+	v1.Get("/isp", internet.Data)
 	v1.Get("/network", network.Data)
 	v1.Get("/processes", process.Data)
 	v1.Get("/ram", ram.Data)
@@ -398,7 +398,7 @@ func main() {
 		}
 
 		config := &tls.Config{Certificates: []tls.Certificate{cer}}
-		utils.StartMessage(port)
+		utils.StartMessage("https", port)
 
 		openBrowser := viper.GetBool("open_browser_on_startup")
 		if openBrowser {
@@ -414,6 +414,7 @@ func main() {
 		logError(err)
 
 	} else {
+		utils.StartMessage("http", port)
 		openBrowser := viper.GetBool("open_browser_on_startup")
 		if openBrowser {
 			utils.OpenBrowser("http://localhost", port)

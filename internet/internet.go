@@ -12,10 +12,10 @@ import (
 )
 
 type Setting struct {
+	Isp string `xml:"isp,attr" json:"isp"`
 	IP  string `xml:"ip,attr" json:"ip"`
 	Lat string `xml:"lat,attr" json:"lat"`
 	Lon string `xml:"lon,attr" json:"lon"`
-	Isp string `xml:"isp,attr" json:"isp"`
 }
 
 type Settings struct {

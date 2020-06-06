@@ -74,6 +74,7 @@ These endpoints allow you to get system and hardware information about your host
 |GET     | /disks                        | [Disks](#disks)              |
 |GET     | /drives                       | [Drives](#drives)            |
 |GET     | /gpu                          | [GPU](#gpu)                  |
+|GET     | /isp                          | [ISP](#isp)                  |
 |GET     | /network                      | [Network](#network)          |
 |GET     | /processes                    | [Processes](#processes)      |
 |GET     | /ram                          | [RAM](#ram)                  |
@@ -190,6 +191,15 @@ http://localhost:8000/api/v1/host?key=yourapikeyhere
 |-----------|----------------|--------------------------|
 | brand     | string         | GPU Brand                |
 | model     | string         | GPU Model                |
+
+#### ISP
+*returns a json object*
+| Key       | Data Type      | Description              |
+|-----------|----------------|--------------------------|
+| isp       | string         | Internet Provider        |
+| ip        | string         | Public IP Address        |
+| lat       | string         | Location Latitude        |
+| lon       | string         | Location Longitude       |
 
 #### Network
 *returns a json array of objects*
