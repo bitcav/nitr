@@ -196,7 +196,7 @@ http://localhost:8000/api/v1/host?key=yourapikeyhere
 *returns a json object*
 | Key       | Data Type      | Description              |
 |-----------|----------------|--------------------------|
-| isp       | string         | Internet Provider        |
+| isp       | string         | Internet Service Provider|
 | ip        | string         | Public IP Address        |
 | lat       | string         | Location Latitude        |
 | lon       | string         | Location Longitude       |
