@@ -65,7 +65,7 @@ Access with default **username** and **password**: **admin admin**
 
 ![preview](https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/images/panel-web.png)
 
-## API
+## API v1
 
 ### Root Endpoint
 
