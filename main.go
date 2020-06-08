@@ -1,3 +1,4 @@
+// go: generate goversioninfo -icon = ./images/app.ico
 package main
 
 import (

@@ -54,7 +54,7 @@ func StartMessage(protocol, port string) {
          ____   (_)/ /_ _____
    ____ / __ \ / // __// ___/
  _____ / / / // // /_ / /    
-   __ /_/ /_//_/ \__//_/ v0.3.0    
+   __ /_/ /_//_/ \__//_/ v0.3.1    
 
 Go to admin panel at %v://localhost:%v
 

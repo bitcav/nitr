@@ -8,6 +8,7 @@ install:
 script:
 - go get -t -v ./...
 - diff -u <(echo -n) <(gofmt -d .)
+- go generate
 - gox -os="linux windows" -arch="amd64"
 deploy:
   edge: true

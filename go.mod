@@ -13,6 +13,7 @@ require (
 	github.com/gofiber/template v1.1.0
 	github.com/hoisie/mustache v0.0.0-20160804235033-6375acf62c69
 	github.com/jaypipes/ghw v0.6.0
+	github.com/josephspurrier/goversioninfo v0.0.0-20200309025242-14b0ab84c6ca // indirect
 	github.com/mitchellh/go-ps v1.0.0
 	github.com/prometheus/procfs v0.0.11
 	github.com/shirou/gopsutil v2.20.4+incompatible
