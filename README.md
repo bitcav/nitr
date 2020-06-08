@@ -67,6 +67,12 @@ Access with default **username** and **password**: **admin admin**
 
 ## API
 
+### Root Endpoint
+
+```
+http://localhost:8000/api/v1
+```
+
 ### Available Endpoints
 
 These endpoints allow you to get system and hardware information about your host.
