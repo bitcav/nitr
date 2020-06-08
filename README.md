@@ -12,10 +12,11 @@
 # nitr-agent
 nitr-agent is a cross-platform remote monitoring tool written in Golang, providing system and hardware information through a JSON API.
 
-<p align="center">
+<p>
     <img alt="Nitr" src="https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/images/usage.gif" style="max-width:100%;">
-    <br>
 </p>
+
+> curl + jq demo
 
 ## Installation
 
@@ -50,6 +51,11 @@ nitr-agent.exe
 ```
 the server will start listening on port 8000 by default
 
+<p>
+    <img alt="app" src="https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/images/app-start.gif" style="max-width:100%;">
+    <br>
+</p>
+
 ### Accessing web panel
 Go to [http://localhost:8000](http://localhost:8000) in your web browser
 
@@ -59,7 +65,13 @@ Access with default **username** and **password**: **admin admin**
 
 ![preview](https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/images/panel-web.png)
 
-## API
+## API v1
+
+### Root Endpoint
+
+```
+http://localhost:8000/api/v1
+```
 
 ### Available Endpoints
 
@@ -84,7 +96,7 @@ These endpoints allow you to get system and hardware information about your host
 
 ### How to Use
 
-Call the above endpoints with ?key=yourapikey in the URL or pass the x-api-key header with your api key as value and you will get success response.
+Call the above endpoints with ***?key=yourapikey*** in the URL or pass the ***x-api-key*** header with your api key as value and you will get success response.
 
 #### Examples:
 
@@ -258,9 +270,7 @@ By default, the web server starts on port 8000.
 
 
 ```
-
 port: 3000
-
 ```
 
 ### Open Browser on Startup
@@ -269,9 +279,7 @@ If true, opens your default web browser on server startup.
 
 
 ```
-
 open_browser_on_startup: true
-
 ```
 
 ### Enabling Logs
@@ -280,9 +288,7 @@ If true, logs are saved in `nitr.log` file, otherwise logs are printed out to co
 
 
 ```
-
 save_logs: true
-
 ```
 
 ### Enable SSL
