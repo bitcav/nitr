@@ -1,4 +1,5 @@
-//go:generate goversioninfo -icon=images/app.ico
+// +build windows go:generate goversioninfo -icon=images/app.ico
+// +build linux
 package main
 
 import (
