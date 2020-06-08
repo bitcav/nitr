@@ -10,7 +10,7 @@ script:
 - go get -t -v ./...
 - diff -u <(echo -n) <(gofmt -d .)
 - go generate
-- gox -os="linux windows" -arch="amd64"
+- gox -os="linux windows" -arch="386 amd64"
 deploy:
   edge: true
   provider: releases
