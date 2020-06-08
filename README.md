@@ -96,7 +96,7 @@ These endpoints allow you to get system and hardware information about your host
 
 ### How to Use
 
-Call the above endpoints with ?key=yourapikey in the URL or pass the x-api-key header with your api key as value and you will get success response.
+Call the above endpoints with ***?key=yourapikey*** in the URL or pass the ***x-api-key*** header with your api key as value and you will get success response.
 
 #### Examples:
 
