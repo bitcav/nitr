@@ -270,9 +270,7 @@ By default, the web server starts on port 8000.
 
 
 ```
-
 port: 3000
-
 ```
 
 ### Open Browser on Startup
@@ -281,9 +279,7 @@ If true, opens your default web browser on server startup.
 
 
 ```
-
 open_browser_on_startup: true
-
 ```
 
 ### Enabling Logs
@@ -292,9 +288,7 @@ If true, logs are saved in `nitr.log` file, otherwise logs are printed out to co
 
 
 ```
-
 save_logs: true
-
 ```
 
 ### Enable SSL
