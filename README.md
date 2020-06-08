@@ -304,11 +304,13 @@ ssl_certificate_key: /path/to/file.key
 
 **Windows**
 
-Tested in Windows 10
+Tested:
+- Windows 10
+- Windows 7 SP1
 
 **Linux**
 
-Tested in:
+Tested:
 - Ubuntu Linux 20.04 LTS
 - Debian Linux 10
 
