@@ -50,6 +50,11 @@ nitr-agent.exe
 ```
 the server will start listening on port 8000 by default
 
+<p>
+    <img alt="app" src="https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/images/app-start.gif" style="max-width:100%;">
+    <br>
+</p>
+
 ### Accessing web panel
 Go to [http://localhost:8000](http://localhost:8000) in your web browser
 
