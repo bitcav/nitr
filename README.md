@@ -310,6 +310,7 @@ Tested:
 Tested:
 - Ubuntu Linux 20.04 LTS
 - Debian Linux 10
+- Manjaro Linux 20
 
 
 ## Powered by
