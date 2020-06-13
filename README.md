@@ -6,7 +6,7 @@
 
 ![Release](https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/images/release.svg) [![Build Status](https://travis-ci.org/juanhuttemann/nitr-agent.svg?branch=master)](https://travis-ci.org/juanhuttemann/nitr-agent) [![Go Report Card](https://goreportcard.com/badge/github.com/juanhuttemann/nitr-agent)](https://goreportcard.com/report/github.com/juanhuttemann/nitr-agent) [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/juanhuttemann/nitr-agent/blob/master/LICENSE)
 
-Nitr-agent is a cross-platform remote monitoring tool written in Golang, providing system and hardware information through a JSON API.
+Nitr is a cross-platform remote monitoring tool written in Golang, providing system and hardware information through a JSON API.
 
 <p>
     <img alt="Nitr" src="https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/images/usage.gif" style="max-width:100%;">
