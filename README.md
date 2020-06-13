@@ -20,6 +20,7 @@ Table of contents
 	    * [Download](#download)
 	    *  [Build](#build)
    * [Running](#running)
+   * [Docker](#docker)
    * [Web Panel](#web-panel)
    * [Usage](#usage)
    * [Api v1](#api-v1)
@@ -69,7 +70,7 @@ the server will start listening on port 8000 by default
     <br>
 </p>
 
-### Docker
+## Docker
 
 Build image using command: 
 ```
