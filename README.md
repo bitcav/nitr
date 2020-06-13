@@ -5,7 +5,6 @@
 </p>
 
 
-
 # nitr-agent ![Release](https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/images/release.svg) [![Build Status](https://travis-ci.org/juanhuttemann/nitr-agent.svg?branch=master)](https://travis-ci.org/juanhuttemann/nitr-agent) [![Go Report Card](https://goreportcard.com/badge/github.com/juanhuttemann/nitr-agent)](https://goreportcard.com/report/github.com/juanhuttemann/nitr-agent) [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/juanhuttemann/nitr-agent/blob/master/LICENSE)
 nitr-agent is a cross-platform remote monitoring tool written in Golang, providing system and hardware information through a JSON API.
 
@@ -52,6 +51,19 @@ the server will start listening on port 8000 by default
     <img alt="app" src="https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/images/app-start.gif" style="max-width:100%;">
     <br>
 </p>
+
+### Docker
+
+Build image using command: 
+```
+docker build -t nitr . 
+```
+
+Run container:
+
+```
+docker run -d -p 8000:8000 nitr:latest
+```
 
 ### Accessing web panel
 Go to [http://localhost:8000](http://localhost:8000) in your web browser
