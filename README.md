@@ -14,6 +14,23 @@ nitr-agent is a cross-platform remote monitoring tool written in Golang, providi
 
 > curl + jq demo
 
+Table of contents
+=================
+   * [Installation](#installation)
+	    * [Download](#download)
+	    *  [Build](#build)
+	    *  [Running](#running)
+   * [Web Panel](#web-panel)
+   * [Usage](#usage)
+   * [Api v1](#api-v1)
+	   * [Available Endpoints](#available-endpoints)
+	   * [JSON Data References](#json-data-references)
+ * [Settings](#settings)
+ * [Platform Support](#platform-support)
+
+
+   
+
 ## Installation
 
 ### Download
@@ -65,7 +82,7 @@ Run container:
 docker run -d -p 8000:8000 nitr:latest
 ```
 
-### Accessing web panel
+### Web Panel
 Go to [http://localhost:8000](http://localhost:8000) in your web browser
 
 ![preview](https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/images/login-web.png)
@@ -74,40 +91,11 @@ Access with default **username** and **password**: **admin admin**
 
 ![preview](https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/images/panel-web.png)
 
-## API v1
+## Usage
 
-### Root Endpoint
+Call [the API endpoints](#available-endpoints) with ***?key=yourapikey*** in the URL or pass the ***x-api-key*** header with your api key as value and you will get success response.
 
-```
-http://localhost:8000/api/v1
-```
-
-### Available Endpoints
-
-These endpoints allow you to get system and hardware information about your host.
-
-| Verb   | Endpoint                      | JSON Data                    |
-|--------|-------------------------------|------------------------------|
-|GET     | /cpu                          | [CPU](#cpu)                  |
-|GET     | /bios                         | [Bios](#bios)                |
-|GET     | /bandwidth                    | [Bandwidth](#bandwidth)      |
-|GET     | /chassis                      | [Chassis](#chassis)          |
-|GET     | /disks                        | [Disks](#disks)              |
-|GET     | /drives                       | [Drives](#drives)            |
-|GET     | /gpu                          | [GPU](#gpu)                  |
-|GET     | /isp                          | [ISP](#isp)                  |
-|GET     | /network                      | [Network](#network)          |
-|GET     | /processes                    | [Processes](#processes)      |
-|GET     | /ram                          | [RAM](#ram)                  |
-|GET     | /baseboard                    | [Baseboard](#baseboard)      |
-|GET     | /product                      | [Product](#product)          |
-
-
-### How to Use
-
-Call the above endpoints with ***?key=yourapikey*** in the URL or pass the ***x-api-key*** header with your api key as value and you will get success response.
-
-#### Examples:
+### Examples:
 
 - Requesting CPU Information.
 >In the terminal.
@@ -146,10 +134,43 @@ http://localhost:8000/api/v1/host?key=yourapikeyhere
 
 ![preview](https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/images/browser-api.png)
 
-### JSON Data References
 
-#### CPU 
-*returns a json object*
+## API v1
+
+### Root Endpoint
+
+```
+http://localhost:8000/api/v1
+```
+
+### Available Endpoints
+
+These endpoints allow you to get system and hardware information about your host.
+
+| Verb   | Endpoint                      | JSON Data                    |
+|--------|-------------------------------|------------------------------|
+|GET     | /cpu                          | [CPU](#cpu)                  |
+|GET     | /bios                         | [Bios](#bios)                |
+|GET     | /bandwidth                    | [Bandwidth](#bandwidth)      |
+|GET     | /chassis                      | [Chassis](#chassis)          |
+|GET     | /disks                        | [Disks](#disks)              |
+|GET     | /drives                       | [Drives](#drives)            |
+|GET     | /gpu                          | [GPU](#gpu)                  |
+|GET     | /isp                          | [ISP](#isp)                  |
+|GET     | /network                      | [Network](#network)          |
+|GET     | /processes                    | [Processes](#processes)      |
+|GET     | /ram                          | [RAM](#ram)                  |
+|GET     | /baseboard                    | [Baseboard](#baseboard)      |
+|GET     | /product                      | [Product](#product)          |
+
+
+
+
+## JSON Data References
+
+### CPU 
+> JSON Object
+
 | Key       | Data Type      | Description              |
 |-----------|----------------|--------------------------|
 | brand     | string         | CPU Brand                |
@@ -159,8 +180,8 @@ http://localhost:8000/api/v1/host?key=yourapikeyhere
 | usageEach | Array of float | Usage percentage per CPU |
 
 
-#### Bios
-*returns a json object*
+### Bios
+> JSON Object
 
 | Key       | Data Type      | Description              |
 |-----------|----------------|--------------------------|
@@ -169,8 +190,9 @@ http://localhost:8000/api/v1/host?key=yourapikeyhere
 | date      | string         | Bios last update         |
 
 
-#### Bandwidth
-*returns a json array of objects*
+### Bandwidth
+>JSON Array of Objects
+
 | Key       | Data Type      | Description              |
 |-----------|----------------|--------------------------|
 | name      | string         | Network Interface name   |
@@ -179,16 +201,18 @@ http://localhost:8000/api/v1/host?key=yourapikeyhere
 | rxPackets | integer        | Total packets received   |
 | txPackets | integer        | Total packets sent       |
 
-#### Chassis
-*returns a json object*
+### Chassis
+> JSON Object
+
 | Key       | Data Type      | Description              |
 |-----------|----------------|--------------------------|
 | type      | string         | Type                     |
 | vendor    | string         | Chassis vendor           |
 | serial    | string         | Chassis serial           |
 
-#### Disks
-*returns a json array of objects*
+### Disks
+>JSON Array of Objects
+
 | Key        | Data Type       | Description                      |
 |------------|-----------------|----------------------------------|
 | mountPoint | string          | Drive Letter or Mount Point      |
@@ -197,8 +221,9 @@ http://localhost:8000/api/v1/host?key=yourapikeyhere
 | used       | integer         | Used disk space in bytes         |
 | percent    | float           | Disk usage percent               |
 
-#### Drives
-*returns a json array of objects*
+### Drives
+> JSON Array of Objects
+
 | Key        | Data Type       | Description                      |
 |------------|-----------------|----------------------------------|
 | name       | string          | Drive name                       |
@@ -206,15 +231,17 @@ http://localhost:8000/api/v1/host?key=yourapikeyhere
 | model      | string          | Drive model                      |
 | serial     | string          | Drive serial                     |
 
-#### GPU
-*returns a json object*
+### GPU
+> JSON Array of Objects
+
 | Key       | Data Type      | Description              |
 |-----------|----------------|--------------------------|
 | brand     | string         | GPU Brand                |
 | model     | string         | GPU Model                |
 
-#### ISP
-*returns a json object*
+### ISP
+>JSON Object
+
 | Key       | Data Type      | Description              |
 |-----------|----------------|--------------------------|
 | isp       | string         | Internet Service Provider|
@@ -222,8 +249,9 @@ http://localhost:8000/api/v1/host?key=yourapikeyhere
 | lat       | string         | Location Latitude        |
 | lon       | string         | Location Longitude       |
 
-#### Network
-*returns a json array of objects*
+### Network
+>JSON Array of Objects
+
 | Key       | Data Type       | Description                            |
 |-----------|-----------------|----------------------------------------|
 | name      | string          | Network Interface name                 |
@@ -232,23 +260,26 @@ http://localhost:8000/api/v1/host?key=yourapikeyhere
 | active    | boolean         | True if the Network Interface is Up    |
 
 
-#### Processes
-*returns a json array of objects*
+### Processes
+> JSON Array of Objects
+
 | Key       | Data Type      | Description              |
 |-----------|----------------|--------------------------|
 | pid       | integer        | Process ID               |
 | name      | string         | Process Name             |
 
-#### Ram
-*returns a json object*
+### Ram
+> JSON Object
+
 | Key       | Data Type      | Description              |
 |-----------|----------------|--------------------------|
 | total     | integer        | Total RAM in bytes       |
 | free      | integer        | Free RAM in bytes        |
 | usage     | integer        | Used RAM in bytes        |
 
-#### Baseboard
-*returns a json object*
+### Baseboard
+> JSON Object
+
 | Key       | Data Type      | Description              |
 |-----------|----------------|--------------------------|
 | vendor    | string         | Baseboard vendor         |
@@ -256,8 +287,9 @@ http://localhost:8000/api/v1/host?key=yourapikeyhere
 | serial    | string         | Baseboard serial         |
 | version   | string         | Baseboard Version        |
 
-#### Product
-*returns a json object*
+### Product
+>JSON Object
+
 | Key       | Data Type      | Description              |
 |-----------|----------------|--------------------------|
 | vendor    | string         | Product vendor           |
