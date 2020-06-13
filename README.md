@@ -19,7 +19,7 @@ Table of contents
    * [Installation](#installation)
 	    * [Download](#download)
 	    *  [Build](#build)
-	    *  [Running](#running)
+   * [Running](#running)
    * [Web Panel](#web-panel)
    * [Usage](#usage)
    * [Api v1](#api-v1)
@@ -50,7 +50,7 @@ cd nitr-agent
 go build
 ```
 
-### Running
+## Running
 
 **Linux**
 ```
