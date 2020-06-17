@@ -29,8 +29,8 @@ import (
 	"github.com/gofiber/logger"
 	"github.com/gofiber/recover"
 	"github.com/gofiber/session"
+	"github.com/gofiber/websocket"
 
-	"github.com/gofiber/template"
 	"github.com/skip2/go-qrcode"
 
 	"github.com/juanhuttemann/nitr-agent/bios"
@@ -174,7 +174,7 @@ func main() {
 		app.Use(logger.New(cfg))
 	}
 
-	app.Settings.TemplateEngine = template.Mustache()
+	//app.Settings.TemplateEngine = template.Mustache()
 
 	sessions := session.New()
 
@@ -378,6 +378,18 @@ func main() {
 			c.SendStatus(304)
 		}
 	})
+
+	app.Get("/status", websocket.New(func(c *websocket.Conn) {
+		for {
+			_, msg, err := c.ReadMessage()
+			if err != nil {
+				log.Println(err)
+				break
+			}
+			log.Printf("%s", msg)
+		}
+
+	}))
 
 	//Checks if custom port was set, otherwise sets default port
 	port := viper.GetString("port")
