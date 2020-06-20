@@ -10,7 +10,9 @@
 
 </div>
 
-Nitr is a **cross-platform remote monitoring tool** written in Golang for **system information gathering** through a **JSON API**. The main intention of this project is to provide highly available data of **CPU, Ram, Disks, Network** and so on, to make use of them in applications such as **web administration panels** or **mobile apps**. 
+Nitr is a **cross-platform remote monitoring tool** written in Golang for **system information gathering**, making it available through a **JSON API**. 
+
+The main intention of this project is to provide highly available data of **CPU, Ram, Disks, Network** and so on, to make use of them in applications such as **web administration panels** or **mobile apps**. 
 
 <p>
     <img alt="Nitr" src="https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/images/usage.gif" style="max-width:100%;">
