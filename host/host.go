@@ -12,8 +12,8 @@ import (
 type HostInfo struct {
 	Name     string `json:"name"`
 	OS       string `json:"os"`
-	Arch     string `json:"arch"`
 	Platform string `json:"platform"`
+	Arch     string `json:"arch"`
 	Uptime   uint64 `json:"uptime"`
 }
 
