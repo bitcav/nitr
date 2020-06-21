@@ -1,0 +1,323 @@
+# The configurations that used for the recording, feel free to edit them
+config:
+
+  # Specify a command to be executed
+  # like `/bin/bash -l`, `ls`, or any other commands
+  # the default is bash for Linux
+  # or powershell.exe for Windows
+  command: null
+  
+  # Specify the current working directory path
+  # the default is the current working directory path
+  cwd: /home/l33t
+  
+  # Export additional ENV variables
+  env:
+    recording: true
+  
+  # Explicitly set the number of columns
+  # or use `auto` to take the current
+  # number of columns of your shell
+  cols: 99
+  
+  # Explicitly set the number of rows
+  # or use `auto` to take the current
+  # number of rows of your shell
+  rows: 22
+  
+  # Amount of times to repeat GIF
+  # If value is -1, play once
+  # If value is 0, loop indefinitely
+  # If value is a positive number, loop n times
+  repeat: 0
+  
+  # Quality
+  # 1 - 100
+  quality: 96
+  
+  # Delay between frames in ms
+  # If the value is `auto` use the actual recording delays
+  frameDelay: auto
+  
+  # Maximum delay between frames in ms
+  # Ignored if the `frameDelay` isn't set to `auto`
+  # Set to `auto` to prevent limiting the max idle time
+  maxIdleTime: 2000
+  
+  # The surrounding frame box
+  # The `type` can be null, window, floating, or solid`
+  # To hide the title use the value null
+  # Don't forget to add a backgroundColor style with a null as type
+  frameBox:
+    type: floating
+    title: Terminal
+    style:
+      border: 0px black solid
+      # boxShadow: none
+      # margin: 0px
+  
+  # Add a watermark image to the rendered gif
+  # You need to specify an absolute path for
+  # the image on your machine or a URL, and you can also
+  # add your own CSS styles
+  watermark:
+    imagePath: null
+    style:
+      position: absolute
+      right: 15px
+      bottom: 15px
+      width: 100px
+      opacity: 0.9
+  
+  # Cursor style can be one of
+  # `block`, `underline`, or `bar`
+  cursorStyle: block
+  
+  # Font family
+  # You can use any font that is installed on your machine
+  # in CSS-like syntax
+  fontFamily: "Monaco, Lucida Console, Ubuntu Mono, Monospace"
+  
+  # The size of the font
+  fontSize: 17
+  
+  # The height of lines
+  lineHeight: 1
+  
+  # The spacing between letters
+  letterSpacing: 0
+  
+  # Theme
+  theme:
+    background: "transparent"
+    foreground: "#afafaf"
+    cursor: "#c7c7c7"
+    black: "#232628"
+    red: "#fc4384"
+    green: "#b3e33b"
+    yellow: "#ffa727"
+    blue: "#75dff2"
+    magenta: "#ae89fe"
+    cyan: "#708387"
+    white: "#d5d5d0"
+    brightBlack: "#626566"
+    brightRed: "#ff7fac"
+    brightGreen: "#c8ed71"
+    brightYellow: "#ebdf86"
+    brightBlue: "#75dff2"
+    brightMagenta: "#ae89fe"
+    brightCyan: "#b1c6ca"
+    brightWhite: "#f9f9f4"
+  
+# Records, feel free to edit them
+records:
+  - delay: 294
+    content: "l33t@mypc:~$ "
+  - delay: 2138
+    content: >-
+      curl -s -X Get 'http://localhost:8000/api/v1/host' -H
+      'x-api-key:96uaiekqlv' | jq
+  - delay: 1609
+    content: "\r\n"
+  - delay: 35
+    content: "\e[1;39m{\r\n  \e[0m\e[34;1m\"name\"\e[0m\e[1;39m: \e[0m\e[0;32m\"mypc\"\e[0m\e[1;39m,\r\n  \e[0m\e[34;1m\"os\"\e[0m\e[1;39m: \e[0m\e[0;32m\"linux\"\e[0m\e[1;39m,\r\n  \e[0m\e[34;1m\"arch\"\e[0m\e[1;39m: \e[0m\e[0;32m\"amd64\"\e[0m\e[1;39m,\r\n  \e[0m\e[34;1m\"platform\"\e[0m\e[1;39m: \e[0m\e[0;32m\"ubuntu 20.04\"\e[0m\e[1;39m,\r\n  \e[0m\e[34;1m\"uptime\"\e[0m\e[1;39m: \e[0m\e[0;39m550\e[0m\e[1;39m\r\n\e[1;39m}\e[0m\r\n\e]0;l33t@mypc:~\e\\\e]7;file://mypc/home/l33t\e\\l33t@mypc:~$ "
+  - delay: 1562
+    content: c
+  - delay: 227
+    content: l
+  - delay: 274
+    content: e
+  - delay: 181
+    content: a
+  - delay: 101
+    content: r
+  - delay: 497
+    content: "\r\n\e[H\e[2J\e[3J\e]0;l33t@mypc:~\e\\\e]7;file://mypc/home/l33t\e\\l33t@mypc:~$ "
+  - delay: 758
+    content: clear
+  - delay: 327
+    content: "\b\b\b\burl -s -X Get 'http://localhost:8000/api/v1/host' -H 'x-api-key:96uaiekqlv' | jq"
+  - delay: 456
+    content: "\b"
+  - delay: 499
+    content: "\b"
+  - delay: 32
+    content: "\b"
+  - delay: 29
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 31
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 29
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 31
+    content: "\b"
+  - delay: 29
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 31
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 29
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 34
+    content: "\b"
+  - delay: 775
+    content: "\b\e[1P"
+  - delay: 206
+    content: "\b\e[1P"
+  - delay: 169
+    content: "\b\e[1P"
+  - delay: 156
+    content: "\b\e[1P"
+  - delay: 248
+    content: "\e[1@c"
+  - delay: 392
+    content: "\e[1@p"
+  - delay: 302
+    content: "\e[1@u"
+  - delay: 238
+    content: "\r\n"
+  - delay: 1034
+    content: "\e[1;39m{\r\n  \e[0m\e[34;1m\"brand\"\e[0m\e[1;39m: \e[0m\e[0;32m\"Intel(R) Core(TM) i7-4810MQ CPU @ 2.80GHz\"\e[0m\e[1;39m,\r\n  \e[0m\e[34;1m\"cores\"\e[0m\e[1;39m: \e[0m\e[0;39m4\e[0m\e[1;39m,\r\n  \e[0m\e[34;1m\"threads\"\e[0m\e[1;39m: \e[0m\e[0;39m8\e[0m\e[1;39m,\r\n  \e[0m\e[34;1m\"frecuency\"\e[0m\e[1;39m: \e[0m\e[0;39m3800\e[0m\e[1;39m,\r\n  \e[0m\e[34;1m\"usage\"\e[0m\e[1;39m: \e[0m\e[0;39m3.999999999999204\e[0m\e[1;39m,\r\n  \e[0m\e[34;1m\"usageEach\"\e[0m\e[1;39m: \e[0m\e[1;39m[\r\n    \e[0;39m0\e[0m\e[1;39m,\r\n    \e[0;39m0\e[0m\e[1;39m,\r\n    \e[0;39m0\e[0m\e[1;39m,\r\n    \e[0;39m0\e[0m\e[1;39m,\r\n    \e[0;39m0\e[0m\e[1;39m,\r\n    \e[0;39m32.65306122449607\e[0m\e[1;39m,\r\n    \e[0;39m0\e[0m\e[1;39m,\r\n    \e[0;39m0\e[0m\e[1;39m\r\n  \e[1;39m]\e[0m\e[1;39m\r\n\e[1;39m}\e[0m\r\n\e]0;l33t@mypc:~\e\\\e]7;file://mypc/home/l33t\e\\l33t@mypc:~$ "
+  - delay: 1930
+    content: c
+  - delay: 146
+    content: l
+  - delay: 154
+    content: e
+  - delay: 229
+    content: a
+  - delay: 88
+    content: r
+  - delay: 491
+    content: "\r\n\e[H\e[2J\e[3J\e]0;l33t@mypc:~\e\\\e]7;file://mypc/home/l33t\e\\l33t@mypc:~$ "
+  - delay: 830
+    content: clear
+  - delay: 361
+    content: "\b\b\b\burl -s -X Get 'http://localhost:8000/api/v1/cpu' -H 'x-api-key:96uaiekqlv' | jq"
+  - delay: 392
+    content: "\b"
+  - delay: 500
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 31
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 29
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 31
+    content: "\b"
+  - delay: 29
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 31
+    content: "\b"
+  - delay: 29
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 31
+    content: "\b"
+  - delay: 29
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 31
+    content: "\b"
+  - delay: 29
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 31
+    content: "\b"
+  - delay: 29
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 30
+    content: "\b"
+  - delay: 362
+    content: "\e[C"
+  - delay: 615
+    content: "\b\e[1P"
+  - delay: 168
+    content: "\b\e[1P"
+  - delay: 171
+    content: "\b\e[1P"
+  - delay: 206
+    content: "\e[1@r"
+  - delay: 89
+    content: "\e[1@a"
+  - delay: 122
+    content: "\e[1@m"
+  - delay: 999
+    content: "\r\n"
+  - delay: 300
+    content: "\e[1;39m{\r\n  \e[0m\e[34;1m\"total\"\e[0m\e[1;39m: \e[0m\e[0;39m8248664064\e[0m\e[1;39m,\r\n  \e[0m\e[34;1m\"free\"\e[0m\e[1;39m: \e[0m\e[0;39m5027340288\e[0m\e[1;39m,\r\n  \e[0m\e[34;1m\"usage\"\e[0m\e[1;39m: \e[0m\e[0;39m3221323776\e[0m\e[1;39m\r\n\e[1;39m}\e[0m\r\n\e]0;l33t@mypc:~\e\\\e]7;file://mypc/home/l33t\e\\l33t@mypc:~$ "
+  - delay: 758
+    content: clear
