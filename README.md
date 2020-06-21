@@ -71,7 +71,7 @@ nitr-agent.exe
 ```
 the server will start listening on port 8000 by default
 
-<p>
+<p style="width:100%;">
     <img alt="app" src="https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/images/app-start.gif">
     <br>
 </p>
