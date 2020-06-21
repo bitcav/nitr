@@ -4,12 +4,18 @@
     <br>
 </p>
 
+<div align="center">
+
 ![go](https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/images/goversion.svg) [![Build Status](https://travis-ci.org/juanhuttemann/nitr-agent.svg?branch=master)](https://travis-ci.org/juanhuttemann/nitr-agent) ![Release](https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/images/release.svg)  [![Go Report Card](https://goreportcard.com/badge/github.com/juanhuttemann/nitr-agent)](https://goreportcard.com/report/github.com/juanhuttemann/nitr-agent) [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/juanhuttemann/nitr-agent/blob/master/LICENSE)
 
-Nitr is a **cross-platform remote monitoring tool** written in Golang for **system information gathering** through a **JSON API**. The main intention of this project is to provide highly available data of **CPU, Ram, Disks, Network** and so on, to make use of them in applications such as **web administration panels** or **mobile apps**. 
+</div>
+
+Nitr is a **cross-platform remote monitoring tool** written in Golang for **system information gathering**, making it available through a **JSON API**. 
+
+The main purpose of this project is to provide highly available data of **CPU, RAM, Disks, Network, Processes** and so on, to make use of them in applications such as **web administration panels** or **mobile apps**. 
 
 <p>
-    <img alt="Nitr" src="https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/images/usage.gif" style="max-width:100%;">
+    <img alt="Nitr" src="https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/images/usage.gif" style="width:100%;">
 </p>
 
 > curl + jq demo
@@ -65,8 +71,8 @@ nitr-agent.exe
 ```
 the server will start listening on port 8000 by default
 
-<p>
-    <img alt="app" src="https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/images/app-start.gif" style="max-width:100%;">
+<p style="width:100%;">
+    <img alt="app" src="https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/images/app-start.gif">
     <br>
 </p>
 
