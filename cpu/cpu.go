@@ -11,13 +11,13 @@ import (
 
 //CPU properties
 type CPU struct {
-	Vendor    string    `json:"vendor"`
-	Model     string    `json:"model"`
-	Cores     uint32    `json:"cores"`
-	Threads   uint32    `json:"threads"`
-	Frecuency float64   `json:"frecuency"`
-	Usage     float64   `json:"usage"`
-	UsageEach []float64 `json:"usageEach"`
+	Vendor     string    `json:"vendor"`
+	Model      string    `json:"model"`
+	Cores      uint32    `json:"cores"`
+	Threads    uint32    `json:"threads"`
+	ClockSpeed float64   `json:"clockSpeed"`
+	Usage      float64   `json:"usage"`
+	UsageEach  []float64 `json:"usageEach"`
 }
 
 //CpuUsage returns the usage percentage of the CPU
@@ -57,7 +57,15 @@ func threads() uint32 {
 	return cpu.TotalThreads
 }
 
-func frecuency() float64 {
+func clockSpeed() float64 {
+	cpu, err := cpu.Info()
+	if err != nil {
+		fmt.Printf("Error getting CPU info: %v", err)
+	}
+	return cpu[0].Mhz
+}
+
+func clockSpeed() float64 {
 	cpu, err := cpu.Info()
 	if err != nil {
 		fmt.Printf("Error getting CPU info: %v", err)
@@ -86,13 +94,13 @@ func vendor() string {
 //Check for CPU availability
 func Check() CPU {
 	return CPU{
-		Vendor:    vendor(),
-		Model:     model(),
-		Cores:     cores(),
-		Threads:   threads(),
-		Frecuency: frecuency(),
-		Usage:     CpuUsage(),
-		UsageEach: cpuUsageEach(),
+		Vendor:     vendor(),
+		Model:      model(),
+		Cores:      cores(),
+		Threads:    threads(),
+		ClockSpeed: clockSpeed(),
+		Usage:      CpuUsage(),
+		UsageEach:  cpuUsageEach(),
 	}
 }
 

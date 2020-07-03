@@ -181,10 +181,11 @@ These endpoints allow you to get system and hardware information about your host
 
 | Key       | Data Type      | Description              |
 |-----------|----------------|--------------------------|
-| vendor     | string        | CPU Vendor               |
+| vendor    | string         | CPU Vendor               |
 | model     | string         | CPU Model                |
 | cores     | integer        | Amount of CPU cores      |
 | threads   | integer        | Amount of CPU threads    |
+| clockSpeed| float          | Clock Speed in Mhz       |
 | usage     | float          | CPU usage percentage     |
 | usageEach | Array of float | Usage percentage per CPU |
 
