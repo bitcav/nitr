@@ -11,7 +11,8 @@ import (
 
 //CPU properties
 type CPU struct {
-	Brand     string    `json:"brand"`
+	Vendor    string    `json:"Vendor"`
+	Model     string    `json:"Model"`
 	Cores     uint32    `json:"cores"`
 	Threads   uint32    `json:"threads"`
 	Frecuency float64   `json:"frecuency"`
@@ -73,10 +74,20 @@ func model() string {
 	return cpu.Processors[0].Model
 }
 
+func vendor() string {
+	cpu, err := ghw.CPU()
+	if err != nil {
+		fmt.Printf("Error getting CPU info: %v", err)
+	}
+
+	return cpu.Processors[0].Vendor
+}
+
 //Check for CPU availability
 func Check() CPU {
 	return CPU{
-		Brand:     model(),
+		Vendor:    vendor(),
+		Model:     model(),
 		Cores:     cores(),
 		Threads:   threads(),
 		Frecuency: frecuency(),

@@ -113,7 +113,8 @@ curl -X Get 'http://localhost:8000/api/v1/cpu' -H 'x-api-key:yourapikeyhere'
 
 ```json
 {
-	"brand":"Intel(R) Core(TM) i7-4810MQ CPU @ 2.80GHz",
+	"vendor":"GenuineIntel",
+	"model":"Intel(R) Core(TM) i7-4810MQ CPU @ 2.80GHz",
 	"cores":4,
 	"threads":8,
 	"frecuency":3800,
@@ -180,7 +181,8 @@ These endpoints allow you to get system and hardware information about your host
 
 | Key       | Data Type      | Description              |
 |-----------|----------------|--------------------------|
-| brand     | string         | CPU Brand                |
+| vendor     | string        | CPU Vendor               |
+| model     | string         | CPU Model                |
 | cores     | integer        | Amount of CPU cores      |
 | threads   | integer        | Amount of CPU threads    |
 | usage     | float          | CPU usage percentage     |
