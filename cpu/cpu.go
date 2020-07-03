@@ -11,8 +11,8 @@ import (
 
 //CPU properties
 type CPU struct {
-	Vendor    string    `json:"Vendor"`
-	Model     string    `json:"Model"`
+	Vendor    string    `json:"vendor"`
+	Model     string    `json:"model"`
 	Cores     uint32    `json:"cores"`
 	Threads   uint32    `json:"threads"`
 	Frecuency float64   `json:"frecuency"`
