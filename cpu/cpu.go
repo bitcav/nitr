@@ -65,14 +65,6 @@ func clockSpeed() float64 {
 	return cpu[0].Mhz
 }
 
-func clockSpeed() float64 {
-	cpu, err := cpu.Info()
-	if err != nil {
-		fmt.Printf("Error getting CPU info: %v", err)
-	}
-	return cpu[0].Mhz
-}
-
 func model() string {
 	cpu, err := ghw.CPU()
 	if err != nil {
