@@ -22,7 +22,7 @@ deploy:
     repo: juanhuttemann/nitr-agent
     branches:    
       only:      
-          - master 
+      - master 
   skip_cleanup: true
   file:
   - nitr-agent_windows_amd64.exe
