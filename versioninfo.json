@@ -3,27 +3,27 @@
         "FileVersion": {
             "Major": 0,
             "Minor": 3,
-            "Patch": 1,
+            "Patch": 4,
             "Build": 0
         },
         "ProductVersion": {
             "Major": 0,
             "Minor": 3,
-            "Patch": 1,
+            "Patch": 4,
             "Build": 0
         }
     },
     "StringFileInfo": {
-        "CompanyName": "juanhuttemann",
-        "FileDescription": "nitr-agent is a cross-platform remote monitoring tool written in Golang, providing system and hardware information through a JSON API.",
-        "FileVersion": "v0.3.1.0",
+        "CompanyName": "bitcav",
+        "FileDescription": "Nitr is a cross-platform remote monitoring tool written in Golang for system information gathering, making it available through a JSON API.",
+        "FileVersion": "v0.3.4.0",
         "InternalName": "nitr-agent.exe",
-        "LegalCopyright": "Copyright (c) 2020 Juan Huttemann",
+        "LegalCopyright": "Copyright (c) 2020 Bit Cavalier",
         "LegalTrademarks": "",
         "OriginalFilename": "nitr-agent.exe",
         "PrivateBuild": "",
         "ProductName": "nitr-agent",
-        "ProductVersion": "v0.3.1.0",
+        "ProductVersion": "v0.3.4.0",
         "SpecialBuild": ""
     },
     "VarFileInfo": {

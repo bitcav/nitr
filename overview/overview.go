@@ -1,10 +1,10 @@
 package overview
 
 import (
+	"github.com/bitcav/nitr-agent/cpu"
+	"github.com/bitcav/nitr-agent/host"
+	"github.com/bitcav/nitr-agent/ram"
 	"github.com/gofiber/fiber"
-	"github.com/juanhuttemann/nitr-agent/cpu"
-	"github.com/juanhuttemann/nitr-agent/host"
-	"github.com/juanhuttemann/nitr-agent/ram"
 )
 
 type Overview struct {
