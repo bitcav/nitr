@@ -1,12 +1,12 @@
 ﻿﻿
 <p align="center">
-    <img alt="Nitr" height="125" src="https://raw.githubusercontent.com/juanhuttemann/nitr-agent/master/app/assets/images/logo.png" style="max-width:100%;">
+    <img alt="Nitr" height="125" src="https://raw.githubusercontent.com/bitcav/nitr-agent/master/app/assets/images/logo.png" style="max-width:100%;">
     <br>
 </p>
 
 <div align="center">
 
-![go](https://raw.githubusercontent.com/bitcav/nitr-agent/master/images/goversion.svg) [![Build Status](https://travis-ci.org/juanhuttemann/nitr-agent.svg?branch=master)](https://travis-ci.org/bitcav/nitr-agent) ![Release](https://raw.githubusercontent.com/bitcav/nitr-agent/master/images/release.svg)  [![Go Report Card](https://goreportcard.com/badge/github.com/juanhuttemann/nitr-agent)](https://goreportcard.com/report/github.com/bitcav/nitr-agent) [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/bitcav/nitr-agent/blob/master/LICENSE)
+![go](https://raw.githubusercontent.com/bitcav/nitr-agent/master/images/goversion.svg) [![Build Status](https://travis-ci.org/bitcav/nitr-agent.svg?branch=master)](https://travis-ci.org/bitcav/nitr-agent) ![Release](https://raw.githubusercontent.com/bitcav/nitr-agent/master/images/release.svg)  [![Go Report Card](https://goreportcard.com/badge/github.com/bitcav/nitr-agent)](https://goreportcard.com/report/github.com/bitcav/nitr-agent) [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/bitcav/nitr-agent/blob/master/LICENSE)
 
 </div>
 
