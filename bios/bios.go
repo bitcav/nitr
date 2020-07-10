@@ -27,7 +27,7 @@ func Check() Bios {
 	}
 }
 
-//Data returns JSON response of the Bios
-func Data(c *fiber.Ctx) {
+//Handler returns JSON response of the Bios
+func Handler(c *fiber.Ctx) {
 	c.JSON(Check())
 }

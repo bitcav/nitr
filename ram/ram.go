@@ -29,7 +29,7 @@ func Check() RAM {
 	return ram
 }
 
-//Data returns JSON response of the RAM
-func Data(c *fiber.Ctx) {
+//Handler returns JSON response of the RAM
+func Handler(c *fiber.Ctx) {
 	c.JSON(Check())
 }

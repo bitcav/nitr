@@ -26,7 +26,7 @@ func Check() []Process {
 	return processList
 }
 
-//Data returns JSON response of the Processes
-func Data(c *fiber.Ctx) {
+//Handler returns JSON response of the Processes
+func Handler(c *fiber.Ctx) {
 	c.JSON(Check())
 }

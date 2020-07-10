@@ -32,7 +32,7 @@ func Check() []GPU {
 	return gpus
 }
 
-//Data returns JSON response of the GPUs
-func Data(c *fiber.Ctx) {
+//Handler returns JSON response of the GPUs
+func Handler(c *fiber.Ctx) {
 	c.JSON(Check())
 }

@@ -27,6 +27,7 @@ func Check() BaseBoard {
 	}
 }
 
-func Data(c *fiber.Ctx) {
+//Handler returns JSON response of the Baseboard
+func Handler(c *fiber.Ctx) {
 	c.JSON(Check())
 }

@@ -26,6 +26,7 @@ func Check() Chassis {
 	}
 }
 
-func Data(c *fiber.Ctx) {
+//Handler returns JSON response of the Chassis
+func Handler(c *fiber.Ctx) {
 	c.JSON(Check())
 }

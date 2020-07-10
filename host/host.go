@@ -33,7 +33,7 @@ func Check() HostInfo {
 	}
 }
 
-//Data returns JSON response of the Host
-func Data(c *fiber.Ctx) {
+//Handler returns JSON response of the Host
+func Handler(c *fiber.Ctx) {
 	c.JSON(Check())
 }

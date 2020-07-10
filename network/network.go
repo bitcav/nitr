@@ -75,6 +75,7 @@ func Check() []networkDevice {
 	return networkDevices
 }
 
-func Data(c *fiber.Ctx) {
+//Handler returns JSON response of the Network
+func Handler(c *fiber.Ctx) {
 	c.JSON(Check())
 }

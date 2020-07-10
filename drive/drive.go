@@ -34,7 +34,7 @@ func Check() []Drive {
 	return drvs
 }
 
-//Data returns JSON response of Drives
-func Data(c *fiber.Ctx) {
+//Handler returns JSON response of Drives
+func Handler(c *fiber.Ctx) {
 	c.JSON(Check())
 }

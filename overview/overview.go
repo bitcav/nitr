@@ -21,6 +21,7 @@ func Check() Overview {
 	}
 }
 
-func Data(c *fiber.Ctx) {
+//Handler returns JSON response of the system overview
+func Handler(c *fiber.Ctx) {
 	c.JSON(Check())
 }

@@ -174,8 +174,6 @@ func main() {
 		app.Use(logger.New(cfg))
 	}
 
-	//app.Settings.TemplateEngine = template.Mustache()
-
 	sessions := session.New()
 
 	app.Use(recover.New(recover.Config{
@@ -191,23 +189,23 @@ func main() {
 	v1.Use(apikey.New(apikey.Config{Key: nitrdb.GetApiKey()}))
 
 	//nitr API Endpoints
-	v1.Get("/", overview.Data)
-	v1.Get("/cpu", cpu.Data)
-	v1.Get("/bios", bios.Data)
-	v1.Get("/bandwidth", bandwidth.Data)
-	v1.Get("/chassis", chassis.Data)
-	v1.Get("/disks", disk.Data)
-	v1.Get("/drives", drive.Data)
-	v1.Get("/devices", devices.Data)
-	v1.Get("/gpu", gpu.Data)
-	v1.Get("/host", host.Data)
-	v1.Get("/isp", internet.Data)
-	v1.Get("/network", network.Data)
-	v1.Get("/processes", process.Data)
-	v1.Get("/ram", ram.Data)
-	v1.Get("/baseboard", baseboard.Data)
-	v1.Get("/product", product.Data)
-	v1.Get("/system", system.Data)
+	v1.Get("/", overview.Handler)
+	v1.Get("/cpu", cpu.Handler)
+	v1.Get("/bios", bios.Handler)
+	v1.Get("/bandwidth", bandwidth.Handler)
+	v1.Get("/chassis", chassis.Handler)
+	v1.Get("/disks", disk.Handler)
+	v1.Get("/drives", drive.Handler)
+	v1.Get("/devices", devices.Handler)
+	v1.Get("/gpu", gpu.Handler)
+	v1.Get("/host", host.Handler)
+	v1.Get("/isp", internet.Handler)
+	v1.Get("/network", network.Handler)
+	v1.Get("/processes", process.Handler)
+	v1.Get("/ram", ram.Handler)
+	v1.Get("/baseboard", baseboard.Handler)
+	v1.Get("/product", product.Handler)
+	v1.Get("/system", system.Handler)
 
 	//Login View
 	app.Get("/", func(c *fiber.Ctx) {

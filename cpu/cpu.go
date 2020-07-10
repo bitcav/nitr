@@ -96,7 +96,7 @@ func Check() CPU {
 	}
 }
 
-//Data returns JSON response of the CPU
-func Data(c *fiber.Ctx) {
+//Handler returns JSON response of the CPU
+func Handler(c *fiber.Ctx) {
 	c.JSON(Check())
 }

@@ -40,6 +40,7 @@ func Check() []Device {
 	return devicesArr
 }
 
-func Data(c *fiber.Ctx) {
+//Handler returns JSON response of Devices
+func Handler(c *fiber.Ctx) {
 	c.JSON(Check())
 }

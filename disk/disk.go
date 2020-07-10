@@ -35,7 +35,7 @@ func Check() []Disk {
 	return totalDisks
 }
 
-//Data returns JSON response of the Disks
-func Data(c *fiber.Ctx) {
+//Handler returns JSON response of the Disks
+func Handler(c *fiber.Ctx) {
 	c.JSON(Check())
 }

@@ -4,8 +4,8 @@ import (
 	"github.com/gofiber/fiber"
 )
 
-//Data returns JSON response of the Bandwidth
-func Data(c *fiber.Ctx) {
+//Handler returns JSON response of the Bandwidth
+func Handler(c *fiber.Ctx) {
 	c.JSON(Check())
 
 }

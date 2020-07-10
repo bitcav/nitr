@@ -33,6 +33,7 @@ func Check() Product {
 	}
 }
 
-func Data(c *fiber.Ctx) {
+//Handler returns JSON response of the Product
+func Handler(c *fiber.Ctx) {
 	c.JSON(Check())
 }
