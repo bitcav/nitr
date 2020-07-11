@@ -1,12 +1,12 @@
 ﻿﻿
 <p align="center">
-    <img alt="Nitr" height="125" src="https://raw.githubusercontent.com/bitcav/nitr-agent/master/app/assets/images/logo.png" style="max-width:100%;">
+    <img alt="Nitr" height="125" src="https://raw.githubusercontent.com/bitcav/nitr/master/app/assets/images/logo.png" style="max-width:100%;">
     <br>
 </p>
 
 <div align="center">
 
-![go](https://raw.githubusercontent.com/bitcav/nitr-agent/master/images/goversion.svg) [![Build Status](https://travis-ci.org/bitcav/nitr-agent.svg?branch=master)](https://travis-ci.org/bitcav/nitr-agent) ![Release](https://raw.githubusercontent.com/bitcav/nitr-agent/master/images/release.svg)  [![Go Report Card](https://goreportcard.com/badge/github.com/bitcav/nitr-agent)](https://goreportcard.com/report/github.com/bitcav/nitr-agent) [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/bitcav/nitr-agent/blob/master/LICENSE)
+![go](https://raw.githubusercontent.com/bitcav/nitr/master/images/goversion.svg) [![Build Status](https://travis-ci.org/bitcav/nitr.svg?branch=master)](https://travis-ci.org/bitcav/nitr) ![Release](https://raw.githubusercontent.com/bitcav/nitr/master/images/release.svg)  [![Go Report Card](https://goreportcard.com/badge/github.com/bitcav/nitr)](https://goreportcard.com/report/github.com/bitcav/nitr) [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/bitcav/nitr/blob/master/LICENSE)
 
 </div>
 
@@ -15,7 +15,7 @@ Nitr is a **cross-platform remote monitoring tool** written in Golang for **syst
 The main purpose of this project is to provide highly available data of **CPU, RAM, Disks, Network, Processes** and so on, to make use of them in applications such as **web administration panels** or **mobile apps**. 
 
 <p>
-    <img alt="Nitr" src="https://raw.githubusercontent.com/bitcav/nitr-agent/master/images/usage.gif" style="width:100%;">
+    <img alt="Nitr" src="https://raw.githubusercontent.com/bitcav/nitr/master/images/usage.gif" style="width:100%;">
 </p>
 
 > curl + jq demo
@@ -42,18 +42,18 @@ Table of contents
 
 ### Download
 
-https://github.com/bitcav/nitr-agent/releases/latest
+https://github.com/bitcav/nitr/releases/latest
 
 ### Building from source
 Note: go version 1.13 or higher is required building it from the source.
 
 #### Clone
 ```
-git clone https://github.com/bitcav/nitr-agent.git
+git clone https://github.com/bitcav/nitr.git
 ```
 #### Build
 ```
-cd nitr-agent
+cd nitr
 go build
 ```
 
@@ -61,18 +61,18 @@ go build
 
 **Linux**
 ```
-./nitr-agent
+./nitr
 ```
 
 **Windows**
 You can double click the .exe file or type in cmd
 ```
-nitr-agent.exe
+nitr.exe
 ```
 the server will start listening on port 8000 by default
 
 <p style="width:100%;">
-    <img alt="app" src="https://raw.githubusercontent.com/bitcav/nitr-agent/master/images/app-start.gif">
+    <img alt="app" src="https://raw.githubusercontent.com/bitcav/nitr/master/images/app-start.gif">
     <br>
 </p>
 
@@ -92,11 +92,11 @@ docker run -d -p 8000:8000 nitr:latest
 ### Web Panel
 Go to [http://localhost:8000](http://localhost:8000) in your web browser
 
-![preview](https://raw.githubusercontent.com/bitcav/nitr-agent/master/images/login-web.png)
+![preview](https://raw.githubusercontent.com/bitcav/nitr/master/images/login-web.png)
 
 Access with default **username** and **password**: **admin admin**
 
-![preview](https://raw.githubusercontent.com/bitcav/nitr-agent/master/images/panel-web.png)
+![preview](https://raw.githubusercontent.com/bitcav/nitr/master/images/panel-web.png)
 
 ## Usage
 
@@ -140,7 +140,7 @@ curl -X Get 'http://localhost:8000/api/v1/cpu' -H 'x-api-key:yourapikeyhere'
 http://localhost:8000/api/v1/host?key=yourapikeyhere
 ```
 
-![preview](https://raw.githubusercontent.com/bitcav/nitr-agent/master/images/browser-api.png)
+![preview](https://raw.githubusercontent.com/bitcav/nitr/master/images/browser-api.png)
 
 
 ## API v1

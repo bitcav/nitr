@@ -9,7 +9,7 @@ config:
   
   # Specify the current working directory path
   # the default is the current working directory path
-  cwd: /home/l33t/nitr-agent
+  cwd: /home/l33t/nitr
   
   # Export additional ENV variables
   env:
@@ -114,7 +114,7 @@ records:
   - delay: 300
     content: "$ "
   - delay: 1758
-    content: ./nitr-agent
+    content: ./nitr
   - delay: 844
     content: "\r\n"
   - delay: 300

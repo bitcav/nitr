@@ -1,18 +1,18 @@
 package system
 
 import (
-	"github.com/bitcav/nitr-agent/baseboard"
-	"github.com/bitcav/nitr-agent/bios"
-	"github.com/bitcav/nitr-agent/chassis"
-	"github.com/bitcav/nitr-agent/cpu"
-	"github.com/bitcav/nitr-agent/disk"
-	"github.com/bitcav/nitr-agent/drive"
-	"github.com/bitcav/nitr-agent/gpu"
-	"github.com/bitcav/nitr-agent/host"
-	"github.com/bitcav/nitr-agent/network"
-	"github.com/bitcav/nitr-agent/process"
-	"github.com/bitcav/nitr-agent/product"
-	"github.com/bitcav/nitr-agent/ram"
+	"github.com/bitcav/nitr/baseboard"
+	"github.com/bitcav/nitr/bios"
+	"github.com/bitcav/nitr/chassis"
+	"github.com/bitcav/nitr/cpu"
+	"github.com/bitcav/nitr/disk"
+	"github.com/bitcav/nitr/drive"
+	"github.com/bitcav/nitr/gpu"
+	"github.com/bitcav/nitr/host"
+	"github.com/bitcav/nitr/network"
+	"github.com/bitcav/nitr/process"
+	"github.com/bitcav/nitr/product"
+	"github.com/bitcav/nitr/ram"
 )
 
 type system struct {

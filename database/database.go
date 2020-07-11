@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/bitcav/nitr-agent/models"
+	"github.com/bitcav/nitr/models"
 	bolt "go.etcd.io/bbolt"
 )
 

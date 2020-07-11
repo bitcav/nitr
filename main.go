@@ -11,10 +11,10 @@ import (
 	"time"
 
 	rice "github.com/GeertJohan/go.rice"
-	ndb "github.com/bitcav/nitr-agent/database"
-	"github.com/bitcav/nitr-agent/handlers"
-	"github.com/bitcav/nitr-agent/models"
-	"github.com/bitcav/nitr-agent/utils"
+	ndb "github.com/bitcav/nitr/database"
+	"github.com/bitcav/nitr/handlers"
+	"github.com/bitcav/nitr/models"
+	"github.com/bitcav/nitr/utils"
 	"github.com/fiberweb/apikey"
 	"github.com/hoisie/mustache"
 
@@ -27,7 +27,7 @@ import (
 
 	"github.com/skip2/go-qrcode"
 
-	"github.com/bitcav/nitr-agent/host"
+	"github.com/bitcav/nitr/host"
 	"github.com/spf13/viper"
 	bolt "go.etcd.io/bbolt"
 )

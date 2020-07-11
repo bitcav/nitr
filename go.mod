@@ -1,4 +1,4 @@
-module github.com/bitcav/nitr-agent
+module github.com/bitcav/nitr
 
 go 1.13
 

@@ -11,23 +11,23 @@ script:
 - diff -u <(echo -n) <(gofmt -d .)
 - gox -os="linux" -arch="386 amd64"
 - goversioninfo -icon=./images/app.ico
-- env GOOS=windows GOARCH=amd64 go build -o nitr-agent_windows_amd64.exe
-- env GOOS=windows GOARCH=386 go build -o nitr-agent_windows_386.exe
+- env GOOS=windows GOARCH=amd64 go build -o nitr_windows_amd64.exe
+- env GOOS=windows GOARCH=386 go build -o nitr_windows_386.exe
 
 deploy:
   edge: true
   provider: releases
   api_key: $GITHUB_TOKEN
   on:
-    repo: bitcav/nitr-agent
+    repo: bitcav/nitr
     branches:    
       only:      
       - master 
   skip_cleanup: true
   file:
-  - nitr-agent_windows_amd64.exe
-  - nitr-agent_windows_386.exe
-  - nitr-agent_linux_amd64
-  - nitr-agent_linux_386
+  - nitr_windows_amd64.exe
+  - nitr_windows_386.exe
+  - nitr_linux_amd64
+  - nitr_linux_386
   draft: true
 
