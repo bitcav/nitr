@@ -60,3 +60,9 @@ Go to admin panel at %v://localhost:%v
 
 `, protocol, port)
 }
+
+func LogError(e error) {
+	if e != nil {
+		log.Println(e)
+	}
+}

@@ -5,16 +5,9 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/bitcav/nitr-agent/models"
 	bolt "go.etcd.io/bbolt"
 )
-
-//User data
-type User struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Apikey   string `json:"apikey"`
-	QrCode   string `json:"qrCode"`
-}
 
 //SetupDB creates nitr database with default values
 func SetupDB() (*bolt.DB, error) {
@@ -36,7 +29,7 @@ func SetupDB() (*bolt.DB, error) {
 }
 
 //SetUserData adds User data to nitr database with default values
-func SetUserData(db *bolt.DB, id string, user User) error {
+func SetUserData(db *bolt.DB, id string, user models.User) error {
 	userBytes, err := json.Marshal(user)
 	if err != nil {
 		return fmt.Errorf("could not marshal entry json: %v", err)
@@ -53,8 +46,8 @@ func SetUserData(db *bolt.DB, id string, user User) error {
 }
 
 //GetUserByID returns User by ID
-func GetUserByID(db *bolt.DB, id string) User {
-	var userData User
+func GetUserByID(db *bolt.DB, id string) models.User {
+	var userData models.User
 	err := db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("users"))
 		user := b.Get([]byte(id))

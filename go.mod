@@ -11,6 +11,7 @@ require (
 	github.com/gofiber/logger v0.0.6
 	github.com/gofiber/recover v0.0.5
 	github.com/gofiber/session v1.0.0
+	github.com/gofiber/utils v0.0.6
 	github.com/gofiber/websocket v0.4.0
 	github.com/hoisie/mustache v0.0.0-20160804235033-6375acf62c69
 	github.com/jaypipes/ghw v0.6.0

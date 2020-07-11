@@ -23,3 +23,10 @@ type QR struct {
 	Port        string `json:"port"`
 	Key         string `json:"key"`
 }
+
+type User struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Apikey   string `json:"apikey"`
+	QrCode   string `json:"qrCode"`
+}

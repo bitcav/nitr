@@ -11,12 +11,12 @@ import (
 	"time"
 
 	rice "github.com/GeertJohan/go.rice"
+	ndb "github.com/bitcav/nitr-agent/database"
 	"github.com/bitcav/nitr-agent/handlers"
 	"github.com/bitcav/nitr-agent/models"
 	"github.com/bitcav/nitr-agent/utils"
 	"github.com/fiberweb/apikey"
 	"github.com/hoisie/mustache"
-	ndb "github.com/juanhuttemann/nitr-agent/database"
 
 	"github.com/gofiber/embed"
 	"github.com/gofiber/fiber"
@@ -36,7 +36,7 @@ func init() {
 	//Config file initial setup
 	if _, err := os.Stat("config.ini"); err != nil {
 		configFile, err := os.OpenFile("config.ini", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-		logError(err)
+		utils.LogError(err)
 		defer configFile.Close()
 
 		defaultConfigOpts := []string{
@@ -50,18 +50,18 @@ func init() {
 
 		defaultConfig := strings.Join(defaultConfigOpts, "\n")
 		_, err = configFile.WriteString(defaultConfig)
-		logError(err)
+		utils.LogError(err)
 	}
 
 	runPath, err := os.Getwd()
-	logError(err)
+	utils.LogError(err)
 
 	viper.SetConfigName("config.ini")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(runPath)
 	err = viper.ReadInConfig()
 	if err != nil {
-		logError(err)
+		utils.LogError(err)
 	}
 
 	//DB Setup
@@ -69,7 +69,7 @@ func init() {
 		log.Println("Database created")
 		db, err := ndb.SetupDB()
 		defer db.Close()
-		logError(err)
+		utils.LogError(err)
 
 		log.Println("Adding default user")
 
@@ -89,20 +89,14 @@ func init() {
 
 		qrJSON, err := json.Marshal(qr)
 		if err != nil {
-			logError(err)
+			utils.LogError(err)
 		}
 
 		png, err := qrcode.Encode(string(qrJSON), qrcode.Medium, 256)
 		uEncQr := b64.StdEncoding.EncodeToString(png)
-		user := ndb.User{Username: "admin", Password: "admin", Apikey: APIKey, QrCode: uEncQr}
+		user := models.User{Username: "admin", Password: "admin", Apikey: APIKey, QrCode: uEncQr}
 		err = ndb.SetUserData(db, "1", user)
-		logError(err)
-	}
-}
-
-func logError(e error) {
-	if e != nil {
-		log.Println(e)
+		utils.LogError(err)
 	}
 }
 
@@ -176,10 +170,10 @@ func main() {
 			c.Redirect("/panel")
 		} else {
 			content, err := rice.MustFindBox("app/views").HTTPBox().String("login.mustache")
-			logError(err)
+			utils.LogError(err)
 
 			layout, err := rice.MustFindBox("app/views/layout").HTTPBox().String("default.mustache")
-			logError(err)
+			utils.LogError(err)
 
 			c.Type("html")
 			c.Send(mustache.RenderInLayout(content, layout))
@@ -196,7 +190,7 @@ func main() {
 		db, err := bolt.Open("nitr.db", 0600, nil)
 		defer db.Close()
 
-		logError(err)
+		utils.LogError(err)
 
 		nitrUser := ndb.GetUserByID(db, "1")
 		if (login.Username == nitrUser.Username) && (login.Password == nitrUser.Password) {
@@ -229,14 +223,14 @@ func main() {
 	//Panel View
 	app.Get("/panel", func(c *fiber.Ctx) {
 		content, err := rice.MustFindBox("app/views").HTTPBox().String("panel.html")
-		logError(err)
+		utils.LogError(err)
 		layout, err := rice.MustFindBox("app/views/layout").HTTPBox().String("default.mustache")
-		logError(err)
+		utils.LogError(err)
 
 		db, err := bolt.Open("nitr.db", 0600, nil)
 		defer db.Close()
 
-		logError(err)
+		utils.LogError(err)
 
 		nitrUser := ndb.GetUserByID(db, "1")
 
@@ -280,19 +274,19 @@ func main() {
 
 		qrJSON, err := json.Marshal(qr)
 		if err != nil {
-			logError(err)
+			utils.LogError(err)
 		}
 		png, err := qrcode.Encode(string(qrJSON), qrcode.Medium, 256)
 		uEncQr := b64.StdEncoding.EncodeToString(png)
 
 		db, err := bolt.Open("nitr.db", 0600, nil)
 		defer db.Close()
-		logError(err)
+		utils.LogError(err)
 
 		nitrUser := ndb.GetUserByID(db, "1")
-		user := ndb.User{Username: nitrUser.Username, Password: nitrUser.Password, Apikey: newAPIKey, QrCode: uEncQr}
+		user := models.User{Username: nitrUser.Username, Password: nitrUser.Password, Apikey: newAPIKey, QrCode: uEncQr}
 		err = ndb.SetUserData(db, "1", user)
-		logError(err)
+		utils.LogError(err)
 
 		c.JSON(models.ApiKey{
 			Key:    newAPIKey,
@@ -305,9 +299,9 @@ func main() {
 	//Change Password View
 	app.Get("/password", func(c *fiber.Ctx) {
 		content, err := rice.MustFindBox("app/views").HTTPBox().String("password.html")
-		logError(err)
+		utils.LogError(err)
 		layout, err := rice.MustFindBox("app/views/layout").HTTPBox().String("default.mustache")
-		logError(err)
+		utils.LogError(err)
 
 		c.Type("html")
 		c.Send(mustache.RenderInLayout(content, layout))
@@ -324,14 +318,14 @@ func main() {
 		db, err := bolt.Open("nitr.db", 0600, nil)
 		defer db.Close()
 
-		logError(err)
+		utils.LogError(err)
 
 		nitrUser := ndb.GetUserByID(db, "1")
 		if password.CurrentPassword == nitrUser.Password {
-			logError(err)
-			user := ndb.User{Username: nitrUser.Username, Password: password.NewPassword, Apikey: nitrUser.Apikey, QrCode: nitrUser.QrCode}
+			utils.LogError(err)
+			user := models.User{Username: nitrUser.Username, Password: password.NewPassword, Apikey: nitrUser.Apikey, QrCode: nitrUser.QrCode}
 			err = ndb.SetUserData(db, "1", user)
-			logError(err)
+			utils.LogError(err)
 			c.SendStatus(200)
 			log.Println("Password changed")
 		} else {
@@ -366,7 +360,7 @@ func main() {
 		cer, err := tls.LoadX509KeyPair(cert, key)
 		if err != nil {
 			log.Println("Invalid ssl certificate")
-			logError(err)
+			utils.LogError(err)
 		}
 
 		config := &tls.Config{Certificates: []tls.Certificate{cer}}
@@ -383,7 +377,7 @@ func main() {
 		if err != nil {
 			fmt.Println(err, "\nCheck settings at config.ini file")
 		}
-		logError(err)
+		utils.LogError(err)
 
 	} else {
 		utils.StartMessage("http", port)
@@ -398,7 +392,7 @@ func main() {
 		if err != nil {
 			fmt.Println(err, "\nCheck settings at config.ini file")
 		}
-		logError(err)
+		utils.LogError(err)
 	}
 
 }
