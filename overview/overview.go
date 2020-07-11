@@ -4,7 +4,6 @@ import (
 	"github.com/bitcav/nitr-agent/cpu"
 	"github.com/bitcav/nitr-agent/host"
 	"github.com/bitcav/nitr-agent/ram"
-	"github.com/gofiber/fiber"
 )
 
 type Overview struct {
@@ -19,9 +18,4 @@ func Check() Overview {
 		CPUUsage: cpu.CpuUsage(),
 		RAM:      ram.Check(),
 	}
-}
-
-//Handler returns JSON response of the system overview
-func Handler(c *fiber.Ctx) {
-	c.JSON(Check())
 }

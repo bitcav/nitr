@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/gofiber/fiber"
 	"github.com/shirou/gopsutil/host"
 )
 
@@ -31,9 +30,4 @@ func Check() HostInfo {
 		Platform: host.Platform + " " + host.PlatformVersion,
 		Uptime:   host.Uptime,
 	}
-}
-
-//Handler returns JSON response of the Host
-func Handler(c *fiber.Ctx) {
-	c.JSON(Check())
 }

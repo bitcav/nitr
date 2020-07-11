@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"net"
 	"strings"
-
-	"github.com/gofiber/fiber"
 )
 
 type address struct {
@@ -73,9 +71,4 @@ func Check() []networkDevice {
 	}
 
 	return networkDevices
-}
-
-//Handler returns JSON response of the Network
-func Handler(c *fiber.Ctx) {
-	c.JSON(Check())
 }

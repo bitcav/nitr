@@ -3,7 +3,6 @@ package product
 import (
 	"fmt"
 
-	"github.com/gofiber/fiber"
 	"github.com/jaypipes/ghw"
 )
 
@@ -31,9 +30,4 @@ func Check() Product {
 		Vendor:       product.Vendor,
 		Version:      product.Version,
 	}
-}
-
-//Handler returns JSON response of the Product
-func Handler(c *fiber.Ctx) {
-	c.JSON(Check())
 }

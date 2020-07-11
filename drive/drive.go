@@ -3,7 +3,6 @@ package drive
 import (
 	"fmt"
 
-	"github.com/gofiber/fiber"
 	"github.com/jaypipes/ghw"
 )
 
@@ -32,9 +31,4 @@ func Check() []Drive {
 	}
 
 	return drvs
-}
-
-//Handler returns JSON response of Drives
-func Handler(c *fiber.Ctx) {
-	c.JSON(Check())
 }

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gofiber/fiber"
 	"github.com/jaypipes/ghw"
 	"github.com/shirou/gopsutil/cpu"
 )
@@ -94,9 +93,4 @@ func Check() CPU {
 		Usage:      CpuUsage(),
 		UsageEach:  cpuUsageEach(),
 	}
-}
-
-//Handler returns JSON response of the CPU
-func Handler(c *fiber.Ctx) {
-	c.JSON(Check())
 }

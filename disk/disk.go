@@ -1,7 +1,6 @@
 package disk
 
 import (
-	"github.com/gofiber/fiber"
 	gdisk "github.com/shirou/gopsutil/disk"
 )
 
@@ -33,9 +32,4 @@ func Check() []Disk {
 
 	}
 	return totalDisks
-}
-
-//Handler returns JSON response of the Disks
-func Handler(c *fiber.Ctx) {
-	c.JSON(Check())
 }

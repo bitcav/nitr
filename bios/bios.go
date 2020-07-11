@@ -3,7 +3,6 @@ package bios
 import (
 	"fmt"
 
-	"github.com/gofiber/fiber"
 	"github.com/jaypipes/ghw"
 )
 
@@ -25,9 +24,4 @@ func Check() Bios {
 		Version: bios.Version,
 		Date:    bios.Date,
 	}
-}
-
-//Handler returns JSON response of the Bios
-func Handler(c *fiber.Ctx) {
-	c.JSON(Check())
 }

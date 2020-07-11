@@ -3,7 +3,6 @@ package chassis
 import (
 	"fmt"
 
-	"github.com/gofiber/fiber"
 	"github.com/jaypipes/ghw"
 )
 
@@ -24,9 +23,4 @@ func Check() Chassis {
 		Vendor:      ghwChassis.Vendor,
 		Serial:      ghwChassis.SerialNumber,
 	}
-}
-
-//Handler returns JSON response of the Chassis
-func Handler(c *fiber.Ctx) {
-	c.JSON(Check())
 }

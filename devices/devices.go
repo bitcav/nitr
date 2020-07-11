@@ -3,7 +3,6 @@ package devices
 import (
 	"fmt"
 
-	"github.com/gofiber/fiber"
 	"github.com/jaypipes/ghw"
 )
 
@@ -38,9 +37,4 @@ func Check() []Device {
 	}
 
 	return devicesArr
-}
-
-//Handler returns JSON response of Devices
-func Handler(c *fiber.Ctx) {
-	c.JSON(Check())
 }

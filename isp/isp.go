@@ -1,4 +1,4 @@
-package internet
+package isp
 
 import (
 	"bytes"
@@ -7,8 +7,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-
-	"github.com/gofiber/fiber"
 )
 
 type Setting struct {
@@ -54,9 +52,4 @@ func Check() Setting {
 		return Setting{}
 	}
 	return settings.Settings[0]
-}
-
-//Handler returns JSON response of the Internet Bandwidth
-func Handler(c *fiber.Ctx) {
-	c.JSON(Check())
 }

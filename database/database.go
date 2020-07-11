@@ -1,4 +1,4 @@
-package nitrdb
+package database
 
 import (
 	"encoding/json"

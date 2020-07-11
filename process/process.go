@@ -1,7 +1,6 @@
 package process
 
 import (
-	"github.com/gofiber/fiber"
 	"github.com/mitchellh/go-ps"
 )
 
@@ -24,9 +23,4 @@ func Check() []Process {
 	}
 
 	return processList
-}
-
-//Handler returns JSON response of the Processes
-func Handler(c *fiber.Ctx) {
-	c.JSON(Check())
 }

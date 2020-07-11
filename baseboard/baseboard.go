@@ -3,7 +3,6 @@ package baseboard
 import (
 	"fmt"
 
-	"github.com/gofiber/fiber"
 	"github.com/jaypipes/ghw"
 )
 
@@ -25,9 +24,4 @@ func Check() BaseBoard {
 		SerialNumber: baseboard.SerialNumber,
 		Version:      baseboard.Version,
 	}
-}
-
-//Handler returns JSON response of the Baseboard
-func Handler(c *fiber.Ctx) {
-	c.JSON(Check())
 }

@@ -11,18 +11,12 @@ import (
 	"time"
 
 	rice "github.com/GeertJohan/go.rice"
-	"github.com/bitcav/nitr-agent/bandwidth"
-	"github.com/bitcav/nitr-agent/baseboard"
-	"github.com/bitcav/nitr-agent/devices"
-	"github.com/bitcav/nitr-agent/internet"
-	"github.com/bitcav/nitr-agent/network"
-	"github.com/bitcav/nitr-agent/nitrdb"
-	"github.com/bitcav/nitr-agent/overview"
-	"github.com/bitcav/nitr-agent/product"
-	"github.com/bitcav/nitr-agent/system"
+	"github.com/bitcav/nitr-agent/handlers"
+	"github.com/bitcav/nitr-agent/models"
 	"github.com/bitcav/nitr-agent/utils"
 	"github.com/fiberweb/apikey"
 	"github.com/hoisie/mustache"
+	ndb "github.com/juanhuttemann/nitr-agent/database"
 
 	"github.com/gofiber/embed"
 	"github.com/gofiber/fiber"
@@ -33,42 +27,10 @@ import (
 
 	"github.com/skip2/go-qrcode"
 
-	"github.com/bitcav/nitr-agent/bios"
-	"github.com/bitcav/nitr-agent/chassis"
-	"github.com/bitcav/nitr-agent/cpu"
-	"github.com/bitcav/nitr-agent/disk"
-	"github.com/bitcav/nitr-agent/drive"
-	"github.com/bitcav/nitr-agent/gpu"
 	"github.com/bitcav/nitr-agent/host"
-	"github.com/bitcav/nitr-agent/process"
-	"github.com/bitcav/nitr-agent/ram"
 	"github.com/spf13/viper"
 	bolt "go.etcd.io/bbolt"
 )
-
-type loginForm struct {
-	Username string `form:"username"`
-	Password string `form:"password"`
-	Remember string `form:"remember"`
-}
-
-type passwordForm struct {
-	CurrentPassword    string `form:"currentPassword"`
-	NewPassword        string `form:"newPassword"`
-	RepeateNewPassword string `form:"repeatNewPassword"`
-}
-
-type apiKeyForm struct {
-	Key    string `json:"key"`
-	QrCode string `json:"qrCode"`
-}
-
-type qr struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Port        string `json:"port"`
-	Key         string `json:"key"`
-}
 
 func init() {
 	//Config file initial setup
@@ -105,7 +67,7 @@ func init() {
 	//DB Setup
 	if _, err := os.Stat("nitr.db"); err != nil {
 		log.Println("Database created")
-		db, err := nitrdb.SetupDB()
+		db, err := ndb.SetupDB()
 		defer db.Close()
 		logError(err)
 
@@ -118,7 +80,7 @@ func init() {
 			port = "3000"
 		}
 
-		qr := qr{
+		qr := models.QR{
 			Name:        host.Check().Name,
 			Description: host.Check().Platform,
 			Port:        port,
@@ -132,8 +94,8 @@ func init() {
 
 		png, err := qrcode.Encode(string(qrJSON), qrcode.Medium, 256)
 		uEncQr := b64.StdEncoding.EncodeToString(png)
-		user := nitrdb.User{Username: "admin", Password: "admin", Apikey: APIKey, QrCode: uEncQr}
-		err = nitrdb.SetUserData(db, "1", user)
+		user := ndb.User{Username: "admin", Password: "admin", Apikey: APIKey, QrCode: uEncQr}
+		err = ndb.SetUserData(db, "1", user)
 		logError(err)
 	}
 }
@@ -186,26 +148,26 @@ func main() {
 	//API Config
 	api := app.Group("/api")
 	v1 := api.Group("/v1")
-	v1.Use(apikey.New(apikey.Config{Key: nitrdb.GetApiKey()}))
+	v1.Use(apikey.New(apikey.Config{Key: ndb.GetApiKey()}))
 
 	//nitr API Endpoints
-	v1.Get("/", overview.Handler)
-	v1.Get("/cpu", cpu.Handler)
-	v1.Get("/bios", bios.Handler)
-	v1.Get("/bandwidth", bandwidth.Handler)
-	v1.Get("/chassis", chassis.Handler)
-	v1.Get("/disks", disk.Handler)
-	v1.Get("/drives", drive.Handler)
-	v1.Get("/devices", devices.Handler)
-	v1.Get("/gpu", gpu.Handler)
-	v1.Get("/host", host.Handler)
-	v1.Get("/isp", internet.Handler)
-	v1.Get("/network", network.Handler)
-	v1.Get("/processes", process.Handler)
-	v1.Get("/ram", ram.Handler)
-	v1.Get("/baseboard", baseboard.Handler)
-	v1.Get("/product", product.Handler)
-	v1.Get("/system", system.Handler)
+	v1.Get("/", handlers.Overview)
+	v1.Get("/cpu", handlers.CPU)
+	v1.Get("/bios", handlers.Bios)
+	v1.Get("/bandwidth", handlers.Bandwidth)
+	v1.Get("/chassis", handlers.Chassis)
+	v1.Get("/disks", handlers.Disk)
+	v1.Get("/drives", handlers.Drive)
+	v1.Get("/devices", handlers.Devices)
+	v1.Get("/gpu", handlers.GPU)
+	v1.Get("/host", handlers.Host)
+	v1.Get("/isp", handlers.ISP)
+	v1.Get("/network", handlers.Network)
+	v1.Get("/processes", handlers.Process)
+	v1.Get("/ram", handlers.RAM)
+	v1.Get("/baseboard", handlers.Baseboard)
+	v1.Get("/product", handlers.Product)
+	v1.Get("/system", handlers.System)
 
 	//Login View
 	app.Get("/", func(c *fiber.Ctx) {
@@ -226,7 +188,7 @@ func main() {
 
 	//Login Submit
 	app.Post("/", func(c *fiber.Ctx) {
-		login := new(loginForm)
+		login := new(models.Login)
 
 		if err := c.BodyParser(login); err != nil {
 			log.Fatal(err)
@@ -236,7 +198,7 @@ func main() {
 
 		logError(err)
 
-		nitrUser := nitrdb.GetUserByID(db, "1")
+		nitrUser := ndb.GetUserByID(db, "1")
 		if (login.Username == nitrUser.Username) && (login.Password == nitrUser.Password) {
 			store := sessions.Get(c)
 			defer store.Save()
@@ -276,7 +238,7 @@ func main() {
 
 		logError(err)
 
-		nitrUser := nitrdb.GetUserByID(db, "1")
+		nitrUser := ndb.GetUserByID(db, "1")
 
 		bind := fiber.Map{
 			"content":  string(content),
@@ -309,7 +271,7 @@ func main() {
 			port = "3000"
 		}
 
-		qr := qr{
+		qr := models.QR{
 			Name:        host.Check().Name,
 			Description: host.Check().Platform,
 			Port:        port,
@@ -327,12 +289,12 @@ func main() {
 		defer db.Close()
 		logError(err)
 
-		nitrUser := nitrdb.GetUserByID(db, "1")
-		user := nitrdb.User{Username: nitrUser.Username, Password: nitrUser.Password, Apikey: newAPIKey, QrCode: uEncQr}
-		err = nitrdb.SetUserData(db, "1", user)
+		nitrUser := ndb.GetUserByID(db, "1")
+		user := ndb.User{Username: nitrUser.Username, Password: nitrUser.Password, Apikey: newAPIKey, QrCode: uEncQr}
+		err = ndb.SetUserData(db, "1", user)
 		logError(err)
 
-		c.JSON(apiKeyForm{
+		c.JSON(models.ApiKey{
 			Key:    newAPIKey,
 			QrCode: uEncQr,
 		})
@@ -353,7 +315,7 @@ func main() {
 
 	//New Password Submit
 	app.Post("/password", func(c *fiber.Ctx) {
-		password := new(passwordForm)
+		password := new(models.Password)
 
 		if err := c.BodyParser(password); err != nil {
 			log.Fatal(err)
@@ -364,11 +326,11 @@ func main() {
 
 		logError(err)
 
-		nitrUser := nitrdb.GetUserByID(db, "1")
+		nitrUser := ndb.GetUserByID(db, "1")
 		if password.CurrentPassword == nitrUser.Password {
 			logError(err)
-			user := nitrdb.User{Username: nitrUser.Username, Password: password.NewPassword, Apikey: nitrUser.Apikey, QrCode: nitrUser.QrCode}
-			err = nitrdb.SetUserData(db, "1", user)
+			user := ndb.User{Username: nitrUser.Username, Password: password.NewPassword, Apikey: nitrUser.Apikey, QrCode: nitrUser.QrCode}
+			err = ndb.SetUserData(db, "1", user)
 			logError(err)
 			c.SendStatus(200)
 			log.Println("Password changed")

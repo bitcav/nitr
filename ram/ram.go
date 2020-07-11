@@ -3,7 +3,6 @@ package ram
 import (
 	"fmt"
 
-	"github.com/gofiber/fiber"
 	"github.com/shirou/gopsutil/mem"
 )
 
@@ -27,9 +26,4 @@ func Check() RAM {
 	}
 
 	return ram
-}
-
-//Handler returns JSON response of the RAM
-func Handler(c *fiber.Ctx) {
-	c.JSON(Check())
 }

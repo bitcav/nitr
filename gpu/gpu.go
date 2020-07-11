@@ -3,7 +3,6 @@ package gpu
 import (
 	"fmt"
 
-	"github.com/gofiber/fiber"
 	"github.com/jaypipes/ghw"
 )
 
@@ -30,9 +29,4 @@ func Check() []GPU {
 	}
 
 	return gpus
-}
-
-//Handler returns JSON response of the GPUs
-func Handler(c *fiber.Ctx) {
-	c.JSON(Check())
 }

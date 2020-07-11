@@ -13,7 +13,6 @@ import (
 	"github.com/bitcav/nitr-agent/process"
 	"github.com/bitcav/nitr-agent/product"
 	"github.com/bitcav/nitr-agent/ram"
-	"github.com/gofiber/fiber"
 )
 
 type system struct {
@@ -31,7 +30,7 @@ type system struct {
 	Processes []process.Process      `json:"processes"`
 }
 
-func check() system {
+func Check() system {
 	sys := system{
 		Host:      host.Check(),
 		CPU:       cpu.Check(),
@@ -47,9 +46,4 @@ func check() system {
 		Product:   product.Check(),
 	}
 	return sys
-}
-
-//Handler returns JSON response of the entire System
-func Handler(c *fiber.Ctx) {
-	c.JSON(check())
 }
