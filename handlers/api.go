@@ -17,7 +17,6 @@ import (
 	"github.com/bitcav/nitr-agent/process"
 	"github.com/bitcav/nitr-agent/product"
 	"github.com/bitcav/nitr-agent/ram"
-	"github.com/bitcav/nitr-agent/system"
 	"github.com/gofiber/fiber"
 )
 
@@ -99,9 +98,4 @@ func Product(c *fiber.Ctx) {
 //RAM returns a JSON response of the RAM information
 func RAM(c *fiber.Ctx) {
 	c.JSON(ram.Check())
-}
-
-//System returns a JSON response of the System information
-func System(c *fiber.Ctx) {
-	c.JSON(system.Check())
 }
