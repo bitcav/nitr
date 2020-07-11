@@ -50,7 +50,7 @@ config:
   # Don't forget to add a backgroundColor style with a null as type
   frameBox:
     type: floating
-    title: Terminal
+    title: Nitr
     style:
       border: 0px black solid
       # boxShadow: none
