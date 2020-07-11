@@ -26,7 +26,8 @@ func checkError(e error) {
 	}
 }
 
-func Check() Setting {
+//Info returns Setting struct containing isp information
+func Info() Setting {
 	// Fetch xml user data
 	resp, err := http.Get("http://speedtest.net/speedtest-config.php")
 	checkError(err)

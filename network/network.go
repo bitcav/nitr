@@ -19,7 +19,7 @@ type networkDevice struct {
 
 type NetworkDevices []networkDevice
 
-func Check() []networkDevice {
+func Info() []networkDevice {
 	var networkDevices []networkDevice
 	var mac string
 	interfaces, err := net.Interfaces()

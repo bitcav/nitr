@@ -12,7 +12,7 @@ type Chassis struct {
 	Serial      string `json:"serial"`
 }
 
-func Check() Chassis {
+func Info() Chassis {
 	ghwChassis, err := ghw.Chassis()
 	if err != nil {
 		fmt.Printf("Error getting chassis info: %v", err)

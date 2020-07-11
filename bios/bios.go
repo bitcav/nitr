@@ -13,8 +13,8 @@ type Bios struct {
 	Date    string `json:"date"`
 }
 
-//Check for Bios availability
-func Check() Bios {
+//Info returns Bios struct containing motherboad bios information
+func Info() Bios {
 	bios, err := ghw.BIOS()
 	if err != nil {
 		fmt.Printf("Error getting BIOS info: %v", err)

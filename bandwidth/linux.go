@@ -19,7 +19,8 @@ type NetworkDeviceBandwidth struct {
 	TxPackets uint64 `json:"txPackets"`
 }
 
-func Check() []NetworkDeviceBandwidth {
+//Info returns []NetworkDeviceBandwidth containing bandwidth usage per interface
+func Info() []NetworkDeviceBandwidth {
 	p, err := procfs.NewDefaultFS()
 	if err != nil {
 		log.Fatalf("could not get process: %s", err)
@@ -29,7 +30,7 @@ func Check() []NetworkDeviceBandwidth {
 		fmt.Println(err)
 	}
 
-	networks := network.Check()
+	networks := network.Info()
 
 	//Round 1
 	var stats1 []NetworkDeviceBandwidth

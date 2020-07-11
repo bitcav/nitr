@@ -82,8 +82,8 @@ func vendor() string {
 	return cpu.Processors[0].Vendor
 }
 
-//Check for CPU availability
-func Check() CPU {
+//Info returns CPU struct containing cpu information
+func Info() CPU {
 	return CPU{
 		Vendor:     vendor(),
 		Model:      model(),

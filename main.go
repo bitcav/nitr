@@ -81,8 +81,8 @@ func init() {
 		}
 
 		qr := models.QR{
-			Name:        host.Check().Name,
-			Description: host.Check().Platform,
+			Name:        host.Info().Name,
+			Description: host.Info().Platform,
 			Port:        port,
 			Key:         APIKey,
 		}
@@ -235,10 +235,10 @@ func main() {
 
 		bind := fiber.Map{
 			"content":  string(content),
-			"host":     host.Check().Name,
-			"os":       host.Check().OS,
-			"platform": host.Check().Platform,
-			"arch":     host.Check().Arch,
+			"host":     host.Info().Name,
+			"os":       host.Info().OS,
+			"platform": host.Info().Platform,
+			"arch":     host.Info().Arch,
 			"apikey":   nitrUser.Apikey,
 			"qrCode":   nitrUser.QrCode,
 		}
@@ -265,8 +265,8 @@ func main() {
 		}
 
 		qr := models.QR{
-			Name:        host.Check().Name,
-			Description: host.Check().Platform,
+			Name:        host.Info().Name,
+			Description: host.Info().Platform,
 			Port:        port,
 			Key:         newAPIKey,
 		}

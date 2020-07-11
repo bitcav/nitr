@@ -13,8 +13,8 @@ type Disk struct {
 	Percent    float64 `json:"percent"`
 }
 
-//Check for Disks availability
-func Check() []Disk {
+//Info returns []Disk containing disks information
+func Info() []Disk {
 	disks, _ := gdisk.Partitions(false)
 	var totalDisks []Disk
 

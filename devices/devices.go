@@ -12,7 +12,7 @@ type Device struct {
 	Address string `json:"address"`
 }
 
-func Check() []Device {
+func Info() []Device {
 	pci, err := ghw.PCI()
 	if err != nil {
 		fmt.Printf("Error getting PCI info: %v", err)

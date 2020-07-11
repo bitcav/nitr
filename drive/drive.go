@@ -14,8 +14,8 @@ type Drive struct {
 	Serial    string        `json:"serial"`
 }
 
-//Check for Drive availability
-func Check() []Drive {
+//Info returns []Drive containing drives information
+func Info() []Drive {
 	block, err := ghw.Block()
 	if err != nil {
 		fmt.Printf("Error getting block storage info: %v", err)

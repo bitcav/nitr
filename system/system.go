@@ -30,20 +30,20 @@ type system struct {
 	Processes []process.Process      `json:"processes"`
 }
 
-func Check() system {
+func Info() system {
 	sys := system{
-		Host:      host.Check(),
-		CPU:       cpu.Check(),
-		Bios:      bios.Check(),
-		RAM:       ram.Check(),
-		Disks:     disk.Check(),
-		Drives:    drive.Check(),
-		Network:   network.Check(),
-		GPU:       gpu.Check(),
-		Chassis:   chassis.Check(),
-		Processes: process.Check(),
-		BaseBoard: baseboard.Check(),
-		Product:   product.Check(),
+		Host:      host.Info(),
+		CPU:       cpu.Info(),
+		Bios:      bios.Info(),
+		RAM:       ram.Info(),
+		Disks:     disk.Info(),
+		Drives:    drive.Info(),
+		Network:   network.Info(),
+		GPU:       gpu.Info(),
+		Chassis:   chassis.Info(),
+		Processes: process.Info(),
+		BaseBoard: baseboard.Info(),
+		Product:   product.Info(),
 	}
 	return sys
 }

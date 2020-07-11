@@ -12,10 +12,10 @@ type Overview struct {
 	RAM      ram.RAM       `json:"ram"`
 }
 
-func Check() Overview {
+func Info() Overview {
 	return Overview{
-		Host:     host.Check(),
+		Host:     host.Info(),
 		CPUUsage: cpu.CpuUsage(),
-		RAM:      ram.Check(),
+		RAM:      ram.Info(),
 	}
 }

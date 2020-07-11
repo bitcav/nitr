@@ -206,7 +206,7 @@ type NetworkDeviceBandwidth struct {
 	TxPackets uint64 `json:"txPackets"`
 }
 
-func Check() []NetworkDeviceBandwidth {
+func Info() []NetworkDeviceBandwidth {
 	stats := GetNetworkStats()
 	var networkDevices []NetworkDeviceBandwidth
 	for _, dev := range stats.NetDevStats {

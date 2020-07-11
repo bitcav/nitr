@@ -16,8 +16,8 @@ type HostInfo struct {
 	Uptime   uint64 `json:"uptime"`
 }
 
-//Check for HostInfo availability
-func Check() HostInfo {
+//Info returns HostInfo struct containing host information
+func Info() HostInfo {
 	host, err := host.Info()
 	if err != nil {
 		fmt.Print(err)

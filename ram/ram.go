@@ -13,8 +13,8 @@ type RAM struct {
 	Usage uint64 `json:"usage"`
 }
 
-//Check for RAM availability
-func Check() RAM {
+//Info returns RAM struct containing system ram information
+func Info() RAM {
 	memory, err := mem.VirtualMemory()
 	if err != nil {
 		fmt.Print(err)

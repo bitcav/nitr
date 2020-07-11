@@ -12,8 +12,8 @@ type GPU struct {
 	Model string `json:"model"`
 }
 
-//Check for GPU availability
-func Check() []GPU {
+//Info returns []GPU containing gpu information
+func Info() []GPU {
 	ghwGpu, err := ghw.GPU()
 	if err != nil {
 		fmt.Printf("Error getting GPU info: %v", err)

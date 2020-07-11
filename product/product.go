@@ -16,7 +16,8 @@ type Product struct {
 	Version      string `json:"version"`
 }
 
-func Check() Product {
+//Info returns Product struct containing product information
+func Info() Product {
 	product, err := ghw.Product()
 	if err != nil {
 		fmt.Printf("Error getting product info: %v", err)

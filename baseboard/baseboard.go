@@ -13,7 +13,8 @@ type BaseBoard struct {
 	Version      string `json:"version"`
 }
 
-func Check() BaseBoard {
+//Info returns BaseBoard struct containing baseboard information
+func Info() BaseBoard {
 	baseboard, err := ghw.Baseboard()
 	if err != nil {
 		fmt.Printf("Error getting product info: %v", err)

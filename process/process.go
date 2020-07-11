@@ -10,8 +10,8 @@ type Process struct {
 	Name string `json:"name"`
 }
 
-//Check for Processes availability
-func Check() []Process {
+//Info returns []Process containing system processes information
+func Info() []Process {
 	processes, err := ps.Processes()
 	if err != nil {
 		panic(err)
