@@ -214,7 +214,7 @@ These endpoints allow you to get system and hardware information about your host
 | txPackets | integer        | Total packets sent       |
 
 ### Chassis
-:lock: Require running **nitr** with elevated privileges 
+:lock: Requires running **nitr** with elevated privileges 
 > JSON Object
 
 | Key       | Data Type      | Description              |
@@ -291,6 +291,7 @@ These endpoints allow you to get system and hardware information about your host
 | usage     | integer        | Used RAM in bytes        |
 
 ### Baseboard
+:lock: Requires running **nitr** with elevated privileges 
 > JSON Object
 
 | Key       | Data Type      | Description              |
@@ -301,6 +302,7 @@ These endpoints allow you to get system and hardware information about your host
 | version   | string         | Baseboard Version        |
 
 ### Product
+:lock: Requires running **nitr** with elevated privileges 
 >JSON Object
 
 | Key       | Data Type      | Description              |
@@ -314,6 +316,7 @@ These endpoints allow you to get system and hardware information about your host
 | version   | string         | Product Version          |
 
 ### Memory
+:lock: Requires running **nitr** with elevated privileges 
 >JSON Array of Objects
 
 | Key          | Data Type       | Description                     |
