@@ -393,3 +393,6 @@ Tested:
 * [Fiber](https://gofiber.io/) - The web framework used
 * [bbolt](https://github.com/etcd-io/bbolt) - Database
 * [UIKit](https://getuikit.com/) - Front-End framework
+* [gopsutil](https://github.com/shirou/gopsutil) - psutil for Golang
+* [ghw](https://github.com/jaypipes/ghw) - Golang HardWare discovery/inspection library
+* [go-smbios](https://github.com/digitalocean/go-smbios) - Detection and access to System Management BIOS
