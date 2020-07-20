@@ -33,7 +33,7 @@ Table of contents
 	   * [Available Endpoints](#available-endpoints)
 	   * [JSON Data References](#mag-json-data-references)
  * [Settings](#wrench-settings)
- * [Platform Support](#platform-support)
+ * [Platform Support](#heavy_check_mark-platform-support)
 
 
    
@@ -376,7 +376,7 @@ ssl_certificate: /path/to/file.crt
 ssl_certificate_key: /path/to/file.key
 ```   
 
-## :white_check_mark: Platform Support
+## :heavy_check_mark: Platform Support
 
 **Windows**
 
