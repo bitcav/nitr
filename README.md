@@ -335,7 +335,7 @@ These endpoints allow you to get system and hardware information about your host
 | totalWidth   | integer         | Total Data Width in bits        |
 
 
-## Settings
+## :wrench: Settings
 
 The following settings are located in the `config.ini` file
   
