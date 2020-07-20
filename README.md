@@ -76,7 +76,7 @@ the server will start listening on port 8000 by default
     <br>
 </p>
 
-## Docker
+## :whale: Docker
 
 Build image using command: 
 ```
