@@ -25,7 +25,7 @@ Table of contents
    * [Installation](#installation)
 	    * [Download](#download)
 	    *  [Build](#build)
-   * [Running](#running)
+   * [Running](#rocket-running)
    * [Docker](#whale-docker)
    * [Web Panel](#web-panel)
    * [Usage](#usage)
@@ -57,7 +57,7 @@ cd nitr
 go build
 ```
 
-## Running
+## :rocket: Running
 
 **Linux**
 ```
