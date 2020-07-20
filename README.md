@@ -376,7 +376,7 @@ ssl_certificate: /path/to/file.crt
 ssl_certificate_key: /path/to/file.key
 ```   
 
-## Platform Support
+## :white_check_mark: Platform Support
 
 **Windows**
 
