@@ -22,7 +22,7 @@ The main purpose of this project is to provide highly available data of **CPU, R
 
 Table of contents
 =================
-   * [Installation](#installation)
+   * [Installation](#gear-installation)
 	    * [Download](#download)
 	    *  [Build](#build)
    * [Running](#rocket-running)
@@ -38,7 +38,7 @@ Table of contents
 
    
 
-## Installation
+## :gear: Installation
 
 ### Download
 
