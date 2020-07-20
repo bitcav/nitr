@@ -155,7 +155,7 @@ http://localhost:8000/api/v1
 
 ### :satellite: Available Endpoints
 
-These endpoints allow you to get system and hardware information about your host.
+These endpoints allow you to get System and Hardware information about your host. Look at the [examples](#examples) for a better understanding
 
 | Verb   | Endpoint                      | JSON Data                    |
 |--------|-------------------------------|------------------------------|
