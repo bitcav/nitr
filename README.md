@@ -30,7 +30,7 @@ Table of contents
    * [Web Panel](#web-panel)
    * [Usage](#usage)
    * [Api v1](#api-v1)
-	   * [Available Endpoints](#available-endpoints)
+	   * [Available Endpoints](#satellite-available-endpoints)
 	   * [JSON Data References](#mag-json-data-references)
  * [Settings](#wrench-settings)
  * [Platform Support](#heavy_check_mark-platform-support)
@@ -152,7 +152,7 @@ http://localhost:8000/api/v1/host?key=yourapikeyhere
 http://localhost:8000/api/v1
 ```
 
-### Available Endpoints
+### :satellite: Available Endpoints
 
 These endpoints allow you to get system and hardware information about your host.
 
