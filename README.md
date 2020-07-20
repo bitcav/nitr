@@ -28,7 +28,7 @@ Table of contents
    * [Running](#rocket-running)
    * [Docker](#whale-docker)
    * [Web Panel](#earth_americas-web-panel)
-   * [Usage](#usage)
+   * [Usage](#pick-usage)
    	   * [Examples](#examples)
    * [Api v1](#api-v1)
 	   * [Available Endpoints](#satellite-available-endpoints)
@@ -100,7 +100,7 @@ Access with default **username** and **password**: **admin admin**
 
 ![preview](https://raw.githubusercontent.com/bitcav/nitr/master/images/panel-web.png)
 
-## Usage
+## :pick: Usage
 
 Call [the API endpoints](#satellite-available-endpoints) with ***?key=yourapikey*** in the URL or pass the ***x-api-key*** header with your api key as value and you will get success response.
 
