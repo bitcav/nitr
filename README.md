@@ -214,6 +214,7 @@ These endpoints allow you to get system and hardware information about your host
 | txPackets | integer        | Total packets sent       |
 
 ### Chassis
+:lock: Require running **nitr** with elevated privileges 
 > JSON Object
 
 | Key       | Data Type      | Description              |
