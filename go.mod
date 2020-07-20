@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	github.com/GeertJohan/go.rice v1.0.0
+	github.com/digitalocean/go-smbios v0.0.0-20180907143718-390a4f403a8e
 	github.com/fasthttp/websocket v1.4.3 // indirect
 	github.com/fiberweb/apikey v1.0.0
 	github.com/gofiber/embed v0.0.9

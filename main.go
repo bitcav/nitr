@@ -161,6 +161,7 @@ func main() {
 	v1.Get("/ram", handlers.RAM)
 	v1.Get("/baseboard", handlers.Baseboard)
 	v1.Get("/product", handlers.Product)
+	v1.Get("/memory", handlers.Memory)
 
 	//Login View
 	app.Get("/", func(c *fiber.Ctx) {

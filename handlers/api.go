@@ -12,6 +12,7 @@ import (
 	"github.com/bitcav/nitr/gpu"
 	"github.com/bitcav/nitr/host"
 	"github.com/bitcav/nitr/isp"
+	"github.com/bitcav/nitr/memory"
 	"github.com/bitcav/nitr/network"
 	"github.com/bitcav/nitr/overview"
 	"github.com/bitcav/nitr/process"
@@ -98,4 +99,9 @@ func Product(c *fiber.Ctx) {
 //RAM returns a JSON response of the RAM information
 func RAM(c *fiber.Ctx) {
 	c.JSON(ram.Info())
+}
+
+//Memory returns a JSON response of the Memory Devices
+func Memory(c *fiber.Ctx) {
+	c.JSON(memory.Info())
 }

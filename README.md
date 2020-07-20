@@ -170,6 +170,8 @@ These endpoints allow you to get system and hardware information about your host
 |GET     | /ram                          | [RAM](#ram)                  |
 |GET     | /baseboard                    | [Baseboard](#baseboard)      |
 |GET     | /product                      | [Product](#product)          |
+|GET     | /memory                       | [Memory](#Memory)            |
+
 
 
 
@@ -309,6 +311,25 @@ These endpoints allow you to get system and hardware information about your host
 | uuid      | string         | Product UUID             |
 | sku       | string         | Product SKU              |
 | version   | string         | Product Version          |
+
+### Memory
+>JSON Array of Objects
+
+| Key          | Data Type       | Description                     |
+|--------------|-----------------|---------------------------------|
+| bank		   | string 		 | Bank Identifier                 |
+| size         | integer         | Size                            |
+| unit         | string          | Unit (KB or MB)                 |
+| type         | string          | Type                            |
+| formFactor   | string          | Form Factor                     |
+| manufacturer | string          | Manufacturer                    |
+| serial       | string          | Serial Number                   |
+| assetTag     | string          | Asset Tag                       |
+| partNumber   | string          | Part Number                     |
+| speed        | integer         | Speed in MT/s                   |
+| dataWidth    | integer         | Data Width in bits              |
+| totalWidth   | integer         | Total Data Width in bits        |
+
 
 ## Settings
 
