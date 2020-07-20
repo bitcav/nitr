@@ -27,7 +27,7 @@ Table of contents
 	    *  [Build](#build)
    * [Running](#rocket-running)
    * [Docker](#whale-docker)
-   * [Web Panel](#web-panel)
+   * [Web Panel](#earth_americas-web-panel)
    * [Usage](#usage)
    	   * [Examples](#examples)
    * [Api v1](#api-v1)
@@ -91,7 +91,7 @@ Run container:
 docker run -d -p 8000:8000 nitr:latest
 ```
 
-### Web Panel
+### :earth_americas: Web Panel
 Go to [http://localhost:8000](http://localhost:8000) in your web browser
 
 ![preview](https://raw.githubusercontent.com/bitcav/nitr/master/images/login-web.png)
