@@ -32,7 +32,7 @@ Table of contents
    * [Api v1](#api-v1)
 	   * [Available Endpoints](#available-endpoints)
 	   * [JSON Data References](#json-data-references)
- * [Settings](#settings)
+ * [Settings](#wrench-settings)
  * [Platform Support](#platform-support)
 
 
