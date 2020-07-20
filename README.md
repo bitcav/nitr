@@ -34,6 +34,7 @@ Table of contents
 	   * [JSON Data References](#mag-json-data-references)
  * [Settings](#wrench-settings)
  * [Platform Support](#heavy_check_mark-platform-support)
+ * [Powered by](#zap-powered-by)
 
 
    
@@ -392,7 +393,7 @@ Tested:
 - Manjaro Linux 20
 
 
-## Powered by
+## :zap: Powered by
 
 * [Fiber](https://gofiber.io/) - The web framework used
 * [bbolt](https://github.com/etcd-io/bbolt) - Database
