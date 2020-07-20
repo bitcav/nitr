@@ -101,7 +101,7 @@ Access with default **username** and **password**: **admin admin**
 
 ## Usage
 
-Call [the API endpoints](#available-endpoints) with ***?key=yourapikey*** in the URL or pass the ***x-api-key*** header with your api key as value and you will get success response.
+Call [the API endpoints](#satellite-available-endpoints) with ***?key=yourapikey*** in the URL or pass the ***x-api-key*** header with your api key as value and you will get success response.
 
 ### Examples:
 
