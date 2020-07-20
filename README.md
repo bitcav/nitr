@@ -29,6 +29,7 @@ Table of contents
    * [Docker](#whale-docker)
    * [Web Panel](#web-panel)
    * [Usage](#usage)
+   	   * [Examples](#examples)
    * [Api v1](#api-v1)
 	   * [Available Endpoints](#satellite-available-endpoints)
 	   * [JSON Data References](#mag-json-data-references)
