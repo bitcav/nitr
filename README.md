@@ -31,7 +31,7 @@ Table of contents
    * [Usage](#usage)
    * [Api v1](#api-v1)
 	   * [Available Endpoints](#available-endpoints)
-	   * [JSON Data References](#json-data-references)
+	   * [JSON Data References](#mag-json-data-references)
  * [Settings](#wrench-settings)
  * [Platform Support](#platform-support)
 
@@ -176,7 +176,7 @@ These endpoints allow you to get system and hardware information about your host
 
 
 
-## JSON Data References
+## :mag: JSON Data References
 
 ### CPU 
 > JSON Object
