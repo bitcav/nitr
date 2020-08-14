@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/GeertJohan/go.rice v1.0.0
-	github.com/digitalocean/go-smbios v0.0.0-20180907143718-390a4f403a8e
+	github.com/bitcav/go-memdev v0.2.0
 	github.com/fasthttp/websocket v1.4.3 // indirect
 	github.com/fiberweb/apikey v1.0.0
 	github.com/gofiber/embed v0.0.9
@@ -12,7 +12,6 @@ require (
 	github.com/gofiber/logger v0.0.6
 	github.com/gofiber/recover v0.0.5
 	github.com/gofiber/session v1.0.0
-	github.com/gofiber/utils v0.0.6
 	github.com/gofiber/websocket v0.4.0
 	github.com/hoisie/mustache v0.0.0-20160804235033-6375acf62c69
 	github.com/jaypipes/ghw v0.6.0
