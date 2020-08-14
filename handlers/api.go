@@ -1,6 +1,9 @@
 package handlers
 
 import (
+	"fmt"
+
+	"github.com/bitcav/go-memdev"
 	"github.com/bitcav/nitr/bandwidth"
 	"github.com/bitcav/nitr/baseboard"
 	"github.com/bitcav/nitr/bios"
@@ -12,7 +15,6 @@ import (
 	"github.com/bitcav/nitr/gpu"
 	"github.com/bitcav/nitr/host"
 	"github.com/bitcav/nitr/isp"
-	"github.com/bitcav/nitr/memory"
 	"github.com/bitcav/nitr/network"
 	"github.com/bitcav/nitr/overview"
 	"github.com/bitcav/nitr/process"
@@ -103,5 +105,9 @@ func RAM(c *fiber.Ctx) {
 
 //Memory returns a JSON response of the Memory Devices
 func Memory(c *fiber.Ctx) {
-	c.JSON(memory.Info())
+	memInfo, err := memdev.Info()
+	if err != nil {
+		fmt.Println(err)
+	}
+	c.JSON(memInfo)
 }
