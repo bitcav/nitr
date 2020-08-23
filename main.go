@@ -27,7 +27,7 @@ import (
 
 	"github.com/skip2/go-qrcode"
 
-	"github.com/bitcav/nitr/host"
+	"github.com/bitcav/nitr-core/host"
 	"github.com/spf13/viper"
 	bolt "go.etcd.io/bbolt"
 )
