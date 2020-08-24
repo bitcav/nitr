@@ -1,6 +1,6 @@
 ﻿﻿
 <p align="center">
-    <img alt="Nitr" height="125" src="https://raw.githubusercontent.com/bitcav/nitr/master/app/assets/images/logo.png" style="max-width:100%;">
+    <img alt="Nitr" height="125" src="https://raw.githubusercontent.com/bitcav/nitr/master/images/logo.png" style="max-width:100%;">
     <br>
 </p>
 
@@ -10,7 +10,9 @@
 
 </div>
 
-Nitr is a **cross-platform remote monitoring tool** written in Golang for **system information gathering**, making it available through a **JSON API**. 
+# Nitr
+
+A **cross-platform remote monitoring tool** written in Golang for **system information gathering**, making it available through a **JSON API**. 
 
 The main purpose of this project is to provide highly available data of **CPU, RAM, Disks, Network, Processes** and so on, to make use of them in applications such as **web administration panels** or **mobile apps**. 
 
