@@ -2,13 +2,12 @@ package main
 
 import (
 	"crypto/tls"
-	b64 "encoding/base64"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"strings"
-	"time"
 
 	rice "github.com/GeertJohan/go.rice"
 	ndb "github.com/bitcav/nitr/database"
@@ -16,13 +15,11 @@ import (
 	"github.com/bitcav/nitr/models"
 	"github.com/bitcav/nitr/utils"
 	"github.com/fiberweb/apikey"
-	"github.com/hoisie/mustache"
 
 	"github.com/gofiber/embed"
 	"github.com/gofiber/fiber"
 	"github.com/gofiber/logger"
 	"github.com/gofiber/recover"
-	"github.com/gofiber/session"
 	"github.com/gofiber/websocket"
 
 	"github.com/skip2/go-qrcode"
@@ -91,7 +88,7 @@ func init() {
 		}
 
 		png, err := qrcode.Encode(string(qrJSON), qrcode.Medium, 256)
-		uEncQr := b64.StdEncoding.EncodeToString(png)
+		uEncQr := base64.StdEncoding.EncodeToString(png)
 		user := models.User{Username: "admin", Password: "admin", Apikey: APIKey, QrCode: uEncQr}
 		err = ndb.SetUserData("1", user)
 		utils.LogError(err)
@@ -128,8 +125,6 @@ func main() {
 		app.Use(logger.New(cfg))
 	}
 
-	sessions := session.New()
-
 	app.Use(recover.New(recover.Config{
 		Handler: func(c *fiber.Ctx, err error) {
 			c.SendString(err.Error())
@@ -162,167 +157,30 @@ func main() {
 	v1.Get("/memory", handlers.Memory)
 
 	//Login View
-	app.Get("/", func(c *fiber.Ctx) {
-		store := sessions.Get(c)
-		if store.Get("UserID") == "1" || c.Cookies("remember") == "1" {
-			c.Redirect("/panel")
-		} else {
-			content, err := rice.MustFindBox("app/views").HTTPBox().String("login.mustache")
-			utils.LogError(err)
-
-			layout, err := rice.MustFindBox("app/views/layout").HTTPBox().String("default.mustache")
-			utils.LogError(err)
-
-			c.Type("html")
-			c.Send(mustache.RenderInLayout(content, layout))
-		}
-	})
+	app.Get("/", handlers.Login)
 
 	//Login Submit
-	app.Post("/", func(c *fiber.Ctx) {
-		login := new(models.Login)
-
-		if err := c.BodyParser(login); err != nil {
-			log.Fatal(err)
-		}
-
-		nitrUser := ndb.GetUserByID("1")
-		if (login.Username == nitrUser.Username) && (login.Password == nitrUser.Password) {
-			store := sessions.Get(c)
-			defer store.Save()
-			store.Set("UserID", "1")
-			if login.Remember == "on" {
-				cookie := new(fiber.Cookie)
-				cookie.Name = "remember"
-				cookie.Value = "1"
-				cookie.Expires = time.Now().Add(48 * time.Hour)
-				c.Cookie(cookie)
-			}
-			c.Redirect("/panel")
-		} else {
-			c.Redirect("/")
-		}
-	})
+	app.Post("/", handlers.LoginSubmit)
 
 	//Auth middleware
-	app.Use(func(c *fiber.Ctx) {
-		store := sessions.Get(c)
-		if store.Get("UserID") == "1" || c.Cookies("remember") == "1" {
-			c.Next()
-		} else {
-			c.Redirect("/")
-		}
-	})
+	app.Use(handlers.Auth)
 
 	//Panel View
-	app.Get("/panel", func(c *fiber.Ctx) {
-		content, err := rice.MustFindBox("app/views").HTTPBox().String("panel.html")
-		utils.LogError(err)
-		layout, err := rice.MustFindBox("app/views/layout").HTTPBox().String("default.mustache")
-		utils.LogError(err)
-
-		nitrUser := ndb.GetUserByID("1")
-
-		bind := fiber.Map{
-			"content":  string(content),
-			"host":     host.Info().Name,
-			"os":       host.Info().OS,
-			"platform": host.Info().Platform,
-			"arch":     host.Info().Arch,
-			"apikey":   nitrUser.Apikey,
-			"qrCode":   nitrUser.QrCode,
-		}
-
-		c.Type("html")
-		c.Send(mustache.Render(layout, bind))
-		log.Println("Session started")
-	})
+	app.Get("/panel", handlers.Panel)
 
 	//Panel Logout
-	app.Post("/logout", func(c *fiber.Ctx) {
-		c.ClearCookie()
-		c.Redirect("/")
-		log.Println("Session closed")
-	})
+	app.Post("/logout", handlers.Logout)
 
 	//Generate new API Key
-	app.Post("/generate", func(c *fiber.Ctx) {
-		newAPIKey := utils.RandString(10)
-
-		port := viper.GetString("port")
-		if port == "" {
-			port = "3000"
-		}
-
-		qr := models.QR{
-			Name:        host.Info().Name,
-			Description: host.Info().Platform,
-			Port:        port,
-			Key:         newAPIKey,
-		}
-
-		qrJSON, err := json.Marshal(qr)
-		if err != nil {
-			utils.LogError(err)
-		}
-		png, err := qrcode.Encode(string(qrJSON), qrcode.Medium, 256)
-		uEncQr := b64.StdEncoding.EncodeToString(png)
-
-		nitrUser := ndb.GetUserByID("1")
-		user := models.User{Username: nitrUser.Username, Password: nitrUser.Password, Apikey: newAPIKey, QrCode: uEncQr}
-		err = ndb.SetUserData("1", user)
-		utils.LogError(err)
-
-		c.JSON(models.ApiKey{
-			Key:    newAPIKey,
-			QrCode: uEncQr,
-		})
-
-		log.Println("New Api key generated")
-	})
+	app.Post("/generate", handlers.GenerateApiKey)
 
 	//Change Password View
-	app.Get("/password", func(c *fiber.Ctx) {
-		content, err := rice.MustFindBox("app/views").HTTPBox().String("password.html")
-		utils.LogError(err)
-		layout, err := rice.MustFindBox("app/views/layout").HTTPBox().String("default.mustache")
-		utils.LogError(err)
-
-		c.Type("html")
-		c.Send(mustache.RenderInLayout(content, layout))
-	})
+	app.Get("/password", handlers.Password)
 
 	//New Password Submit
-	app.Post("/password", func(c *fiber.Ctx) {
-		password := new(models.Password)
+	app.Post("/password", handlers.PasswordSubmit)
 
-		if err := c.BodyParser(password); err != nil {
-			log.Fatal(err)
-		}
-
-		nitrUser := ndb.GetUserByID("1")
-		if password.CurrentPassword == nitrUser.Password {
-			user := models.User{Username: nitrUser.Username, Password: password.NewPassword, Apikey: nitrUser.Apikey, QrCode: nitrUser.QrCode}
-			err := ndb.SetUserData("1", user)
-			utils.LogError(err)
-			c.SendStatus(200)
-			log.Println("Password changed")
-		} else {
-			c.SendStatus(304)
-		}
-	})
-
-	app.Get("/status", websocket.New(func(c *websocket.Conn) {
-		for {
-			_, msg, err := c.ReadMessage()
-			if err != nil {
-				log.Println(err)
-				break
-			}
-			log.Printf("%s", msg)
-		}
-
-	}))
+	app.Get("/status", websocket.New(handlers.SocketReader))
 
 	//Checks if custom port was set, otherwise sets default port
 	port := viper.GetString("port")
