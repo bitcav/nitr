@@ -29,7 +29,6 @@ import (
 
 	"github.com/bitcav/nitr-core/host"
 	"github.com/spf13/viper"
-	bolt "go.etcd.io/bbolt"
 )
 
 func init() {
@@ -67,8 +66,7 @@ func init() {
 	//DB Setup
 	if _, err := os.Stat("nitr.db"); err != nil {
 		log.Println("Database created")
-		db, err := ndb.SetupDB()
-		defer db.Close()
+		err := ndb.SetupDB()
 		utils.LogError(err)
 
 		log.Println("Adding default user")
@@ -95,7 +93,7 @@ func init() {
 		png, err := qrcode.Encode(string(qrJSON), qrcode.Medium, 256)
 		uEncQr := b64.StdEncoding.EncodeToString(png)
 		user := models.User{Username: "admin", Password: "admin", Apikey: APIKey, QrCode: uEncQr}
-		err = ndb.SetUserData(db, "1", user)
+		err = ndb.SetUserData("1", user)
 		utils.LogError(err)
 	}
 }
@@ -187,12 +185,8 @@ func main() {
 		if err := c.BodyParser(login); err != nil {
 			log.Fatal(err)
 		}
-		db, err := bolt.Open("nitr.db", 0600, nil)
-		defer db.Close()
 
-		utils.LogError(err)
-
-		nitrUser := ndb.GetUserByID(db, "1")
+		nitrUser := ndb.GetUserByID("1")
 		if (login.Username == nitrUser.Username) && (login.Password == nitrUser.Password) {
 			store := sessions.Get(c)
 			defer store.Save()
@@ -227,12 +221,7 @@ func main() {
 		layout, err := rice.MustFindBox("app/views/layout").HTTPBox().String("default.mustache")
 		utils.LogError(err)
 
-		db, err := bolt.Open("nitr.db", 0600, nil)
-		defer db.Close()
-
-		utils.LogError(err)
-
-		nitrUser := ndb.GetUserByID(db, "1")
+		nitrUser := ndb.GetUserByID("1")
 
 		bind := fiber.Map{
 			"content":  string(content),
@@ -279,13 +268,9 @@ func main() {
 		png, err := qrcode.Encode(string(qrJSON), qrcode.Medium, 256)
 		uEncQr := b64.StdEncoding.EncodeToString(png)
 
-		db, err := bolt.Open("nitr.db", 0600, nil)
-		defer db.Close()
-		utils.LogError(err)
-
-		nitrUser := ndb.GetUserByID(db, "1")
+		nitrUser := ndb.GetUserByID("1")
 		user := models.User{Username: nitrUser.Username, Password: nitrUser.Password, Apikey: newAPIKey, QrCode: uEncQr}
-		err = ndb.SetUserData(db, "1", user)
+		err = ndb.SetUserData("1", user)
 		utils.LogError(err)
 
 		c.JSON(models.ApiKey{
@@ -315,16 +300,10 @@ func main() {
 			log.Fatal(err)
 		}
 
-		db, err := bolt.Open("nitr.db", 0600, nil)
-		defer db.Close()
-
-		utils.LogError(err)
-
-		nitrUser := ndb.GetUserByID(db, "1")
+		nitrUser := ndb.GetUserByID("1")
 		if password.CurrentPassword == nitrUser.Password {
-			utils.LogError(err)
 			user := models.User{Username: nitrUser.Username, Password: password.NewPassword, Apikey: nitrUser.Apikey, QrCode: nitrUser.QrCode}
-			err = ndb.SetUserData(db, "1", user)
+			err := ndb.SetUserData("1", user)
 			utils.LogError(err)
 			c.SendStatus(200)
 			log.Println("Password changed")
