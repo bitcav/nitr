@@ -4,17 +4,24 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/bitcav/nitr/models"
 	bolt "go.etcd.io/bbolt"
 )
 
+const database string = "nitr.db"
+const fileMode os.FileMode = 0600
+
 //SetupDB creates nitr database with default values
-func SetupDB() (*bolt.DB, error) {
-	db, err := bolt.Open("nitr.db", 0600, nil)
+func SetupDB() error {
+	db, err := bolt.Open(database, fileMode, nil)
+
 	if err != nil {
-		return nil, fmt.Errorf("could not open db, %v", err)
+		return fmt.Errorf("could not open db, %v", err)
 	}
+	defer db.Close()
+
 	err = db.Update(func(tx *bolt.Tx) error {
 		_, err := tx.CreateBucketIfNotExists([]byte("users"))
 		if err != nil {
@@ -23,13 +30,20 @@ func SetupDB() (*bolt.DB, error) {
 		return nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("could not set up buckets, %v", err)
+		return fmt.Errorf("could not set up buckets, %v", err)
 	}
-	return db, nil
+	return nil
 }
 
 //SetUserData adds User data to nitr database with default values
-func SetUserData(db *bolt.DB, id string, user models.User) error {
+func SetUserData(id string, user models.User) error {
+	db, err := bolt.Open(database, fileMode, nil)
+
+	if err != nil {
+		return fmt.Errorf("could not open db, %v", err)
+	}
+	defer db.Close()
+
 	userBytes, err := json.Marshal(user)
 	if err != nil {
 		return fmt.Errorf("could not marshal entry json: %v", err)
@@ -46,9 +60,17 @@ func SetUserData(db *bolt.DB, id string, user models.User) error {
 }
 
 //GetUserByID returns User by ID
-func GetUserByID(db *bolt.DB, id string) models.User {
+func GetUserByID(id string) models.User {
+	db, err := bolt.Open(database, fileMode, nil)
+
+	if err != nil {
+		fmt.Println("could not open db")
+	}
+
+	defer db.Close()
+
 	var userData models.User
-	err := db.View(func(tx *bolt.Tx) error {
+	err = db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("users"))
 		user := b.Get([]byte(id))
 		if err := json.Unmarshal(user, &userData); err != nil {
@@ -65,13 +87,6 @@ func GetUserByID(db *bolt.DB, id string) models.User {
 
 //GetApiKey returns current User Api Key
 func GetApiKey() string {
-	db, err := bolt.Open("nitr.db", 0600, nil)
-
-	if err != nil {
-		fmt.Println("could not open db")
-	}
-	nitrUser := GetUserByID(db, "1")
-	db.Close()
+	nitrUser := GetUserByID("1")
 	return nitrUser.Apikey
-
 }
