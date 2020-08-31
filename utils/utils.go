@@ -86,11 +86,14 @@ func RandString(length int) string {
 
 //StartMessage displays message on server start up
 func StartMessage(protocol, port string) {
-	fmt.Printf(`                 _  __       
-         ____   (_)/ /_ _____
-   ____ / __ \ / // __// ___/
- _____ / / / // // /_ / /    
-   __ /_/ /_//_/ \__//_/ v0.4.0    
+	fmt.Printf(`       
+     _____________
+    /            /\                 
+   /   /    /   / /   ___   (_)/ /_ ____
+  /   /    /   / /   / _ \ / // __// __/    
+ /            / /   /_//_//_/ \__//_/
+/____________/ / 	    
+\____________\/     v0.4.0
 
 Go to admin panel at %v://localhost:%v
 
