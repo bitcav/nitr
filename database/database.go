@@ -1,12 +1,17 @@
 package database
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 
+	"github.com/bitcav/nitr-core/host"
 	"github.com/bitcav/nitr/models"
+	"github.com/bitcav/nitr/utils"
+	"github.com/skip2/go-qrcode"
+	"github.com/spf13/viper"
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -89,4 +94,40 @@ func GetUserByID(id string) models.User {
 func GetApiKey() string {
 	nitrUser := GetUserByID("1")
 	return nitrUser.Apikey
+}
+
+func SetAPIData() {
+	//DB Setup
+	if _, err := os.Stat("nitr.db"); err != nil {
+		log.Println("Database created")
+		err := SetupDB()
+		utils.LogError(err)
+
+		log.Println("Adding default user")
+
+		APIKey := utils.RandString(10)
+
+		port := viper.GetString("port")
+		if port == "" {
+			port = "3000"
+		}
+
+		qr := models.QR{
+			Name:        host.Info().Name,
+			Description: host.Info().Platform,
+			Port:        port,
+			Key:         APIKey,
+		}
+
+		qrJSON, err := json.Marshal(qr)
+		if err != nil {
+			utils.LogError(err)
+		}
+
+		png, err := qrcode.Encode(string(qrJSON), qrcode.Medium, 256)
+		uEncQr := base64.StdEncoding.EncodeToString(png)
+		user := models.User{Username: "admin", Password: "admin", Apikey: APIKey, QrCode: uEncQr}
+		err = SetUserData("1", user)
+		utils.LogError(err)
+	}
 }

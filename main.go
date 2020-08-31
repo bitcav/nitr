@@ -2,17 +2,13 @@ package main
 
 import (
 	"crypto/tls"
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
-	"strings"
 
 	rice "github.com/GeertJohan/go.rice"
-	ndb "github.com/bitcav/nitr/database"
+	db "github.com/bitcav/nitr/database"
 	"github.com/bitcav/nitr/handlers"
-	"github.com/bitcav/nitr/models"
 	"github.com/bitcav/nitr/utils"
 	"github.com/fiberweb/apikey"
 
@@ -22,80 +18,16 @@ import (
 	"github.com/gofiber/recover"
 	"github.com/gofiber/websocket"
 
-	"github.com/skip2/go-qrcode"
-
-	"github.com/bitcav/nitr-core/host"
 	"github.com/spf13/viper"
 )
 
-func init() {
-	//Config file initial setup
-	if _, err := os.Stat("config.ini"); err != nil {
-		configFile, err := os.OpenFile("config.ini", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-		utils.LogError(err)
-		defer configFile.Close()
-
-		defaultConfigOpts := []string{
-			"port: 8000",
-			"open_browser_on_startup: true",
-			"save_logs: false",
-			"ssl_enabled: false",
-			"# ssl_certificate: /path/to/file.crt ",
-			"# ssl_certificate_key: /path/to/file.key",
-		}
-
-		defaultConfig := strings.Join(defaultConfigOpts, "\n")
-		_, err = configFile.WriteString(defaultConfig)
-		utils.LogError(err)
-	}
-
-	runPath, err := os.Getwd()
-	utils.LogError(err)
-
-	viper.SetConfigName("config.ini")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath(runPath)
-	err = viper.ReadInConfig()
-	if err != nil {
-		utils.LogError(err)
-	}
-
-	//DB Setup
-	if _, err := os.Stat("nitr.db"); err != nil {
-		log.Println("Database created")
-		err := ndb.SetupDB()
-		utils.LogError(err)
-
-		log.Println("Adding default user")
-
-		APIKey := utils.RandString(10)
-
-		port := viper.GetString("port")
-		if port == "" {
-			port = "3000"
-		}
-
-		qr := models.QR{
-			Name:        host.Info().Name,
-			Description: host.Info().Platform,
-			Port:        port,
-			Key:         APIKey,
-		}
-
-		qrJSON, err := json.Marshal(qr)
-		if err != nil {
-			utils.LogError(err)
-		}
-
-		png, err := qrcode.Encode(string(qrJSON), qrcode.Medium, 256)
-		uEncQr := base64.StdEncoding.EncodeToString(png)
-		user := models.User{Username: "admin", Password: "admin", Apikey: APIKey, QrCode: uEncQr}
-		err = ndb.SetUserData("1", user)
-		utils.LogError(err)
-	}
-}
-
 func main() {
+	//Set Config.ini Default Values
+	utils.ConfigFileSetup()
+
+	//Set API Server default Data
+	db.SetAPIData()
+
 	//App Config
 	app := fiber.New(&fiber.Settings{
 		DisableStartupMessage: true,
@@ -135,7 +67,7 @@ func main() {
 	//API Config
 	api := app.Group("/api")
 	v1 := api.Group("/v1")
-	v1.Use(apikey.New(apikey.Config{Key: ndb.GetApiKey()}))
+	v1.Use(apikey.New(apikey.Config{Key: db.GetApiKey()}))
 
 	//nitr API Endpoints
 	v1.Get("/", handlers.Overview)

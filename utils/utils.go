@@ -4,10 +4,46 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"os"
 	"os/exec"
 	"runtime"
+	"strings"
 	"time"
+
+	"github.com/spf13/viper"
 )
+
+func ConfigFileSetup() {
+	if _, err := os.Stat("config.ini"); err != nil {
+		configFile, err := os.OpenFile("config.ini", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		LogError(err)
+		defer configFile.Close()
+
+		defaultConfigOpts := []string{
+			"port: 8000",
+			"open_browser_on_startup: true",
+			"save_logs: false",
+			"ssl_enabled: false",
+			"# ssl_certificate: /path/to/file.crt ",
+			"# ssl_certificate_key: /path/to/file.key",
+		}
+
+		defaultConfig := strings.Join(defaultConfigOpts, "\n")
+		_, err = configFile.WriteString(defaultConfig)
+		LogError(err)
+	}
+
+	runPath, err := os.Getwd()
+	LogError(err)
+
+	viper.SetConfigName("config.ini")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath(runPath)
+	err = viper.ReadInConfig()
+	if err != nil {
+		LogError(err)
+	}
+}
 
 //OpenBrowser opens default web browser in specific domain
 func OpenBrowser(domain, port string) {
