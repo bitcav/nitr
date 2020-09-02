@@ -22,10 +22,10 @@ func Login(c *fiber.Ctx) {
 	if store.Get("UserID") == "1" || c.Cookies("remember") == "1" {
 		c.Redirect("/panel")
 	} else {
-		content, err := rice.MustFindBox("app/views").HTTPBox().String("login.mustache")
+		content, err := rice.MustFindBox("../app/views").HTTPBox().String("login.mustache")
 		utils.LogError(err)
 
-		layout, err := rice.MustFindBox("app/views/layout").HTTPBox().String("default.mustache")
+		layout, err := rice.MustFindBox("../app/views/layout").HTTPBox().String("default.mustache")
 		utils.LogError(err)
 
 		c.Type("html")
@@ -52,9 +52,9 @@ func LoginSubmit(c *fiber.Ctx) {
 }
 
 func Panel(c *fiber.Ctx) {
-	content, err := rice.MustFindBox("app/views").HTTPBox().String("panel.html")
+	content, err := rice.MustFindBox("../app/views").HTTPBox().String("panel.html")
 	utils.LogError(err)
-	layout, err := rice.MustFindBox("app/views/layout").HTTPBox().String("default.mustache")
+	layout, err := rice.MustFindBox("../app/views/layout").HTTPBox().String("default.mustache")
 	utils.LogError(err)
 
 	c.Type("html")
@@ -118,9 +118,9 @@ func GenerateApiKey(c *fiber.Ctx) {
 }
 
 func Password(c *fiber.Ctx) {
-	content, err := rice.MustFindBox("app/views").HTTPBox().String("password.html")
+	content, err := rice.MustFindBox("../app/views").HTTPBox().String("password.html")
 	utils.LogError(err)
-	layout, err := rice.MustFindBox("app/views/layout").HTTPBox().String("default.mustache")
+	layout, err := rice.MustFindBox("../app/views/layout").HTTPBox().String("default.mustache")
 	utils.LogError(err)
 
 	c.Type("html")
