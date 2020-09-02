@@ -102,6 +102,10 @@ Access with default **username** and **password**: **admin admin**
 
 ![preview](https://raw.githubusercontent.com/bitcav/nitr/master/images/panel-web.png)
 
+## QR Code
+
+The QR Code contains the exact same information displayed in the Host Info Panel formatted as JSON.
+
 ## :pick: Usage
 
 Call [the API endpoints](#satellite-available-endpoints) with ***?key=yourapikey*** in the URL or pass the ***x-api-key*** header with your api key as value and you will get success response.
