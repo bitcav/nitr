@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"log"
 	"time"
@@ -15,8 +14,6 @@ import (
 	"github.com/gofiber/session"
 	"github.com/gofiber/websocket"
 	"github.com/hoisie/mustache"
-	"github.com/skip2/go-qrcode"
-	"github.com/spf13/viper"
 )
 
 var sessions = session.New()
@@ -68,21 +65,29 @@ func Panel(c *fiber.Ctx) {
 	layout, err := rice.MustFindBox("../app/views/layout").HTTPBox().String("default.mustache")
 	utils.LogError(err)
 
-	nitrUser := db.GetUserByID("1")
+	c.Type("html")
+	c.Send(mustache.RenderInLayout(content, layout))
 
-	bind := fiber.Map{
-		"content":  string(content),
-		"host":     host.Info().Name,
-		"os":       host.Info().OS,
-		"platform": host.Info().Platform,
-		"arch":     host.Info().Arch,
-		"apikey":   nitrUser.Apikey,
-		"qrCode":   nitrUser.QrCode,
+	log.Println("Session started")
+}
+
+func PanelContent(c *fiber.Ctx) {
+	hostInfo := models.HostInfo{
+		Name:        host.Info().Name,
+		Description: host.Info().Platform + "/" + host.Info().Arch,
+		IP:          utils.GetLocalIP(),
+		Port:        utils.GetLocalPort(),
+		Key:         db.GetApiKey(),
 	}
 
-	c.Type("html")
-	c.Send(mustache.Render(layout, bind))
-	log.Println("Session started")
+	hostInfoJSON, err := json.Marshal(hostInfo)
+	if err != nil {
+		utils.LogError(err)
+	}
+
+	hostInfo.QrCode = string(hostInfoJSON)
+
+	c.JSON(hostInfo)
 }
 
 func Logout(c *fiber.Ctx) {
@@ -94,33 +99,27 @@ func Logout(c *fiber.Ctx) {
 func GenerateApiKey(c *fiber.Ctx) {
 	newAPIKey := utils.RandString(10)
 
-	port := viper.GetString("port")
-	if port == "" {
-		port = "3000"
-	}
-
-	qr := models.QR{
+	hostInfo := models.HostInfo{
 		Name:        host.Info().Name,
-		Description: host.Info().Platform,
-		Port:        port,
+		Description: host.Info().Platform + "/" + host.Info().Arch,
+		IP:          utils.GetLocalIP(),
+		Port:        utils.GetLocalPort(),
 		Key:         newAPIKey,
 	}
 
-	qrJSON, err := json.Marshal(qr)
+	hostInfoJSON, err := json.Marshal(hostInfo)
 	if err != nil {
 		utils.LogError(err)
 	}
-	png, err := qrcode.Encode(string(qrJSON), qrcode.Medium, 256)
-	uEncQr := base64.StdEncoding.EncodeToString(png)
 
 	nitrUser := db.GetUserByID("1")
-	user := models.User{Username: nitrUser.Username, Password: nitrUser.Password, Apikey: newAPIKey, QrCode: uEncQr}
+	user := models.User{Username: nitrUser.Username, Password: nitrUser.Password, Apikey: newAPIKey}
 	err = db.SetUserData("1", user)
 	utils.LogError(err)
 
 	c.JSON(models.ApiKey{
 		Key:    newAPIKey,
-		QrCode: uEncQr,
+		QrCode: string(hostInfoJSON),
 	})
 
 	log.Println("New Api key generated")
@@ -146,7 +145,7 @@ func PasswordSubmit(c *fiber.Ctx) {
 	nitrUser := db.GetUserByID("1")
 
 	if password.CurrentPassword == nitrUser.Password {
-		user := models.User{Username: nitrUser.Username, Password: password.NewPassword, Apikey: nitrUser.Apikey, QrCode: nitrUser.QrCode}
+		user := models.User{Username: nitrUser.Username, Password: password.NewPassword, Apikey: nitrUser.Apikey}
 		err := db.SetUserData("1", user)
 		utils.LogError(err)
 		c.SendStatus(200)

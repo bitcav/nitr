@@ -2,7 +2,6 @@
   <div class="uk-navbar-left">
     <a class="uk-navbar-item uk-logo" id="logo" href="/">
     </a>
-
   </div>
   <div class="uk-navbar-right">
     <a href="/password" class="uk-button uk-button-secondary uk-margin-right">Change Password</a>
@@ -11,7 +10,6 @@
     </form>
   </div>
 </nav>
-
 <div class="uk-container uk-container-small uk-section">
   <div>
     <img alt="nitr logo" src="/assets/images/logo.png" width="160" class="uk-margin-small-bottom">
@@ -22,7 +20,7 @@
     </div>
     <div class="server uk-width-3-5">
       <form class="uk-form-horizontal uk-margin-large">
-        <h3>Host Info</h3>
+        <h4>Host Info</h4>
         <div class="uk-margin">
           <label class="uk-form-label" for="hostname">NAME:</label>
           <div class="uk-form-controls">
@@ -36,16 +34,28 @@
           </div>
         </div>
         <div class="uk-margin">
+          <label class="uk-form-label" for="form-stacked-select">IP ADDRESS:</label>
+          <div class="uk-form-controls">
+            <input class="uk-input" id="ip" type="text" placeholder="" readonly=readonly>
+          </div>
+        </div>
+        <div class="uk-margin">
+          <label class="uk-form-label" for="form-stacked-select">PORT:</label>
+          <div class="uk-form-controls">
+            <input class="uk-input" id="port" type="text" placeholder="" readonly=readonly>
+          </div>
+        </div>
+        <div class="uk-margin">
           <label class="uk-form-label" for="key">API KEY:</label>
           <div class="uk-form-controls">
-            <div class="uk-inline">
+            <div class="uk-inline uk-width-1-1">
               <button type="button" data-clipboard-target="#key" class="uk-form-icon uk-form-icon-flip copy"
                 uk-icon="icon: copy" uk-tooltip="title: Copy;"></button>
               <input class="uk-input" id="key" type="text" placeholder="" readonly=readonly>
             </div>
           </div>
         </div>
-        <button id="genBtn" class="uk-button uk-button-primary uk-button">
+        <button id="genBtn" class="uk-button uk-button-danger uk-button">
           REGENERATE
           API KEY
         </button>
@@ -53,7 +63,7 @@
     </div>
     <div class="qrCode uk-width-2-5">
       <div>
-        <img id="qr" src="" class="uk-align-center" alt="qr" uk-img>
+        <div id="qrcode" class="uk-align-center uk-margin-top uk-margin-left"></div>
       </div>
     </div>
   </div>

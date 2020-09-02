@@ -1,8 +1,6 @@
 package main
 
 import (
-	"crypto/tls"
-	"fmt"
 	"log"
 	"os"
 
@@ -100,6 +98,9 @@ func main() {
 	//Panel View
 	app.Get("/panel", handlers.Panel)
 
+	//Panel JSON Data
+	app.Get("/content", handlers.PanelContent)
+
 	//Panel Logout
 	app.Post("/logout", handlers.Logout)
 
@@ -114,54 +115,6 @@ func main() {
 
 	app.Get("/status", websocket.New(handlers.SocketReader))
 
-	//Checks if custom port was set, otherwise sets default port
-	port := viper.GetString("port")
-	if port == "" {
-		port = "3000"
-	}
-
 	//Server startup
-	sslEnabled := viper.GetBool("ssl_enabled")
-	if sslEnabled {
-		cert := viper.GetString("ssl_certificate")
-		key := viper.GetString("ssl_certificate_key")
-
-		cer, err := tls.LoadX509KeyPair(cert, key)
-		if err != nil {
-			log.Println("Invalid ssl certificate")
-			utils.LogError(err)
-		}
-
-		config := &tls.Config{Certificates: []tls.Certificate{cer}}
-		utils.StartMessage("https", port)
-
-		openBrowser := viper.GetBool("open_browser_on_startup")
-		if openBrowser {
-			utils.OpenBrowser("https://localhost", port)
-		}
-
-		log.Println("Starting server")
-
-		err = app.Listen(port, config)
-		if err != nil {
-			fmt.Println(err, "\nCheck settings at config.ini file")
-		}
-		utils.LogError(err)
-
-	} else {
-		utils.StartMessage("http", port)
-		openBrowser := viper.GetBool("open_browser_on_startup")
-		if openBrowser {
-			utils.OpenBrowser("http://localhost", port)
-		}
-
-		log.Println("Starting server")
-
-		err := app.Listen(port)
-		if err != nil {
-			fmt.Println(err, "\nCheck settings at config.ini file")
-		}
-		utils.LogError(err)
-	}
-
+	utils.StartServer(app)
 }

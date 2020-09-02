@@ -1,4 +1,30 @@
+var qrcode;
+
+function jsUcfirst(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
 $(document).ready(function () {
+  fetch("/content")
+    .then(function (response) {
+      return response.json()
+    })
+    .then(function (data) {
+      $("#hostname").val(data.name)
+      $("#platform").val(jsUcfirst(data.description));
+      $("#ip").val(data.ip);
+      $("#port").val(data.port);
+      $("#key").val(data.key);
+      qrcode = new QRCode("qrcode", {
+        text: data.qrCode,
+        width: 256,
+        height: 256,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H,
+      });
+    });
+
   var clipboard = new ClipboardJS(".copy");
 
   clipboard.on("success", function (e) {
@@ -21,11 +47,11 @@ $(document).ready(function () {
           return response.json();
         })
         .then(function (data) {
+          console.log(data)
           $("#key").val(data.key);
-          $("#qr")
-            .removeAttr("src")
-            .attr("src", "data:image/png;base64, " + data.qrCode)
-            .show();
+          $("#qrcode").empty();
+          new QRCode(document.getElementById("qrcode"), data.qrCode);
+
           UIkit.notification({
             message: "Restart the agent service to apply these changes.",
             status: "warning",
@@ -48,7 +74,6 @@ $(document).ready(function () {
   $("#mainOverlay").hide()
   const url = window.location.href
   const arr = url.split("/");
-  console.log(arr)
   const server = arr[2]
 
   let attempts = 0

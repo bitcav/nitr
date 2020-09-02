@@ -17,16 +17,17 @@ type ApiKey struct {
 	QrCode string `json:"qrCode"`
 }
 
-type QR struct {
+type HostInfo struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
+	IP          string `json:"ip"`
 	Port        string `json:"port"`
 	Key         string `json:"key"`
+	QrCode      string `json:"qrCode,omitempty"`
 }
 
 type User struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 	Apikey   string `json:"apikey"`
-	QrCode   string `json:"qrCode"`
 }
