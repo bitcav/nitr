@@ -4,6 +4,9 @@ go:
 before_install:
 - go get github.com/josephspurrier/goversioninfo/cmd/goversioninfo
 - go get github.com/mitchellh/gox
+- go get github.com/GeertJohan/go.rice
+- go get github.com/GeertJohan/go.rice/rice
+
 install:
 - 
 script:
@@ -11,8 +14,8 @@ script:
 - diff -u <(echo -n) <(gofmt -d .)
 - gox -os="linux" -arch="386 amd64"
 - goversioninfo -icon=./images/app.ico
-- env GOOS=windows GOARCH=amd64 go build -o nitr_windows_amd64.exe
-- env GOOS=windows GOARCH=386 go build -o nitr_windows_386.exe
+- env GOOS=windows GOARCH=amd64 rice embed-go && go build -o nitr_windows_amd64.exe
+- env GOOS=windows GOARCH=386 rice embed-go && go build -o nitr_windows_386.exe
 
 deploy:
   edge: true
