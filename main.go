@@ -8,7 +8,6 @@ import (
 	db "github.com/bitcav/nitr/database"
 	"github.com/bitcav/nitr/handlers"
 	"github.com/bitcav/nitr/utils"
-	"github.com/fiberweb/apikey"
 
 	"github.com/gofiber/embed"
 	"github.com/gofiber/fiber"
@@ -65,7 +64,9 @@ func main() {
 	//API Config
 	api := app.Group("/api")
 	v1 := api.Group("/v1")
-	v1.Use(apikey.New(apikey.Config{Key: db.GetApiKey()}))
+
+	//API Key auth middleware
+	v1.Use(handlers.AuthAPI)
 
 	//nitr API Endpoints
 	v1.Get("/", handlers.Overview)

@@ -52,12 +52,6 @@ $(document).ready(function () {
           $("#qrcode").empty();
           new QRCode(document.getElementById("qrcode"), data.qrCode);
 
-          UIkit.notification({
-            message: "Restart the agent service to apply these changes.",
-            status: "warning",
-            pos: "bottom-center",
-            timeout: 5000,
-          });
         });
       var btn = $("#genBtn");
       btn.prop("disabled", true).attr("uk-spinner", true);

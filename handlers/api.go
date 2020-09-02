@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/bitcav/go-memdev"
 	"github.com/bitcav/nitr-core/bandwidth"
@@ -20,8 +21,17 @@ import (
 	"github.com/bitcav/nitr-core/process"
 	"github.com/bitcav/nitr-core/product"
 	"github.com/bitcav/nitr-core/ram"
+	db "github.com/bitcav/nitr/database"
 	"github.com/gofiber/fiber"
 )
+
+func AuthAPI(c *fiber.Ctx) {
+	key := c.Get("x-api-key")
+	if db.GetApiKey() == key {
+		c.Next()
+	}
+	c.SendStatus(http.StatusUnauthorized)
+}
 
 //Bandwidth returns a JSON response of the Bandwidth information
 func Bandwidth(c *fiber.Ctx) {
