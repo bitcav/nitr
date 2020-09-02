@@ -1,7 +1,9 @@
 package utils
 
 import (
+	"crypto/sha256"
 	"crypto/tls"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"math/rand"
@@ -96,7 +98,7 @@ func StartMessage(protocol, port string) {
   /   /    /   / /   / _ \ / // __// __/    
  /            / /   /_//_//_/ \__//_/
 /____________/ / 	    
-\____________\/     v0.5.2
+\____________\/     v0.6.0
 
 Go to admin panel at %v://localhost:%v
 
@@ -176,4 +178,12 @@ func StartServer(app *fiber.App) {
 		}
 		LogError(err)
 	}
+}
+
+func PasswordHash(password string) string {
+	h := sha256.New()
+	h.Write([]byte(password))
+	sha1_hash := hex.EncodeToString(h.Sum(nil))
+
+	return sha1_hash
 }
