@@ -30,6 +30,7 @@ Table of contents
    * [Running](#rocket-running)
    * [Docker](#whale-docker)
    * [Web Panel](#earth_americas-web-panel)
+   * [QR Code](#qr-code)
    * [Usage](#pick-usage)
    	   * [Examples](#examples)
    * [Api v1](#api-v1)
