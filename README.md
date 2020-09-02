@@ -30,6 +30,7 @@ Table of contents
    * [Running](#rocket-running)
    * [Docker](#whale-docker)
    * [Web Panel](#earth_americas-web-panel)
+   * [QR Code](#qr-code)
    * [Usage](#pick-usage)
    	   * [Examples](#examples)
    * [Api v1](#api-v1)
@@ -101,6 +102,10 @@ Go to [http://localhost:8000](http://localhost:8000) in your web browser
 Access with default **username** and **password**: **admin admin**
 
 ![preview](https://raw.githubusercontent.com/bitcav/nitr/master/images/panel-web.png)
+
+## QR Code
+
+The QR Code contains the exact same information displayed in the Host Info Panel formatted as JSON.
 
 ## :pick: Usage
 
