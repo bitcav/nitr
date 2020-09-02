@@ -17,8 +17,8 @@ $(document).ready(function () {
       $("#key").val(data.key);
       qrcode = new QRCode("qrcode", {
         text: data.qrCode,
-        width: 256,
-        height: 256,
+        width: 240,
+        height: 240,
         colorDark: "#000000",
         colorLight: "#ffffff",
         correctLevel: QRCode.CorrectLevel.H,
@@ -50,7 +50,14 @@ $(document).ready(function () {
           console.log(data)
           $("#key").val(data.key);
           $("#qrcode").empty();
-          new QRCode(document.getElementById("qrcode"), data.qrCode);
+                qrcode = new QRCode("qrcode", {
+                  text: data.qrCode,
+                  width: 240,
+                  height: 240,
+                  colorDark: "#000000",
+                  colorLight: "#ffffff",
+                  correctLevel: QRCode.CorrectLevel.H,
+                });
 
         });
       var btn = $("#genBtn");
