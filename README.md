@@ -141,17 +141,6 @@ curl -X Get 'http://localhost:8000/api/v1/cpu' -H 'x-api-key:yourapikeyhere'
 }
 ```
 
-- Requesting Host Information.
-
->In the web browser.
-
-```
-http://localhost:8000/api/v1/host?key=yourapikeyhere
-```
-
-![preview](https://raw.githubusercontent.com/bitcav/nitr/master/images/browser-api.png)
-
-
 ## API v1
 
 ### Root Endpoint

@@ -96,7 +96,7 @@ func StartMessage(protocol, port string) {
   /   /    /   / /   / _ \ / // __// __/    
  /            / /   /_//_//_/ \__//_/
 /____________/ / 	    
-\____________\/     v0.5.0
+\____________\/     v0.5.2
 
 Go to admin panel at %v://localhost:%v
 
