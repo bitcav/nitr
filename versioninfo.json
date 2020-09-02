@@ -16,14 +16,14 @@
     "StringFileInfo": {
         "CompanyName": "bitcav",
         "FileDescription": "Nitr is a cross-platform remote monitoring tool written in Golang for system information gathering, making it available through a JSON API.",
-        "FileVersion": "v0.5.2.0",
+        "FileVersion": "v0.6.0.0",
         "InternalName": "nitr.exe",
         "LegalCopyright": "Copyright (c) 2020 Bit Cavalier",
         "LegalTrademarks": "",
         "OriginalFilename": "nitr.exe",
         "PrivateBuild": "",
         "ProductName": "nitr",
-        "ProductVersion": "v0.5.2.0",
+        "ProductVersion": "v0.6.0.0",
         "SpecialBuild": ""
     },
     "VarFileInfo": {

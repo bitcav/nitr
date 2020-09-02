@@ -20,5 +20,5 @@ require (
 	github.com/skip2/go-qrcode v0.0.0-20191027152451-9434209cb086
 	github.com/spf13/viper v1.7.0
 	go.etcd.io/bbolt v1.3.4
-	go.etcd.io/etcd v3.3.25+incompatible // indirect
+	go.etcd.io/etcd v3.3.25+incompatible
 )
