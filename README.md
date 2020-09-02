@@ -32,7 +32,7 @@ Table of contents
    * [Web Panel](#earth_americas-web-panel)
    * [QR Code](#qr-code)
    * [Usage](#pick-usage)
-   	   * [Examples](#examples)
+   	   * [Example](#example)
    * [Api v1](#api-v1)
 	   * [Available Endpoints](#satellite-available-endpoints)
 	   * [JSON Data References](#mag-json-data-references)
@@ -111,7 +111,7 @@ The QR Code contains the exact same information displayed in the Host Info Panel
 
 Call [the API endpoints](#satellite-available-endpoints) with ***?key=yourapikey*** in the URL or pass the ***x-api-key*** header with your api key as value and you will get success response.
 
-### Examples:
+### Example:
 
 - Requesting CPU Information.
 >In the terminal.
