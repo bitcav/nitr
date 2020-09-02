@@ -99,7 +99,7 @@ Go to [http://localhost:8000](http://localhost:8000) in your web browser
 
 ![preview](https://raw.githubusercontent.com/bitcav/nitr/master/images/login-web.png)
 
-Access with default **username** and **password**: **admin admin**
+Access with default **password**: **123456**
 
 ![preview](https://raw.githubusercontent.com/bitcav/nitr/master/images/panel-web.png)
 
