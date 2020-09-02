@@ -109,7 +109,7 @@ func SetAPIData() {
 			port = "3000"
 		}
 
-		user := models.User{Username: "admin", Password: "admin", Apikey: APIKey}
+		user := models.User{Password: utils.PasswordHash("123456"), Apikey: APIKey}
 		err = SetUserData("1", user)
 		utils.LogError(err)
 	}

@@ -1,9 +1,7 @@
 package models
 
 type Login struct {
-	Username string `form:"username"`
 	Password string `form:"password"`
-	Remember string `form:"remember"`
 }
 
 type Password struct {
@@ -27,7 +25,6 @@ type HostInfo struct {
 }
 
 type User struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Apikey   string `json:"apikey"`
+	Password string
+	Apikey   string
 }

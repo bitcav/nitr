@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"log"
-	"time"
 
 	rice "github.com/GeertJohan/go.rice"
 	"github.com/bitcav/nitr-core/host"
@@ -42,17 +41,10 @@ func LoginSubmit(c *fiber.Ctx) {
 	}
 
 	nitrUser := db.GetUserByID("1")
-	if (login.Username == nitrUser.Username) && (login.Password == nitrUser.Password) {
+	if utils.PasswordHash(login.Password) == nitrUser.Password {
 		store := sessions.Get(c)
 		defer store.Save()
 		store.Set("UserID", "1")
-		if login.Remember == "on" {
-			cookie := new(fiber.Cookie)
-			cookie.Name = "remember"
-			cookie.Value = "1"
-			cookie.Expires = time.Now().Add(48 * time.Hour)
-			c.Cookie(cookie)
-		}
 		c.Redirect("/panel")
 	} else {
 		c.Redirect("/")
@@ -113,7 +105,7 @@ func GenerateApiKey(c *fiber.Ctx) {
 	}
 
 	nitrUser := db.GetUserByID("1")
-	user := models.User{Username: nitrUser.Username, Password: nitrUser.Password, Apikey: newAPIKey}
+	user := models.User{Password: nitrUser.Password, Apikey: newAPIKey}
 	err = db.SetUserData("1", user)
 	utils.LogError(err)
 
@@ -144,8 +136,8 @@ func PasswordSubmit(c *fiber.Ctx) {
 
 	nitrUser := db.GetUserByID("1")
 
-	if password.CurrentPassword == nitrUser.Password {
-		user := models.User{Username: nitrUser.Username, Password: password.NewPassword, Apikey: nitrUser.Apikey}
+	if utils.PasswordHash(password.CurrentPassword) == nitrUser.Password {
+		user := models.User{Password: utils.PasswordHash(password.NewPassword), Apikey: nitrUser.Apikey}
 		err := db.SetUserData("1", user)
 		utils.LogError(err)
 		c.SendStatus(200)
