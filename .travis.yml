@@ -10,7 +10,6 @@ install:
 - 
 script:
 - go get -t -v ./...
-- diff -u <(echo -n) <(gofmt -d .)
 - gox -os="linux" -arch="386 amd64"
 - goversioninfo -icon=./images/app.ico
 - env GOOS=windows GOARCH=amd64 go build -o nitr_windows_amd64.exe
