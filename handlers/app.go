@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"log"
 
-	rice "github.com/GeertJohan/go.rice"
 	"github.com/bitcav/nitr-core/host"
 	db "github.com/bitcav/nitr/database"
 	"github.com/bitcav/nitr/models"
 	"github.com/bitcav/nitr/utils"
+	"github.com/gobuffalo/packr/v2"
 	"github.com/gofiber/fiber"
 	"github.com/gofiber/session"
 	"github.com/gofiber/websocket"
@@ -16,20 +16,21 @@ import (
 )
 
 var sessions = session.New()
+var viewsBox = packr.New("views", "../app/views")
 
 func Login(c *fiber.Ctx) {
 	store := sessions.Get(c)
 	if store.Get("UserID") == "1" || c.Cookies("remember") == "1" {
 		c.Redirect("/panel")
 	} else {
-		content, err := rice.MustFindBox("../app/views").HTTPBox().String("login.mustache")
+		loginView, err := viewsBox.FindString("login.mustache")
 		utils.LogError(err)
 
-		layout, err := rice.MustFindBox("../app/views/layout").HTTPBox().String("default.mustache")
+		layoutView, err := viewsBox.FindString("layout/default.mustache")
 		utils.LogError(err)
 
 		c.Type("html")
-		c.Send(mustache.RenderInLayout(content, layout))
+		c.Send(mustache.RenderInLayout(loginView, layoutView))
 	}
 }
 
@@ -52,13 +53,14 @@ func LoginSubmit(c *fiber.Ctx) {
 }
 
 func Panel(c *fiber.Ctx) {
-	content, err := rice.MustFindBox("../app/views").HTTPBox().String("panel.html")
+	panelView, err := viewsBox.FindString("panel.html")
 	utils.LogError(err)
-	layout, err := rice.MustFindBox("../app/views/layout").HTTPBox().String("default.mustache")
+
+	layoutView, err := viewsBox.FindString("layout/default.mustache")
 	utils.LogError(err)
 
 	c.Type("html")
-	c.Send(mustache.RenderInLayout(content, layout))
+	c.Send(mustache.RenderInLayout(panelView, layoutView))
 
 	log.Println("Session started")
 }
@@ -80,12 +82,6 @@ func PanelContent(c *fiber.Ctx) {
 	hostInfo.QrCode = string(hostInfoJSON)
 
 	c.JSON(hostInfo)
-}
-
-func Logout(c *fiber.Ctx) {
-	c.ClearCookie()
-	c.Redirect("/")
-	log.Println("Session closed")
 }
 
 func GenerateApiKey(c *fiber.Ctx) {
@@ -118,13 +114,14 @@ func GenerateApiKey(c *fiber.Ctx) {
 }
 
 func Password(c *fiber.Ctx) {
-	content, err := rice.MustFindBox("../app/views").HTTPBox().String("password.html")
+	passwordView, err := viewsBox.FindString("password.html")
 	utils.LogError(err)
-	layout, err := rice.MustFindBox("../app/views/layout").HTTPBox().String("default.mustache")
+
+	layoutView, err := viewsBox.FindString("layout/default.mustache")
 	utils.LogError(err)
 
 	c.Type("html")
-	c.Send(mustache.RenderInLayout(content, layout))
+	c.Send(mustache.RenderInLayout(passwordView, layoutView))
 }
 
 func PasswordSubmit(c *fiber.Ctx) {
@@ -167,4 +164,10 @@ func Auth(c *fiber.Ctx) {
 	} else {
 		c.Redirect("/")
 	}
+}
+
+func Logout(c *fiber.Ctx) {
+	c.ClearCookie()
+	c.Redirect("/")
+	log.Println("Session closed")
 }
