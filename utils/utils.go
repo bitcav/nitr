@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber"
+	"github.com/gofiber/logger"
 	"github.com/spf13/viper"
 )
 
@@ -98,11 +99,33 @@ func StartMessage(protocol, port string) {
   /   /    /   / /   / _ \ / // __// __/    
  /            / /   /_//_//_/ \__//_/
 /____________/ / 	    
-\____________\/     v0.6.0
+\____________\/     v0.6.3
 
 Go to admin panel at %v://localhost:%v
 
 `, protocol, port)
+}
+
+func Logs(app *fiber.App) {
+	saveLogs := viper.GetBool("save_logs")
+	if saveLogs {
+		logFile, err := os.OpenFile("nitr.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		if err != nil {
+			log.Fatalf("error opening file: %v", err)
+		}
+		log.SetOutput(logFile)
+
+		cfg := logger.Config{
+			Output:     logFile,
+			TimeFormat: "2006/01/02 15:04:05",
+			Format:     "${time} - ${method} ${path} - ${ip}\n",
+		}
+
+		app.Use(logger.New(cfg))
+		//logFile.Close()
+
+	}
+
 }
 
 func LogError(e error) {

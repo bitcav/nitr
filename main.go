@@ -1,9 +1,6 @@
 package main
 
 import (
-	"log"
-	"os"
-
 	rice "github.com/GeertJohan/go.rice"
 	db "github.com/bitcav/nitr/database"
 	"github.com/bitcav/nitr/handlers"
@@ -11,11 +8,8 @@ import (
 
 	"github.com/gofiber/embed"
 	"github.com/gofiber/fiber"
-	"github.com/gofiber/logger"
 	"github.com/gofiber/recover"
 	"github.com/gofiber/websocket"
-
-	"github.com/spf13/viper"
 )
 
 func main() {
@@ -36,29 +30,10 @@ func main() {
 	}))
 
 	//Checks if logs saving is activated
-	saveLogs := viper.GetBool("save_logs")
-	if saveLogs {
-		logFile, err := os.OpenFile("nitr.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-		if err != nil {
-			log.Fatalf("error opening file: %v", err)
-		}
-		defer logFile.Close()
-		log.SetOutput(logFile)
-
-		cfg := logger.Config{
-			Output:     logFile,
-			TimeFormat: "2006/01/02 15:04:05",
-			Format:     "${time} - ${method} ${path} - ${ip}\n",
-		}
-
-		app.Use(logger.New(cfg))
-	}
+	utils.Logs(app)
 
 	app.Use(recover.New(recover.Config{
-		Handler: func(c *fiber.Ctx, err error) {
-			c.SendString(err.Error())
-			c.SendStatus(500)
-		},
+		Handler: handlers.Recover,
 	}))
 
 	//API Config

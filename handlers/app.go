@@ -172,3 +172,8 @@ func Logout(c *fiber.Ctx) {
 	c.Redirect("/")
 	log.Println("Session closed")
 }
+
+func Recover(c *fiber.Ctx, err error) {
+	c.SendString(err.Error())
+	c.SendStatus(500)
+}
