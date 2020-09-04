@@ -88,6 +88,7 @@ func main() {
 	v1.Get("/memory", handlers.Memory)
 
 	//Login View
+	handlers.ViewsBox = rice.MustFindBox("app/views")
 	app.Get("/", handlers.Login)
 
 	//Login Submit

@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"log"
 
+	rice "github.com/GeertJohan/go.rice"
 	"github.com/bitcav/nitr-core/host"
 	db "github.com/bitcav/nitr/database"
 	"github.com/bitcav/nitr/models"
 	"github.com/bitcav/nitr/utils"
-	"github.com/gobuffalo/packr/v2"
 	"github.com/gofiber/fiber"
 	"github.com/gofiber/session"
 	"github.com/gofiber/websocket"
@@ -16,17 +16,18 @@ import (
 )
 
 var sessions = session.New()
-var viewsBox = packr.New("views", "../app/views")
+
+var ViewsBox *rice.Box
 
 func Login(c *fiber.Ctx) {
 	store := sessions.Get(c)
 	if store.Get("UserID") == "1" || c.Cookies("remember") == "1" {
 		c.Redirect("/panel")
 	} else {
-		loginView, err := viewsBox.FindString("login.mustache")
+		loginView, err := ViewsBox.String("login.mustache")
 		utils.LogError(err)
 
-		layoutView, err := viewsBox.FindString("layout/default.mustache")
+		layoutView, err := ViewsBox.String("layout/default.mustache")
 		utils.LogError(err)
 
 		c.Type("html")
@@ -53,10 +54,10 @@ func LoginSubmit(c *fiber.Ctx) {
 }
 
 func Panel(c *fiber.Ctx) {
-	panelView, err := viewsBox.FindString("panel.html")
+	panelView, err := ViewsBox.String("panel.html")
 	utils.LogError(err)
 
-	layoutView, err := viewsBox.FindString("layout/default.mustache")
+	layoutView, err := ViewsBox.String("layout/default.mustache")
 	utils.LogError(err)
 
 	c.Type("html")
@@ -114,10 +115,10 @@ func GenerateApiKey(c *fiber.Ctx) {
 }
 
 func Password(c *fiber.Ctx) {
-	passwordView, err := viewsBox.FindString("password.html")
+	passwordView, err := ViewsBox.String("password.html")
 	utils.LogError(err)
 
-	layoutView, err := viewsBox.FindString("layout/default.mustache")
+	layoutView, err := ViewsBox.String("layout/default.mustache")
 	utils.LogError(err)
 
 	c.Type("html")
