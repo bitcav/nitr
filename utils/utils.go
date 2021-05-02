@@ -71,8 +71,8 @@ func OpenBrowser(domain, port string) {
 	}
 }
 
-const charset = "abcdefghijklmnopqrstuvwxyz" +
-	"0123456789"
+const charset = "abcdefghijkmnpqrstuvwxyz" +
+	"123456789"
 
 var seededRand *rand.Rand = rand.New(
 	rand.NewSource(time.Now().UnixNano()))
@@ -99,7 +99,7 @@ func StartMessage(protocol, port string) {
   /   /    /   / /   / _ \ / // __// __/    
  /            / /   /_//_//_/ \__//_/
 /____________/ / 	    
-\____________\/     v0.6.3
+\____________\/     v0.6.4
 
 Go to admin panel at %v://localhost:%v
 
@@ -113,6 +113,8 @@ func Logs(app *fiber.App) {
 		if err != nil {
 			log.Fatalf("error opening file: %v", err)
 		}
+		//defer logFile.Close()
+
 		log.SetOutput(logFile)
 
 		cfg := logger.Config{
@@ -122,8 +124,6 @@ func Logs(app *fiber.App) {
 		}
 
 		app.Use(logger.New(cfg))
-		//logFile.Close()
-
 	}
 
 }
@@ -135,18 +135,15 @@ func LogError(e error) {
 }
 
 func GetLocalIP() string {
-	addrs, err := net.InterfaceAddrs()
+	conn, err := net.Dial("udp", "8.8.8.8:80")
 	if err != nil {
-		return ""
+		log.Fatal(err)
 	}
-	for _, address := range addrs {
-		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil {
-				return ipnet.IP.String()
-			}
-		}
-	}
-	return ""
+	defer conn.Close()
+
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+
+	return fmt.Sprint(localAddr.IP)
 }
 
 func GetLocalPort() string {

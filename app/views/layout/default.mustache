@@ -18,8 +18,8 @@
 <body>
   {{{content}}}
   <div class="uk-position-bottom-center uk-position-small uk-visible@m uk-position-z-index">
-		<span class="uk-text-small uk-text-muted">© 2020 | Bit Cavalier  <a href="https://github.com/bitcav/nitr"><span uk-icon="icon: github;"></a> </span>
-</span>
+		<span class="uk-text-small uk-text-muted">© <span id="year"></span> | Bit Cavalier  <a href="https://github.com/bitcav/nitr"><span uk-icon="icon: github;"></a> </span>
+    </span>
 	</div>
 </body>
 <script src="/assets/js/clipboard.min.js"></script>
@@ -31,6 +31,10 @@
   $("#key").val("{{{apikey}}}")
   $("#ip").val("{{{ip}}}")
   $("#port").val("{{{port}}}")
+
+  var d = new Date();
+  var n = d.getFullYear();
+  document.getElementById("year").innerHTML = n;
 </script>
 <script>
 </script>

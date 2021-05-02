@@ -1,27 +1,27 @@
 {
     "FixedFileInfo": {
         "FileVersion": {
-            "Major": 0,
-            "Minor": 6,
-            "Patch": 4
+            "Major": {{.Major}},
+            "Minor": {{.Minor}},
+            "Patch": {{.Patch}}
         },
         "ProductVersion": {
-            "Major": 0,
-            "Minor": 6,
-            "Patch": 4
+            "Major": {{.Major}},
+            "Minor": {{.Minor}},
+            "Patch": {{.Patch}}
         }
     },
     "StringFileInfo": {
         "CompanyName": "Bit Cavalier",
         "FileDescription": "Nitr is a cross-platform remote monitoring tool written in Golang for system information gathering, making it available through a JSON API.",
-        "FileVersion": "v0.6.4",
+        "FileVersion": "v{{.Major}}.{{.Minor}}.{{.Patch}}",
         "InternalName": "nitr.exe",
-        "LegalCopyright": "Copyright (c) 2021 Bit Cavalier",
+        "LegalCopyright": "Copyright (c) {{.Year}} Bit Cavalier",
         "LegalTrademarks": "",
         "OriginalFilename": "nitr.exe",
         "PrivateBuild": "",
         "ProductName": "nitr",
-        "ProductVersion": "v0.6.4",
+        "ProductVersion": "v{{.Major}}.{{.Minor}}.{{.Patch}}",
         "SpecialBuild": ""
     },
     "VarFileInfo": {

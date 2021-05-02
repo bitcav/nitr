@@ -1,10 +1,13 @@
 package main
 
 import (
+	"log"
+
 	rice "github.com/GeertJohan/go.rice"
 	db "github.com/bitcav/nitr/database"
 	"github.com/bitcav/nitr/handlers"
 	"github.com/bitcav/nitr/utils"
+	"github.com/kardianos/service"
 
 	"github.com/gofiber/embed"
 	"github.com/gofiber/fiber"
@@ -12,7 +15,7 @@ import (
 	"github.com/gofiber/websocket"
 )
 
-func main() {
+func server() {
 	//Set Config.ini Default Values
 	utils.ConfigFileSetup()
 
@@ -94,4 +97,41 @@ func main() {
 
 	//Server startup
 	utils.StartServer(app)
+}
+
+type program struct{}
+
+var logger service.Logger
+
+func (p *program) Start(s service.Service) error {
+	go p.run()
+	return nil
+}
+func (p *program) run() {
+	server()
+}
+
+func (p *program) Stop(s service.Service) error {
+	return nil
+}
+
+func main() {
+	svcConfig := &service.Config{
+		Name:        "NitrService",
+		Description: "A Remote Monitoring Tool for system information gathering, making it available through a JSON API.",
+	}
+
+	prg := &program{}
+	s, err := service.New(prg, svcConfig)
+	if err != nil {
+		log.Fatal(err)
+	}
+	logger, err = s.Logger(nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = s.Run()
+	if err != nil {
+		logger.Error(err)
+	}
 }
