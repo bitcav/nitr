@@ -109,14 +109,19 @@ The QR Code contains the exact same information displayed in the Host Info Panel
 
 ## :pick: Usage
 
-Call [the API endpoints](#satellite-available-endpoints) with ***?key=yourapikey*** in the URL or pass the ***x-api-key*** header with your api key as value and you will get success response.
+Get [the API endpoints](#satellite-available-endpoints) information passing the ***x-api-key*** header with your api key as value and you will get success response.
 
 ### Example:
 
 - Requesting CPU Information.
->In the terminal.
+- 
+>With Curl.
 ```
 curl -X Get 'http://localhost:8000/api/v1/cpu' -H 'x-api-key:yourapikeyhere'
+```
+>With Powershell.
+```
+ Invoke-RestMethod -Uri http://localhost:8000/api/v1/cpu -H @{"x-api-key"="yourapikeyhere"}
 ```
 >JSON Response:
 
