@@ -109,7 +109,7 @@ The QR Code contains the exact same information displayed in the Host Info Panel
 
 ## :pick: Usage
 
-Get [the API endpoints](#satellite-available-endpoints) information passing the ***x-api-key*** header with your api key as value and you will get success response.
+Requesting system info with HTTP Get Method through [the API endpoints](#satellite-available-endpoints) passing the "x-api-key" header with your ***api key*** as value and you will get success response.
 
 ### Example:
 
@@ -156,7 +156,7 @@ http://localhost:8000/api/v1
 
 ### :satellite: Available Endpoints
 
-These endpoints allow you to get System and Hardware information about your **host**. Check the [examples](#examples) for a better understanding.
+These endpoints allow you to get System and Hardware information about your **host**. Check the [example](#example) for a better understanding.
 
 | Verb   | Endpoint                      | JSON Data                    |
 |--------|-------------------------------|------------------------------|
