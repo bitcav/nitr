@@ -114,7 +114,7 @@ Get [the API endpoints](#satellite-available-endpoints) information passing the 
 ### Example:
 
 - Requesting CPU Information.
-- 
+
 >With Curl.
 ```
 curl -X Get 'http://localhost:8000/api/v1/cpu' -H 'x-api-key:yourapikeyhere'
