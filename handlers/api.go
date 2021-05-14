@@ -29,8 +29,12 @@ func AuthAPI(c *fiber.Ctx) {
 	key := c.Get("x-api-key")
 	if db.GetApiKey() == key {
 		c.Next()
+	} else {
+		c.JSON(fiber.Map{
+			"message": "Unauthorized, please correct the api key of the target host",
+			"status":  http.StatusUnauthorized,
+		})
 	}
-	c.SendStatus(http.StatusUnauthorized)
 }
 
 //Bandwidth returns a JSON response of the Bandwidth information
