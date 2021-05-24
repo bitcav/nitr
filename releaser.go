@@ -22,7 +22,7 @@ type versionInfo struct {
 
 func main() {
 
-	versionCmd := flag.String("version", "0.0.0", `go run version.go -version="1.0.0" `)
+	versionCmd := flag.String("version", "0.0.0", `go run releaser.go -version="1.0.0" `)
 
 	flag.Parse()
 	versionArr := strings.Split(*versionCmd, ".")
@@ -40,11 +40,12 @@ func main() {
 		Year:  year,
 	}
 
-	versionTemplateFile, err := ioutil.ReadFile("versioninfo.template")
+	versionTemplateFile, err := ioutil.ReadFile("versioninfo.json.template")
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	//Version Info file
 	versionInfoFileString := string(versionTemplateFile)
 
 	versionTemplate := template.New("Version")
@@ -63,7 +64,8 @@ func main() {
 
 	versionFile.Close()
 
-	releaseSVGTemplateFile, err := ioutil.ReadFile("release.template")
+	//Release SVG shield for README.md
+	releaseSVGTemplateFile, err := ioutil.ReadFile("release.svg.template")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -81,6 +83,31 @@ func main() {
 	}
 
 	err = svgTemplate.Execute(releaseFile, version)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	releaseFile.Close()
+
+	//App Version Package
+	versionGoTemplateFile, err := ioutil.ReadFile("version.go.template")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	versionGoString := string(versionGoTemplateFile)
+
+	versionGoTemplate := template.New("versionGo")
+
+	versionGoTemplate, _ = versionGoTemplate.Parse(versionGoString)
+
+	versionGoFile, err := os.Create("version/version.go")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = versionGoTemplate.Execute(versionGoFile, version)
 	if err != nil {
 		fmt.Println(err)
 	}

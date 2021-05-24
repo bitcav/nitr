@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bitcav/nitr/version"
 	"github.com/gofiber/fiber"
 	"github.com/gofiber/logger"
 	"github.com/spf13/viper"
@@ -99,11 +100,11 @@ func StartMessage(protocol, port string) {
   /   /    /   / /   / _ \ / // __// __/    
  /            / /   /_//_//_/ \__//_/
 /____________/ / 	    
-\____________\/     v0.6.5
+\____________\/     v%v
 
 Go to admin panel at %v://localhost:%v
 
-`, protocol, port)
+`, version.Version, protocol, port)
 }
 
 func Logs(app *fiber.App) {
