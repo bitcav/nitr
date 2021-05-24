@@ -2,8 +2,10 @@ package main
 
 import (
 	"log"
+	"os"
 
 	rice "github.com/GeertJohan/go.rice"
+	"github.com/bitcav/nitr/cmd"
 	db "github.com/bitcav/nitr/database"
 	"github.com/bitcav/nitr/handlers"
 	"github.com/bitcav/nitr/utils"
@@ -116,6 +118,11 @@ func (p *program) Stop(s service.Service) error {
 }
 
 func main() {
+	if len(os.Args) > 1 {
+		cmd.Execute()
+		return
+	}
+
 	svcConfig := &service.Config{
 		Name:        "NitrService",
 		Description: "A Remote Monitoring Tool for system information gathering, making it available through a JSON API.",
