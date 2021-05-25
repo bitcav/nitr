@@ -28,6 +28,7 @@ Table of contents
 	    * [Download](#download)
 	    *  [Build](#build)
    * [Running](#rocket-running)
+   * [Commands](#white_square_button-available-commands)
    * [Docker](#whale-docker)
    * [Web Panel](#earth_americas-web-panel)
    * [QR Code](#qr-code)
@@ -80,6 +81,32 @@ the server will start listening on port 8000 by default
     <img alt="app" src="https://raw.githubusercontent.com/bitcav/nitr/master/images/app-start.gif">
     <br>
 </p>
+
+## :white_square_button: Available Commands
+
+Help:
+
+```
+nitr -h
+```
+
+Change Password:
+
+```
+nitr passwd
+```
+
+Get api key:
+
+```
+nitr key
+```
+
+Print Qr Code:
+
+```
+nitr qr
+```
 
 ## :whale: Docker
 
