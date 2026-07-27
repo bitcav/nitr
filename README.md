@@ -25,6 +25,7 @@ The main purpose of this project is to provide highly available data of **CPU, R
 Table of contents
 =================
    * [Installation](#gear-installation)
+	    * [Quick install](#quick-install)
 	    * [Download](#download)
 	    *  [Build](#build)
    * [Running](#rocket-running)
@@ -45,6 +46,21 @@ Table of contents
    
 
 ## :gear: Installation
+
+### Quick install
+
+**Linux (amd64)**
+```
+curl -L https://github.com/bitcav/nitr/releases/latest/download/nitr_linux_amd64 -o nitr
+sudo install -m 755 nitr /usr/local/bin/
+```
+
+**Windows (amd64) — PowerShell**
+```
+Invoke-WebRequest https://github.com/bitcav/nitr/releases/latest/download/nitr_windows_amd64.exe -OutFile nitr.exe
+```
+
+> On 32-bit systems, swap the asset name for `nitr_linux_386` or `nitr_windows_386.exe`.
 
 ### Download
 
