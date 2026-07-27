@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bitcav/nitr/version"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -47,10 +48,32 @@ func TestProgramStop(t *testing.T) {
 
 func TestDispatchCLI(t *testing.T) {
 	cdTempMain(t)
-	// with arguments -> CLI runs (cmd.Execute) and dispatch returns true
-	assert.True(t, dispatch([]string{"nitr", "version"}))
+	// with arguments -> CLI runs the version subcommand and prints the
+	// real version string; asserting on captured output is what proves
+	// args actually reach cobra (a boolean-only check would pass either way).
+	out := captureStdout(t, func() {
+		assert.True(t, dispatch([]string{"nitr", "version"}))
+	})
+	assert.Contains(t, out, "Nitr v"+version.Version)
 	// without arguments -> no CLI, dispatch returns false
 	assert.False(t, dispatch([]string{"nitr"}))
+}
+
+// captureStdout redirects os.Stdout for the duration of fn and returns
+// everything fn wrote. fmt.Printf in cmd.VersionCmd targets os.Stdout
+// directly, so this is the seam that makes the routing test meaningful.
+func captureStdout(t *testing.T, fn func()) string {
+	t.Helper()
+	old := os.Stdout
+	r, w, err := os.Pipe()
+	require.NoError(t, err)
+	os.Stdout = w
+	defer func() { os.Stdout = old }()
+	fn()
+	require.NoError(t, w.Close())
+	b, err := ioutil.ReadAll(r)
+	require.NoError(t, err)
+	return string(b)
 }
 
 func TestInitService(t *testing.T) {
