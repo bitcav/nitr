@@ -28,7 +28,7 @@ func TestAuthAPIDeniedMissingKey(t *testing.T) {
 	app.Get("/cpu", AuthAPI, func(c *fiber.Ctx) { c.Send("granted") })
 
 	resp := get(t, app, "/cpu")
-	assert.Equal(t, 200, resp.StatusCode) // handler never sets a status code
+	assert.Equal(t, 401, resp.StatusCode)
 	bd := body(t, resp)
 	assert.Contains(t, bd, "Unauthorized")
 	assert.Contains(t, bd, "\"status\":401")
@@ -43,6 +43,7 @@ func TestAuthAPIDeniedWrongKey(t *testing.T) {
 	req.Header.Set("x-api-key", "wrong")
 	resp, err := app.Test(req, 30000)
 	assert.NoError(t, err)
+	assert.Equal(t, 401, resp.StatusCode)
 	assert.Contains(t, body(t, resp), "Unauthorized")
 }
 
