@@ -84,10 +84,10 @@ func TestInitService(t *testing.T) {
 }
 
 // TestServerBootsViaProgramStart exercises the full server bootstrap
-// (program.Start -> run -> server -> all route/middleware registration ->
-// utils.StartServer). The blocking listener runs in a background goroutine
-// launched by Start; we verify the server answers requests, then leave the
-// goroutine to be reaped when the test process exits.
+// (program.Start -> server -> all route/middleware registration ->
+// utils.StartServer). Setup now runs synchronously inside Start and only the
+// blocking listener is backgrounded, so the app is ready to answer by the
+// time Start returns; we still poll to tolerate listener ramp-up.
 func TestServerBootsViaProgramStart(t *testing.T) {
 	dir := cdTempMain(t)
 	port := freePortStr(t)
@@ -101,7 +101,8 @@ func TestServerBootsViaProgramStart(t *testing.T) {
 	require.NoError(t, ioutil.WriteFile("config.ini", []byte(cfg), 0666))
 
 	p := &program{}
-	// Start spawns run() -> server() in a goroutine and returns immediately.
+	// Start runs setup synchronously and backgrounds only the blocking
+	// listener, so it returns once the app is assembled.
 	require.NoError(t, p.Start(nil))
 
 	base := "http://127.0.0.1:" + port + "/"
@@ -126,6 +127,39 @@ func TestServerBootsViaProgramStart(t *testing.T) {
 	assert.NotEmpty(t, b) // the login view HTML
 
 	_ = dir
+}
+
+// TestStartPropagatesLogsError is the regression guard for the
+// fire-and-forget-goroutine defect: when save_logs=true and nitr.log cannot
+// be opened, utils.Logs used to call log.Fatalf from inside the goroutine
+// spawned by Start, os.Exit-ing the whole process and bypassing main's
+// error-reporting path (if err := s.Run(); err != nil). The fix makes
+// utils.Logs return an error that Start propagates.
+//
+// We force the failing path with save_logs=true and a directory at the
+// "nitr.log" path, so os.OpenFile fails. Before the fix this test would
+// crash the binary via log.Fatalf (run in isolation to observe that); now
+// the failure must surface as a returned error. The guard is structured to
+// observe the error rather than let log.Fatalf kill the test run.
+func TestStartPropagatesLogsError(t *testing.T) {
+	cdTempMain(t)
+	port := freePortStr(t)
+
+	// A directory where the file should be makes os.OpenFile fail
+	// (EISDIR on Linux, the equivalent error on Windows), which is the
+	// exact failure mode the old log.Fatalf guarded.
+	require.NoError(t, os.Mkdir("nitr.log", 0755))
+
+	cfg := fmt.Sprintf(
+		"port: %s\nopen_browser_on_startup: false\nsave_logs: true\nssl_enabled: false\n",
+		port,
+	)
+	require.NoError(t, ioutil.WriteFile("config.ini", []byte(cfg), 0666))
+
+	p := &program{}
+	err := p.Start(nil)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "nitr.log")
 }
 
 // TestBuiltBinaryRuns guards against the go.rice/go.zipexe init() panic class
