@@ -36,6 +36,7 @@ func AuthAPI(c *fiber.Ctx) {
 	if storedKey == key {
 		c.Next()
 	} else {
+		c.Status(http.StatusUnauthorized)
 		c.JSON(fiber.Map{
 			"message": "Unauthorized, please correct the api key of the target host",
 			"status":  http.StatusUnauthorized,
