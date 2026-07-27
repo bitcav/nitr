@@ -13,6 +13,25 @@ behavioral and API changes that would be considered breaking after 1.0; patch
 _Nothing yet. Move entries here as they land on master, then promote them under
 a new version heading at release time (see RELEASING.md)._
 
+## [0.8.1] - 2026-07-27
+
+**If you downloaded v0.8.0, replace it.** Every v0.8.0 binary crashed on
+startup before reaching `main`, so every command — on every platform —
+exited immediately; v0.8.1 is that fix.
+
+### Added
+
+- Quick-install command added to the README. ([925d004](https://github.com/bitcav/nitr/commit/925d004))
+
+### Fixed
+
+- Built binaries panicked in an `init()` before `main` ran, so every command
+  crashed on launch. Bumping `go.rice` to `v1.0.3` pulls the fixed
+  `go.zipexe v1.0.2` transitively, and a smoke test that builds and runs the
+  binary now guards against this shipping green again. ([9a41e4c](https://github.com/bitcav/nitr/commit/9a41e4c))
+- `make build` produced no binary at all — the target was missing the `-o`
+  flag — so it now writes `nitr` as expected. ([f234a60](https://github.com/bitcav/nitr/commit/f234a60))
+
 ## [0.8.0] - 2026-07-27
 
 First release cut since v0.7.0. Brings the toolchain and CI up to date, clears
@@ -68,5 +87,6 @@ visible breaking change to the HTTP API.
   in `fiber v1.11.1` (EOL, no upstream fix); resolving them requires a
   `fiber v1 → v2` migration, tracked separately. ([f90cc72](https://github.com/bitcav/nitr/commit/f90cc72))
 
-[Unreleased]: https://github.com/bitcav/nitr/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/bitcav/nitr/compare/v0.8.1...HEAD
+[0.8.1]: https://github.com/bitcav/nitr/releases/tag/v0.8.1
 [0.8.0]: https://github.com/bitcav/nitr/releases/tag/v0.8.0
