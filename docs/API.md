@@ -231,4 +231,4 @@ Example response:
 | dataWidth    | integer         | Data Width in bits              |
 | totalWidth   | integer         | Total Data Width in bits        |
 
-> Unlike the other `:lock:` endpoints, `/memory` does not degrade per field: `go-memdev` reads the raw SMBIOS table, which on Linux needs root, and on failure the handler returns `200 null` with the error logged only to the server's stdout. The caller gets no clue that root is missing. This silent-failure behaviour is tracked separately.
+> Unlike the other `:lock:` endpoints, `/memory` does not degrade per field: `go-memdev` reads the raw SMBIOS table, which on Linux needs root. On failure the handler returns an error response instead of swallowing it. The status code is `403` when the underlying error is a permission error (e.g. running non-root and `/dev/mem` / `/sys/firmware/dmi/tables/*` is unreadable), and `500` otherwise. The body is the standard error envelope (`{"message": "...", "status": <code>}`), so callers can distinguish "needs root" from "broken".
