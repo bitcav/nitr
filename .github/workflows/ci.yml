@@ -9,8 +9,27 @@ on:
 
 jobs:
   test:
-    name: Vet & Test
-    runs-on: ubuntu-latest
+    name: Vet & Test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            ext: ''
+          # Pinned to windows-2025, not windows-latest. Verified 2026-07-27
+          # against actions/runner-images: windows-latest currently aliases
+          # windows-2025 (Windows Server 2025, x64, GA). It is not about to
+          # migrate (no newer Windows Server image is in beta), but this
+          # project makes explicit platform claims in its README, so the
+          # tested image is pinned to keep that claim verifiable and to stop
+          # the label silently drifting under us. Re-point when a newer
+          # Windows Server runner image becomes generally available.
+          - os: windows-2025
+            ext: '.exe'
+    runs-on: ${{ matrix.os }}
+    # The two Windows bugs this project hit were hangs, not failures; without
+    # a timeout a hang burns the 6-hour job default instead of failing fast.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
@@ -23,6 +42,17 @@ jobs:
         run: go vet ./...
       - name: Test
         run: go test ./...
+      # Artifact smoke test: building is not testing. This builds the real
+      # binary and executes it on each OS, asserting exit 0 AND a sane version
+      # string. It is the guard against the init()-panic class of bug, where
+      # every built binary died before main() while go test stayed green.
+      # shell: bash is explicit because the Windows default is PowerShell and
+      # grep / the pipe idiom are bash; Git Bash ships on windows-* runners.
+      - name: Smoke test built binary
+        shell: bash
+        run: |
+          go build -o nitr${{ matrix.ext }} .
+          ./nitr${{ matrix.ext }} version | grep "Nitr v"
 
   build:
     name: Cross-compile binaries
