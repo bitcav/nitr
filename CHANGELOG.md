@@ -10,6 +10,10 @@ behavioral and API changes that would be considered breaking after 1.0; patch
 
 ## [Unreleased]
 
+_Nothing yet. Move entries here as they land on master, then promote them under a new version heading at release time (see RELEASING.md)._
+
+## [0.9.0] - 2026-07-27
+
 ### ⚠ Breaking changes
 
 - **`nitr key`, `nitr passwd`, and `nitr qr` now fail when `nitr.db` is absent
@@ -189,6 +193,7 @@ visible breaking change to the HTTP API.
   in `fiber v1.11.1` (EOL, no upstream fix); resolving them requires a
   `fiber v1 → v2` migration, tracked separately. ([f90cc72](https://github.com/bitcav/nitr/commit/f90cc72))
 
-[Unreleased]: https://github.com/bitcav/nitr/compare/v0.8.1...HEAD
+[Unreleased]: https://github.com/bitcav/nitr/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/bitcav/nitr/releases/tag/v0.9.0
 [0.8.1]: https://github.com/bitcav/nitr/releases/tag/v0.8.1
 [0.8.0]: https://github.com/bitcav/nitr/releases/tag/v0.8.0
