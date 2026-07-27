@@ -135,7 +135,7 @@ func main() {
 // in which case the caller must not start the host service.
 func dispatch(args []string) bool {
 	if len(args) > 1 {
-		cmd.Execute()
+		cmd.ExecuteArgs(args[1:])
 		return true
 	}
 	return false
