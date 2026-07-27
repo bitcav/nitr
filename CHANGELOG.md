@@ -10,7 +10,40 @@ behavioral and API changes that would be considered breaking after 1.0; patch
 
 ## [Unreleased]
 
-_Nothing yet. Move entries here as they land on master, then promote them under a new version heading at release time (see RELEASING.md)._
+### ⚠ Breaking changes
+
+- **`/api/v1/memory` no longer returns `200 OK` with a `null` body when the
+  memory collector fails.** It previously printed the error to server stdout
+  and returned `200` with an empty body, so a caller could not distinguish
+  "needs root", "broken", or "no memory devices" from success — every poll
+  looked healthy. It now returns `403 Forbidden` when the underlying error is
+  a permission error and `500 Internal Server Error` otherwise, with the
+  standard error envelope (`{"message": "...", "status": <code>}`), so
+  callers branching on the HTTP status (rather than the body) must react.
+  Verified on the wire, running non-root: `GET /api/v1/memory` → `403
+  {"message":"open /dev/mem: permission denied","status":403}`. The DMI
+  endpoints (`/product`, `/chassis`, `/baseboard`) keep their per-field
+  `"unknown"` degradation behaviour and are unchanged. ([728e195](https://github.com/bitcav/nitr/commit/728e195))
+
+### Added
+
+- Liveness and readiness probes at `GET /health` and `GET /ready`, plus a
+  Docker `HEALTHCHECK` that polls `/health`. Both routes are registered on the
+  root app before the `x-api-key` middleware and the panel session auth, so
+  they answer with **no credentials** and never redirect to the login page —
+  the point being that Docker / Compose / Kubernetes / uptime checkers can
+  poll them unauthenticated. `/health` does no I/O and returns
+  `200 {"status":"ok","version":"0.9.0"}`. `/ready` does an
+  `os.Stat("nitr.db")` and nothing more: `200 {"status":"ready"}` when the
+  file is present, `503 {"status":"not ready","error":"..."}` (the raw stat
+  error) when it is not. It confirms the database file exists; it does **not**
+  confirm bolt can be opened right now, nor that the DB is uncorrupted —
+  `database.SetupDB` opens bolt with nil options whose exclusive flock has no
+  timeout and blocks forever under contention, so a probe that opened the DB
+  could pile up blocked goroutines when polled every few seconds. The Docker
+  `HEALTHCHECK` (`wget -q -O /dev/null http://localhost:8000/health`,
+  30s interval / 5s timeout / 10s start period / 3 retries) makes `docker ps`
+  report a health status for the container. ([0262123](https://github.com/bitcav/nitr/commit/0262123))
 
 ## [0.9.0] - 2026-07-27
 
