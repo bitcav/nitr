@@ -72,6 +72,9 @@ func server() (*fiber.App, error) {
 	v1.Get("/product", handlers.Product)
 	v1.Get("/memory", handlers.Memory)
 
+	//Prometheus /metrics endpoint, behind the same x-api-key auth as /api/v1/*.
+	app.Get("/metrics", handlers.AuthAPI, handlers.Metrics)
+
 	//Login View
 	handlers.ViewsBox = rice.MustFindBox("app/views")
 	app.Get("/", handlers.Login)
