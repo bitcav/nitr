@@ -235,3 +235,54 @@ func TestSocketReader(t *testing.T) {
 	require.NoError(t, c.Close())
 	time.Sleep(150 * time.Millisecond)
 }
+
+func TestSocketReaderRecoversFromPanic(t *testing.T) {
+	setupEnv(t)
+	app := fiber.New(fiber.Config{DisableStartupMessage: true})
+	app.Get("/ws", websocket.New(SocketReader))
+
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	addr := ln.Addr().String()
+
+	go func() { _ = app.Listener(ln) }()
+	t.Cleanup(func() { _ = app.Shutdown() })
+
+	// Swap the per-message seam for one that panics. SocketReader runs on the
+	// goroutine fasthttp/websocket spawns after the connection hijack, which
+	// recover.New does not cover, so without the explicit recover in
+	// SocketReader this panic escapes and kills the whole test process.
+	orig := handleSocketMessageFunc
+	handleSocketMessageFunc = func(_ []byte) { panic("boom from message handler") }
+	t.Cleanup(func() { handleSocketMessageFunc = orig })
+
+	dialer := ws.Dialer{HandshakeTimeout: 2 * time.Second}
+	var c *ws.Conn
+	for i := 0; i < 50; i++ {
+		conn, _, derr := dialer.Dial("ws://"+addr+"/ws", nil)
+		if derr == nil {
+			c = conn
+			break
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	require.NotNil(t, c, "could not dial websocket server")
+	require.NoError(t, c.WriteMessage(ws.TextMessage, []byte("trigger")))
+	require.NoError(t, c.Close())
+
+	// Reaching this dial at all proves the test process survived the panic.
+	// If the recover were absent, the panicked goroutine would have crashed
+	// `go test` before this line ran; the listener would be gone and the
+	// dial would never succeed.
+	var c2 *ws.Conn
+	for i := 0; i < 50; i++ {
+		conn, _, derr := dialer.Dial("ws://"+addr+"/ws", nil)
+		if derr == nil {
+			c2 = conn
+			break
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	require.NotNil(t, c2, "server not accepting new connections after a handler panic")
+	require.NoError(t, c2.Close())
+}

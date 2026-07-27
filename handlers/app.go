@@ -167,16 +167,31 @@ func PasswordSubmit(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNotModified)
 }
 
+// handleSocketMessageFunc processes a single inbound websocket message. It is
+// a package-level seam so tests can substitute a handler that panics, which is
+// the only way to exercise SocketReader's recover path from outside the loop.
+var handleSocketMessageFunc = func(msg []byte) { log.Printf("%s", msg) }
+
 func SocketReader(c *websocket.Conn) {
+	// recover.New's deferred recover runs on the request goroutine, but
+	// fasthttp/websocket runs this handler on a separate hijacked-conn
+	// goroutine it spawns itself. An unrecovered panic here would crash the
+	// whole process, so recover explicitly: log, then let the function
+	// return so the websocket library's own deferred releaseConn closes
+	// the connection.
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("SocketReader recovered from panic: %v", r)
+		}
+	}()
 	for {
 		_, msg, err := c.ReadMessage()
 		if err != nil {
 			log.Println(err)
 			break
 		}
-		log.Printf("%s", msg)
+		handleSocketMessageFunc(msg)
 	}
-
 }
 
 // Auth Middleware
