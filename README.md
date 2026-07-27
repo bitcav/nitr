@@ -409,12 +409,30 @@ These endpoints return system and hardware information about your **host**. Chec
 
 >JSON Array of Objects
 
-| Key       | Data Type       | Description                            |
-|-----------|-----------------|----------------------------------------|
-| name      | string          | Network Interface name                 |
-| addresses | Array of string | IPv4 and IPv6 list                     |
-| mac       | string          | MAC Address                            |
-| active    | boolean         | True if the Network Interface is Up    |
+| Key       | Data Type        | Description                            |
+|-----------|------------------|----------------------------------------|
+| name      | string           | Network Interface name                 |
+| addresses | Array of objects | IPv4 and IPv6 addresses (see example)  |
+| mac       | string           | MAC Address                            |
+| active    | boolean          | True if the Network Interface is Up    |
+
+Each entry of `addresses` is an object with a single `ip` key.
+
+Example response:
+
+```json
+[
+  {
+    "name": "eth0",
+    "addresses": [
+      { "ip": "192.168.1.10" },
+      { "ip": "fe80::1" }
+    ],
+    "mac": "00:11:22:33:44:55",
+    "active": true
+  }
+]
+```
 
 </details>
 
