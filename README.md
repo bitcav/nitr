@@ -22,12 +22,27 @@ A **cross-platform remote monitoring tool** written in Go that exposes **system 
 
 **Try it in 30 seconds:**
 
+> Nitr does **not** need root to run. It writes `nitr.db` and `config.ini` to its **current working directory**, so run it from a directory you own — running it once as root (or from two different directories) will leave a `nitr.db` owned by root or split your state across two databases.
+
 ```bash
 # Linux (amd64) — see Installation for Windows / 32-bit
 curl -L https://github.com/bitcav/nitr/releases/latest/download/nitr_linux_amd64 -o nitr
+chmod +x nitr
+./nitr          # starts the server in the foreground (default port 8000)
+                # and creates nitr.db + config.ini in this directory
+```
+
+`./nitr` blocks here — the server is running. The commands below need `nitr.db`, so they only work once the server has run in this directory. Run them in a **second terminal in the same directory**, or after stopping the server with `Ctrl+C`:
+
+```bash
+./nitr passwd   # change the default password before going further
+./nitr key      # print your API key (prompts for the password)
+```
+
+Optional, system-wide install (puts `nitr` on `PATH`; needs `sudo`):
+
+```bash
 sudo install -m 755 nitr /usr/local/bin/
-nitr            # start the server (default port 8000, default password 123456)
-nitr key        # print your API key (needs the password)
 ```
 
 ```bash
@@ -61,7 +76,7 @@ See [Usage](#usage) for the full endpoint list and response shapes.
 
 ### Quick install
 
-**Linux (amd64)**
+**Linux (amd64)** — system-wide install (optional, needs `sudo`; the quick start above runs the binary without it):
 ```
 curl -L https://github.com/bitcav/nitr/releases/latest/download/nitr_linux_amd64 -o nitr
 sudo install -m 755 nitr /usr/local/bin/
@@ -284,313 +299,29 @@ http://localhost:8000/api/v1
 
 These endpoints return system and hardware information about your **host**. Check the [example](#example) for a better understanding.
 
-| Verb | Endpoint   | JSON Data               |
-|------|------------|-------------------------|
-| GET  | /cpu       | [CPU](#cpu)             |
-| GET  | /bios      | [Bios](#bios)           |
-| GET  | /bandwidth | [Bandwidth](#bandwidth) |
-| GET  | /chassis   | [Chassis](#chassis)     |
-| GET  | /disks     | [Disks](#disks)         |
-| GET  | /drives    | [Drives](#drives)       |
-| GET  | /devices   | [Devices](#devices)     |
-| GET  | /gpu       | [GPU](#gpu)             |
-| GET  | /host      | [Host](#host)           |
-| GET  | /isp       | [ISP](#isp)             |
-| GET  | /network   | [Network](#network)     |
-| GET  | /processes | [Processes](#processes) |
-| GET  | /ram       | [RAM](#ram)             |
-| GET  | /baseboard | [Baseboard](#baseboard) |
-| GET  | /product   | [Product](#product)     |
-| GET  | /memory    | [Memory](#memory)       |
+| Verb | Endpoint   | JSON Data                 |
+|------|------------|---------------------------|
+| GET  | /          | [Overview](docs/API.md#overview) |
+| GET  | /cpu       | [CPU](docs/API.md#cpu)             |
+| GET  | /bios      | [Bios](docs/API.md#bios)           |
+| GET  | /bandwidth | [Bandwidth](docs/API.md#bandwidth) |
+| GET  | /chassis   | [Chassis](docs/API.md#chassis)     |
+| GET  | /disks     | [Disks](docs/API.md#disks)         |
+| GET  | /drives    | [Drives](docs/API.md#drives)       |
+| GET  | /devices   | [Devices](docs/API.md#devices)     |
+| GET  | /gpu       | [GPU](docs/API.md#gpu)             |
+| GET  | /host      | [Host](docs/API.md#host)           |
+| GET  | /isp       | [ISP](docs/API.md#isp)             |
+| GET  | /network   | [Network](docs/API.md#network)     |
+| GET  | /processes | [Processes](docs/API.md#processes) |
+| GET  | /ram       | [RAM](docs/API.md#ram)             |
+| GET  | /baseboard | [Baseboard](docs/API.md#baseboard) |
+| GET  | /product   | [Product](docs/API.md#product)     |
+| GET  | /memory    | [Memory](docs/API.md#memory)       |
 
 ### JSON data references
 
-<details>
-<summary>CPU</summary>
-
-### CPU
-
-> JSON Object
-
-| Key       | Data Type      | Description              |
-|-----------|----------------|--------------------------|
-| vendor    | string         | CPU Vendor               |
-| model     | string         | CPU Model                |
-| cores     | integer        | Amount of CPU cores      |
-| threads   | integer        | Amount of CPU threads    |
-| clockSpeed| float          | Clock Speed in Mhz       |
-| usage     | float          | CPU usage percentage     |
-| usageEach | Array of float | Usage percentage per CPU |
-
-</details>
-
-<details>
-<summary>Bios</summary>
-
-### Bios
-
-> JSON Object
-
-| Key       | Data Type      | Description              |
-|-----------|----------------|--------------------------|
-| vendor    | string         | Vendor                   |
-| version   | string         | Bios version             |
-| date      | string         | Bios last update         |
-
-</details>
-
-<details>
-<summary>Bandwidth</summary>
-
-### Bandwidth
-
->JSON Array of Objects
-
-| Key       | Data Type      | Description              |
-|-----------|----------------|--------------------------|
-| name      | string         | Network Interface name   |
-| rxBytes   | integer        | Amount of bytes received |
-| txBytes   | integer        | Amount of bytes sent     |
-| rxPackets | integer        | Total packets received   |
-| txPackets | integer        | Total packets sent       |
-
-</details>
-
-<details>
-<summary>Chassis</summary>
-
-### Chassis
-
-:lock: Requires running **nitr** with elevated privileges 
-> JSON Object
-
-| Key       | Data Type      | Description              |
-|-----------|----------------|--------------------------|
-| type      | string         | Type                     |
-| vendor    | string         | Chassis vendor           |
-| serial    | string         | Chassis serial           |
-
-</details>
-
-<details>
-<summary>Disks</summary>
-
-### Disks
-
->JSON Array of Objects
-
-| Key        | Data Type       | Description                      |
-|------------|-----------------|----------------------------------|
-| mountPoint | string          | Drive Letter or Mount Point      |
-| free       | integer         | Available disk space in bytes    |
-| size       | integer         | Total disk space in bytes        |
-| used       | integer         | Used disk space in bytes         |
-| percent    | float           | Disk usage percent               |
-
-</details>
-
-<details>
-<summary>Drives</summary>
-
-### Drives
-
-> JSON Array of Objects
-
-| Key        | Data Type       | Description                      |
-|------------|-----------------|----------------------------------|
-| name       | string          | Drive name                       |
-| type       | string          | Drive type                       |
-| model      | string          | Drive model                      |
-| serial     | string          | Drive serial                     |
-
-</details>
-
-<details>
-<summary>Devices</summary>
-
-### Devices
-
-> JSON Array of Objects
-
-| Key     | Data Type | Description          |
-|---------|-----------|----------------------|
-| product | string    | Device product name  |
-| vendor  | string    | Device vendor        |
-| address | string    | PCI address          |
-
-</details>
-
-<details>
-<summary>GPU</summary>
-
-### GPU
-
-> JSON Array of Objects
-
-| Key       | Data Type      | Description              |
-|-----------|----------------|--------------------------|
-| brand     | string         | GPU Brand                |
-| model     | string         | GPU Model                |
-
-</details>
-
-<details>
-<summary>Host</summary>
-
-### Host
-
-> JSON Object
-
-| Key      | Data Type | Description          |
-|----------|-----------|----------------------|
-| name     | string    | Hostname             |
-| os       | string    | Operating system     |
-| platform | string    | Platform and version |
-| arch     | string    | Architecture         |
-| uptime   | integer   | Uptime in seconds    |
-
-</details>
-
-<details>
-<summary>ISP</summary>
-
-### ISP
-
->JSON Object
-
-| Key       | Data Type      | Description              |
-|-----------|----------------|--------------------------|
-| isp       | string         | Internet Service Provider|
-| ip        | string         | Public IP Address        |
-| lat       | string         | Location Latitude        |
-| lon       | string         | Location Longitude       |
-
-</details>
-
-<details>
-<summary>Network</summary>
-
-### Network
-
->JSON Array of Objects
-
-| Key       | Data Type        | Description                            |
-|-----------|------------------|----------------------------------------|
-| name      | string           | Network Interface name                 |
-| addresses | Array of objects | IPv4 and IPv6 addresses (see example)  |
-| mac       | string           | MAC Address                            |
-| active    | boolean          | True if the Network Interface is Up    |
-
-Each entry of `addresses` is an object with a single `ip` key.
-
-Example response:
-
-```json
-[
-  {
-    "name": "eth0",
-    "addresses": [
-      { "ip": "192.168.1.10" },
-      { "ip": "fe80::1" }
-    ],
-    "mac": "00:11:22:33:44:55",
-    "active": true
-  }
-]
-```
-
-</details>
-
-<details>
-<summary>Processes</summary>
-
-### Processes
-
-> JSON Array of Objects
-
-| Key       | Data Type      | Description              |
-|-----------|----------------|--------------------------|
-| pid       | integer        | Process ID               |
-| name      | string         | Process Name             |
-
-</details>
-
-<details>
-<summary>Ram</summary>
-
-### Ram
-
-> JSON Object
-
-| Key       | Data Type      | Description              |
-|-----------|----------------|--------------------------|
-| total     | integer        | Total RAM in bytes       |
-| free      | integer        | Free RAM in bytes        |
-| usage     | integer        | Used RAM in bytes        |
-
-</details>
-
-<details>
-<summary>Baseboard</summary>
-
-### Baseboard
-
-:lock: Requires running **nitr** with elevated privileges 
-> JSON Object
-
-| Key       | Data Type      | Description              |
-|-----------|----------------|--------------------------|
-| vendor    | string         | Baseboard vendor         |
-| assetTag  | string         | Asset Tag                |
-| serial    | string         | Baseboard serial         |
-| version   | string         | Baseboard Version        |
-
-</details>
-
-<details>
-<summary>Product</summary>
-
-### Product
-
-:lock: Requires running **nitr** with elevated privileges 
->JSON Object
-
-| Key       | Data Type      | Description              |
-|-----------|----------------|--------------------------|
-| vendor    | string         | Product vendor           |
-| family    | string         | Product family           |
-| assetTag  | string         | Asset Tag                |
-| serial    | string         | Product serial           |
-| uuid      | string         | Product UUID             |
-| sku       | string         | Product SKU              |
-| version   | string         | Product Version          |
-
-</details>
-
-<details>
-<summary>Memory</summary>
-
-### Memory
-
-:lock: Requires running **nitr** with elevated privileges 
->JSON Array of Objects
-
-| Key          | Data Type       | Description                     |
-|--------------|-----------------|---------------------------------|
-| bank		   | string 		 | Bank Identifier                 |
-| size         | integer         | Size                            |
-| unit         | string          | Unit (KB or MB)                 |
-| type         | string          | Type                            |
-| formFactor   | string          | Form Factor                     |
-| manufacturer | string          | Manufacturer                    |
-| serial       | string          | Serial Number                   |
-| assetTag     | string          | Asset Tag                       |
-| partNumber   | string          | Part Number                     |
-| speed        | integer         | Speed in MT/s                   |
-| dataWidth    | integer         | Data Width in bits              |
-| totalWidth   | integer         | Total Data Width in bits        |
-
-</details>
+The per-endpoint field tables and `:lock:` privilege notes live in [docs/API.md](docs/API.md).
 
 ## Settings
 
