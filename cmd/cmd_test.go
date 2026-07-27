@@ -111,9 +111,51 @@ func TestExecuteVersion(t *testing.T) {
 
 	out := withIO(t, "", func() { Execute() })
 	assert.Contains(t, out, "Nitr v"+version.Version)
-	// Execute provisions config + db on the way through
-	assert.FileExists(t, "config.ini")
-	assert.FileExists(t, "nitr.db")
+	// version is an informational command — it must not provision a database
+	// or write a config file. CI and install scripts run "nitr version" as a
+	// smoke check, and provisioning a default "123456" user from there is a
+	// security hazard in whatever cwd invoked it.
+	assertNoProvisioningSideEffects(t)
+}
+
+// assertNoProvisioningSideEffects fails if config.ini or nitr.db were created
+// in the test's cwd. Used by the side-effect-free command guards below.
+func assertNoProvisioningSideEffects(t *testing.T) {
+	t.Helper()
+	if _, err := os.Stat("config.ini"); err == nil {
+		t.Errorf("config.ini was created; informational commands must be side-effect free")
+	}
+	if _, err := os.Stat("nitr.db"); err == nil {
+		t.Errorf("nitr.db was created; informational commands must be side-effect free")
+	}
+}
+
+// TestExecuteVersionHelpClean and TestExecuteRootHelpClean guard the
+// regression fixed alongside TestExecuteVersion: cobra dispatches -h, help,
+// and unknown commands before any subcommand PreRun runs, so they share the
+// same requirement that the cwd stays untouched. All start from genuinely
+// empty state — provisionDefaultUser is intentionally NOT called — because
+// that helper pre-creates the DB and hides the side effect.
+//
+// Unknown commands are not covered here: ExecuteArgs calls os.Exit(1) on the
+// error cobra returns for them, which terminates the test binary before any
+// assertion can run. They go through the same rootCmd.Execute() path as the
+// cases below, and that path no longer provisions, so the structural
+// guarantee covers them.
+func TestExecuteVersionHelpClean(t *testing.T) {
+	cdTemp(t)
+	viper.Reset()
+
+	withIO(t, "", func() { ExecuteArgs([]string{"-h"}) })
+	assertNoProvisioningSideEffects(t)
+}
+
+func TestExecuteRootHelpClean(t *testing.T) {
+	cdTemp(t)
+	viper.Reset()
+
+	withIO(t, "", func() { ExecuteArgs([]string{"help"}) })
+	assertNoProvisioningSideEffects(t)
 }
 
 func TestExecuteNoDuplicateRegistration(t *testing.T) {
