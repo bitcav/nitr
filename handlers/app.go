@@ -178,7 +178,7 @@ func SocketReader(c *websocket.Conn) {
 
 }
 
-//Auth Middleware
+// Auth Middleware
 func Auth(c *fiber.Ctx) {
 	store := sessions.Get(c)
 	if store.Get("UserID") == "1" || c.Cookies("remember") == "1" {

@@ -170,7 +170,7 @@ func TestOpenBrowser(t *testing.T) {
 		// On hosts lacking xdg-open/open/rundll32 the command simply fails to
 		// start; that is acceptable behaviour as long as it is returned
 		// (not fatal).
-		t.Logf("OpenBrowser returned error (expected on hosts without a " +
+		t.Logf("OpenBrowser returned error (expected on hosts without a "+
 			"browser opener): %v", err)
 	}
 }

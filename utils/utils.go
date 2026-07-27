@@ -52,7 +52,7 @@ func ConfigFileSetup() {
 	}
 }
 
-//OpenBrowser opens default web browser in specific domain
+// OpenBrowser opens default web browser in specific domain
 func OpenBrowser(domain, port string) error {
 	url := domain + ":" + port
 	var err error
@@ -73,8 +73,8 @@ func OpenBrowser(domain, port string) error {
 	return nil
 }
 
-//openBrowserFunc is a seam so tests can stub browser opening without
-//spawning a real process. It points at OpenBrowser in production.
+// openBrowserFunc is a seam so tests can stub browser opening without
+// spawning a real process. It points at OpenBrowser in production.
 var openBrowserFunc = OpenBrowser
 
 const charset = "abcdefghijkmnpqrstuvwxyz" +
@@ -91,12 +91,12 @@ func stringWithCharset(length int, charset string) string {
 	return string(b)
 }
 
-//RandString returns random string with specific length
+// RandString returns random string with specific length
 func RandString(length int) string {
 	return stringWithCharset(length, charset)
 }
 
-//StartMessage displays message on server start up
+// StartMessage displays message on server start up
 func StartMessage(protocol, port string) {
 	fmt.Printf(`       
      _____________
