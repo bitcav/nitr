@@ -110,7 +110,8 @@ func TestGenerateApiKey(t *testing.T) {
 	assert.Contains(t, bd, "key")
 
 	// the new key must have been persisted
-	newKey := db.GetApiKey()
+	newKey, err := db.GetApiKey()
+	require.NoError(t, err)
 	assert.Len(t, newKey, 10)
 	assert.Contains(t, bd, newKey)
 }
@@ -134,7 +135,9 @@ func TestPasswordSubmitCorrect(t *testing.T) {
 	assert.Equal(t, 200, resp.StatusCode)
 
 	// password actually changed in db
-	assert.Equal(t, utils.PasswordHash("newpass"), db.GetUserByID("1").Password)
+	u, err := db.GetUserByID("1")
+	require.NoError(t, err)
+	assert.Equal(t, utils.PasswordHash("newpass"), u.Password)
 }
 
 func TestPasswordSubmitWrongCurrent(t *testing.T) {

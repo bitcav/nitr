@@ -27,7 +27,13 @@ import (
 
 func AuthAPI(c *fiber.Ctx) {
 	key := c.Get("x-api-key")
-	if db.GetApiKey() == key {
+	storedKey, err := db.GetApiKey()
+	if err != nil {
+		c.SendString(err.Error())
+		c.SendStatus(500)
+		return
+	}
+	if storedKey == key {
 		c.Next()
 	} else {
 		c.JSON(fiber.Map{

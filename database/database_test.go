@@ -54,7 +54,8 @@ func TestSetAndGetUserData(t *testing.T) {
 	user := models.User{Password: "hashed", Apikey: "key-abc"}
 	require.NoError(t, SetUserData("1", user))
 
-	got := GetUserByID("1")
+	got, err := GetUserByID("1")
+	require.NoError(t, err)
 	assert.Equal(t, "hashed", got.Password)
 	assert.Equal(t, "key-abc", got.Apikey)
 }
@@ -71,21 +72,25 @@ func TestGetApiKey(t *testing.T) {
 	cdTemp(t)
 	require.NoError(t, SetupDB())
 	require.NoError(t, SetUserData("1", models.User{Password: "p", Apikey: "superkey"}))
-	assert.Equal(t, "superkey", GetApiKey())
+	key, err := GetApiKey()
+	require.NoError(t, err)
+	assert.Equal(t, "superkey", key)
 }
 
-func TestGetUserByIDMissingPanics(t *testing.T) {
+func TestGetUserByIDMissingReturnsError(t *testing.T) {
 	cdTemp(t)
 	require.NoError(t, SetupDB())
-	// bucket exists but key "missing" is absent -> json.Unmarshal(nil) panics
-	assert.Panics(t, func() { GetUserByID("missing") })
+	// bucket exists but key "missing" is absent -> json.Unmarshal(nil) errors
+	_, err := GetUserByID("missing")
+	assert.Error(t, err)
 }
 
 func TestGetUserByIDOpenError(t *testing.T) {
 	cdTemp(t)
-	// nitr.db is a directory -> bolt.Open fails -> prints + later nil deref panic
+	// nitr.db is a directory -> bolt.Open fails -> GetUserByID returns an error
 	require.NoError(t, os.Mkdir("nitr.db", 0755))
-	assert.Panics(t, func() { GetUserByID("1") })
+	_, err := GetUserByID("1")
+	assert.Error(t, err)
 }
 
 func TestSetAPIDataFirstRun(t *testing.T) {
@@ -95,7 +100,8 @@ func TestSetAPIDataFirstRun(t *testing.T) {
 	SetAPIData()
 	assert.FileExists(t, "nitr.db")
 
-	user := GetUserByID("1")
+	user, err := GetUserByID("1")
+	require.NoError(t, err)
 	assert.Equal(t, utils.PasswordHash("123456"), user.Password)
 	assert.Len(t, user.Apikey, 10)
 }
@@ -104,9 +110,12 @@ func TestSetAPIDataSubsequentRunNoop(t *testing.T) {
 	cdTemp(t)
 	viper.Reset()
 	SetAPIData()
-	first := GetApiKey()
+	first, err := GetApiKey()
+	require.NoError(t, err)
 
 	// second call must NOT re-provision (db already present)
 	SetAPIData()
-	assert.Equal(t, first, GetApiKey())
+	key, err := GetApiKey()
+	require.NoError(t, err)
+	assert.Equal(t, first, key)
 }
