@@ -53,7 +53,7 @@ func ConfigFileSetup() {
 }
 
 //OpenBrowser opens default web browser in specific domain
-func OpenBrowser(domain, port string) {
+func OpenBrowser(domain, port string) error {
 	url := domain + ":" + port
 	var err error
 
@@ -68,8 +68,9 @@ func OpenBrowser(domain, port string) {
 		err = fmt.Errorf("unsupported platform")
 	}
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
+	return nil
 }
 
 const charset = "abcdefghijkmnpqrstuvwxyz" +
@@ -173,7 +174,7 @@ func StartServer(app *fiber.App) {
 
 		openBrowser := viper.GetBool("open_browser_on_startup")
 		if openBrowser {
-			OpenBrowser("https://localhost", port)
+			LogError(OpenBrowser("https://localhost", port))
 		}
 
 		log.Println("Starting server")
@@ -188,7 +189,7 @@ func StartServer(app *fiber.App) {
 		StartMessage("http", port)
 		openBrowser := viper.GetBool("open_browser_on_startup")
 		if openBrowser {
-			OpenBrowser("http://localhost", port)
+			LogError(OpenBrowser("http://localhost", port))
 		}
 
 		log.Println("Starting server")
