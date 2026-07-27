@@ -6,15 +6,13 @@
 
 <div align="center">
 
-![go](https://raw.githubusercontent.com/bitcav/nitr/master/images/goversion.svg) [![CI](https://github.com/bitcav/nitr/actions/workflows/ci.yml/badge.svg)](https://github.com/bitcav/nitr/actions/workflows/ci.yml) ![Release](https://raw.githubusercontent.com/bitcav/nitr/master/images/release.svg)  ![go report](https://raw.githubusercontent.com/bitcav/nitr/master/images/goreport.svg) [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/bitcav/nitr/blob/master/LICENSE)
+![Go version](https://raw.githubusercontent.com/bitcav/nitr/master/images/goversion.svg) [![CI](https://github.com/bitcav/nitr/actions/workflows/ci.yml/badge.svg)](https://github.com/bitcav/nitr/actions/workflows/ci.yml) ![Release](https://raw.githubusercontent.com/bitcav/nitr/master/images/release.svg) ![Go report](https://raw.githubusercontent.com/bitcav/nitr/master/images/goreport.svg) [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/bitcav/nitr/blob/master/LICENSE) ![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows-blue.svg)
 
 </div>
 
 # Nitr
 
-A **cross-platform remote monitoring tool** written in Golang for **system information gathering**, making it available through a **JSON API**. 
-
-The main purpose of this project is to provide highly available data of **CPU, RAM, Disks, Network, Processes** and so on, to make use of them in applications such as **web administration panels** or **mobile apps**. 
+A **cross-platform remote monitoring tool** written in Go that exposes **system and hardware information** (CPU, RAM, disks, network, processes, and more) through a **JSON API**, so it can be consumed by web admin panels, mobile apps, or anything that speaks HTTP.
 
 <p>
     <img alt="Nitr" src="https://raw.githubusercontent.com/bitcav/nitr/master/images/usage.gif" style="width:100%;">
@@ -22,30 +20,43 @@ The main purpose of this project is to provide highly available data of **CPU, R
 
 > curl + jq demo
 
-Table of contents
-=================
-   * [Installation](#gear-installation)
-	    * [Quick install](#quick-install)
-	    * [Download](#download)
-	    *  [Build](#build)
-   * [Running](#rocket-running)
-   * [Commands](#white_square_button-available-commands)
-   * [Docker](#whale-docker)
-   * [Web Panel](#earth_americas-web-panel)
-   * [QR Code](#qr-code)
-   * [Usage](#pick-usage)
-   	   * [Example](#example)
-   * [Api v1](#api-v1)
-	   * [Available Endpoints](#satellite-available-endpoints)
-	   * [JSON Data References](#mag-json-data-references)
- * [Settings](#wrench-settings)
- * [Platform Support](#heavy_check_mark-platform-support)
- * [Powered by](#zap-powered-by)
+**Try it in 30 seconds:**
 
+```bash
+# Linux (amd64) — see Installation for Windows / 32-bit
+curl -L https://github.com/bitcav/nitr/releases/latest/download/nitr_linux_amd64 -o nitr
+sudo install -m 755 nitr /usr/local/bin/
+nitr            # start the server (default port 8000, default password 123456)
+nitr key        # print your API key (needs the password)
+```
 
-   
+```bash
+curl -X GET http://localhost:8000/api/v1/cpu -H 'x-api-key: yourapikeyhere'
+```
 
-## :gear: Installation
+See [Usage](#usage) for the full endpoint list and response shapes.
+
+## Table of contents
+
+- [Installation](#installation)
+  - [Quick install](#quick-install)
+  - [Download](#download)
+  - [Build](#build)
+- [Running](#running)
+- [Commands](#commands)
+- [Docker](#docker)
+- [Web panel](#web-panel)
+- [QR Code](#qr-code)
+- [Usage](#usage)
+  - [Example](#example)
+- [API v1](#api-v1)
+  - [Available endpoints](#available-endpoints)
+  - [JSON data references](#json-data-references)
+- [Settings](#settings)
+- [Platform support](#platform-support)
+- [Powered by](#powered-by)
+
+## Installation
 
 ### Quick install
 
@@ -66,7 +77,8 @@ Invoke-WebRequest https://github.com/bitcav/nitr/releases/latest/download/nitr_w
 
 https://github.com/bitcav/nitr/releases/latest
 
-### Building from source
+### Build
+
 Note: go version 1.26 or higher is required building it from the source.
 
 #### Clone
@@ -79,7 +91,7 @@ cd nitr
 go build
 ```
 
-## :rocket: Running
+## Running
 
 **Linux**
 ```
@@ -98,7 +110,7 @@ the server will start listening on port 8000 by default
     <br>
 </p>
 
-## :white_square_button: Available Commands
+## Commands
 
 Help:
 
@@ -106,38 +118,44 @@ Help:
 nitr -h
 ```
 
-Change Password:
+Print the version:
+
+```
+nitr version
+```
+
+Change password:
 
 ```
 nitr passwd
 ```
 
-Get api key:
+Get API key:
 
 ```
 nitr key
 ```
 
-Print Qr Code:
+Print QR code:
 
 ```
 nitr qr
 ```
 
-## :whale: Docker
+## Docker
 
-Build image using command: 
+Build image using command:
 ```
 docker build -t nitr . 
 ```
 
 Run container:
-
 ```
 docker run -d -p 8000:8000 nitr:latest
 ```
 
-### :earth_americas: Web Panel
+## Web panel
+
 Go to [http://localhost:8000](http://localhost:8000) in your web browser
 
 ![preview](https://raw.githubusercontent.com/bitcav/nitr/master/images/login-web.png)
@@ -150,23 +168,23 @@ Access with default **password**: **123456**
 
 The QR Code contains the exact same information displayed in the Host Info Panel formatted as JSON.
 
-## :pick: Usage
+## Usage
 
-Requesting system info with HTTP Get Method through [the API endpoints](#satellite-available-endpoints) passing the "x-api-key" header with your ***api key*** as value and you will get success response.
+Request system info with an HTTP `GET` to [one of the API endpoints](#available-endpoints), passing the `x-api-key` header with your ***API key*** as the value, and you will get a success response.
 
-### Example:
+### Example
 
-- Requesting CPU Information.
+Requesting CPU information.
 
->With Curl.
+> With curl.
 ```
-curl -X Get 'http://localhost:8000/api/v1/cpu' -H 'x-api-key:yourapikeyhere'
+curl -X GET 'http://localhost:8000/api/v1/cpu' -H 'x-api-key:yourapikeyhere'
 ```
->With Powershell.
+> With PowerShell.
 ```
- Invoke-RestMethod -Uri http://localhost:8000/api/v1/cpu -H @{"x-api-key"="yourapikeyhere"}
+Invoke-RestMethod -Uri http://localhost:8000/api/v1/cpu -H @{"x-api-key"="yourapikeyhere"}
 ```
->JSON Response:
+> JSON response:
 
 ```json
 {
@@ -174,7 +192,7 @@ curl -X Get 'http://localhost:8000/api/v1/cpu' -H 'x-api-key:yourapikeyhere'
 	"model":"Intel(R) Core(TM) i7-4810MQ CPU @ 2.80GHz",
 	"cores":4,
 	"threads":8,
-	"frecuency":3800,
+	"clockSpeed":3800,
 	"usage":8.354430379674321,
 	"usageEach":[
 				9.803921568623954,
@@ -191,40 +209,42 @@ curl -X Get 'http://localhost:8000/api/v1/cpu' -H 'x-api-key:yourapikeyhere'
 
 ## API v1
 
-### Root Endpoint
+### Root endpoint
 
 ```
 http://localhost:8000/api/v1
 ```
 
-### :satellite: Available Endpoints
+### Available endpoints
 
-These endpoints allow you to get System and Hardware information about your **host**. Check the [example](#example) for a better understanding.
+These endpoints return system and hardware information about your **host**. Check the [example](#example) for a better understanding.
 
-| Verb   | Endpoint                      | JSON Data                    |
-|--------|-------------------------------|------------------------------|
-|GET     | /cpu                          | [CPU](#cpu)                  |
-|GET     | /bios                         | [Bios](#bios)                |
-|GET     | /bandwidth                    | [Bandwidth](#bandwidth)      |
-|GET     | /chassis                      | [Chassis](#chassis)          |
-|GET     | /disks                        | [Disks](#disks)              |
-|GET     | /drives                       | [Drives](#drives)            |
-|GET     | /gpu                          | [GPU](#gpu)                  |
-|GET     | /isp                          | [ISP](#isp)                  |
-|GET     | /network                      | [Network](#network)          |
-|GET     | /processes                    | [Processes](#processes)      |
-|GET     | /ram                          | [RAM](#ram)                  |
-|GET     | /baseboard                    | [Baseboard](#baseboard)      |
-|GET     | /product                      | [Product](#product)          |
-|GET     | /memory                       | [Memory](#Memory)            |
+| Verb | Endpoint   | JSON Data               |
+|------|------------|-------------------------|
+| GET  | /cpu       | [CPU](#cpu)             |
+| GET  | /bios      | [Bios](#bios)           |
+| GET  | /bandwidth | [Bandwidth](#bandwidth) |
+| GET  | /chassis   | [Chassis](#chassis)     |
+| GET  | /disks     | [Disks](#disks)         |
+| GET  | /drives    | [Drives](#drives)       |
+| GET  | /devices   | [Devices](#devices)     |
+| GET  | /gpu       | [GPU](#gpu)             |
+| GET  | /host      | [Host](#host)           |
+| GET  | /isp       | [ISP](#isp)             |
+| GET  | /network   | [Network](#network)     |
+| GET  | /processes | [Processes](#processes) |
+| GET  | /ram       | [RAM](#ram)             |
+| GET  | /baseboard | [Baseboard](#baseboard) |
+| GET  | /product   | [Product](#product)     |
+| GET  | /memory    | [Memory](#memory)       |
 
+### JSON data references
 
+<details>
+<summary>CPU</summary>
 
+### CPU
 
-
-## :mag: JSON Data References
-
-### CPU 
 > JSON Object
 
 | Key       | Data Type      | Description              |
@@ -237,8 +257,13 @@ These endpoints allow you to get System and Hardware information about your **ho
 | usage     | float          | CPU usage percentage     |
 | usageEach | Array of float | Usage percentage per CPU |
 
+</details>
+
+<details>
+<summary>Bios</summary>
 
 ### Bios
+
 > JSON Object
 
 | Key       | Data Type      | Description              |
@@ -247,8 +272,13 @@ These endpoints allow you to get System and Hardware information about your **ho
 | version   | string         | Bios version             |
 | date      | string         | Bios last update         |
 
+</details>
+
+<details>
+<summary>Bandwidth</summary>
 
 ### Bandwidth
+
 >JSON Array of Objects
 
 | Key       | Data Type      | Description              |
@@ -259,7 +289,13 @@ These endpoints allow you to get System and Hardware information about your **ho
 | rxPackets | integer        | Total packets received   |
 | txPackets | integer        | Total packets sent       |
 
+</details>
+
+<details>
+<summary>Chassis</summary>
+
 ### Chassis
+
 :lock: Requires running **nitr** with elevated privileges 
 > JSON Object
 
@@ -269,7 +305,13 @@ These endpoints allow you to get System and Hardware information about your **ho
 | vendor    | string         | Chassis vendor           |
 | serial    | string         | Chassis serial           |
 
+</details>
+
+<details>
+<summary>Disks</summary>
+
 ### Disks
+
 >JSON Array of Objects
 
 | Key        | Data Type       | Description                      |
@@ -280,7 +322,13 @@ These endpoints allow you to get System and Hardware information about your **ho
 | used       | integer         | Used disk space in bytes         |
 | percent    | float           | Disk usage percent               |
 
+</details>
+
+<details>
+<summary>Drives</summary>
+
 ### Drives
+
 > JSON Array of Objects
 
 | Key        | Data Type       | Description                      |
@@ -290,7 +338,28 @@ These endpoints allow you to get System and Hardware information about your **ho
 | model      | string          | Drive model                      |
 | serial     | string          | Drive serial                     |
 
+</details>
+
+<details>
+<summary>Devices</summary>
+
+### Devices
+
+> JSON Array of Objects
+
+| Key     | Data Type | Description          |
+|---------|-----------|----------------------|
+| product | string    | Device product name  |
+| vendor  | string    | Device vendor        |
+| address | string    | PCI address          |
+
+</details>
+
+<details>
+<summary>GPU</summary>
+
 ### GPU
+
 > JSON Array of Objects
 
 | Key       | Data Type      | Description              |
@@ -298,7 +367,30 @@ These endpoints allow you to get System and Hardware information about your **ho
 | brand     | string         | GPU Brand                |
 | model     | string         | GPU Model                |
 
+</details>
+
+<details>
+<summary>Host</summary>
+
+### Host
+
+> JSON Object
+
+| Key      | Data Type | Description          |
+|----------|-----------|----------------------|
+| name     | string    | Hostname             |
+| os       | string    | Operating system     |
+| platform | string    | Platform and version |
+| arch     | string    | Architecture         |
+| uptime   | integer   | Uptime in seconds    |
+
+</details>
+
+<details>
+<summary>ISP</summary>
+
 ### ISP
+
 >JSON Object
 
 | Key       | Data Type      | Description              |
@@ -308,7 +400,13 @@ These endpoints allow you to get System and Hardware information about your **ho
 | lat       | string         | Location Latitude        |
 | lon       | string         | Location Longitude       |
 
+</details>
+
+<details>
+<summary>Network</summary>
+
 ### Network
+
 >JSON Array of Objects
 
 | Key       | Data Type       | Description                            |
@@ -318,8 +416,13 @@ These endpoints allow you to get System and Hardware information about your **ho
 | mac       | string          | MAC Address                            |
 | active    | boolean         | True if the Network Interface is Up    |
 
+</details>
+
+<details>
+<summary>Processes</summary>
 
 ### Processes
+
 > JSON Array of Objects
 
 | Key       | Data Type      | Description              |
@@ -327,7 +430,13 @@ These endpoints allow you to get System and Hardware information about your **ho
 | pid       | integer        | Process ID               |
 | name      | string         | Process Name             |
 
+</details>
+
+<details>
+<summary>Ram</summary>
+
 ### Ram
+
 > JSON Object
 
 | Key       | Data Type      | Description              |
@@ -336,7 +445,13 @@ These endpoints allow you to get System and Hardware information about your **ho
 | free      | integer        | Free RAM in bytes        |
 | usage     | integer        | Used RAM in bytes        |
 
+</details>
+
+<details>
+<summary>Baseboard</summary>
+
 ### Baseboard
+
 :lock: Requires running **nitr** with elevated privileges 
 > JSON Object
 
@@ -347,7 +462,13 @@ These endpoints allow you to get System and Hardware information about your **ho
 | serial    | string         | Baseboard serial         |
 | version   | string         | Baseboard Version        |
 
+</details>
+
+<details>
+<summary>Product</summary>
+
 ### Product
+
 :lock: Requires running **nitr** with elevated privileges 
 >JSON Object
 
@@ -361,7 +482,13 @@ These endpoints allow you to get System and Hardware information about your **ho
 | sku       | string         | Product SKU              |
 | version   | string         | Product Version          |
 
+</details>
+
+<details>
+<summary>Memory</summary>
+
 ### Memory
+
 :lock: Requires running **nitr** with elevated privileges 
 >JSON Array of Objects
 
@@ -380,11 +507,12 @@ These endpoints allow you to get System and Hardware information about your **ho
 | dataWidth    | integer         | Data Width in bits              |
 | totalWidth   | integer         | Total Data Width in bits        |
 
+</details>
 
-## :wrench: Settings
+## Settings
 
 The following settings are located in the `config.ini` file
-  
+
 
 ### Server Port
 
@@ -422,23 +550,18 @@ ssl_certificate: /path/to/file.crt
 ssl_certificate_key: /path/to/file.key
 ```   
 
-## :heavy_check_mark: Platform Support
+## Platform support
 
-**Windows**
+Nitr publishes release binaries for **Linux** and **Windows**, on **amd64** and **386** (32-bit) architectures:
 
-Tested:
-- Windows 10
-- Windows 7 SP1
+| OS      | amd64 | 386 |
+|---------|-------|-----|
+| Linux   | yes   | yes |
+| Windows | yes   | yes |
 
-**Linux**
+Download them from the [latest release](https://github.com/bitcav/nitr/releases/latest).
 
-Tested:
-- Ubuntu Linux 20.04 LTS
-- Debian Linux 10
-- Manjaro Linux 20
-
-
-## :zap: Powered by
+## Powered by
 
 * [Fiber](https://gofiber.io/) - The web framework used
 * [bbolt](https://github.com/etcd-io/bbolt) - Database
