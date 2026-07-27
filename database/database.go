@@ -15,7 +15,7 @@ import (
 const database string = "nitr.db"
 const fileMode os.FileMode = 0600
 
-//SetupDB creates nitr database with default values
+// SetupDB creates nitr database with default values
 func SetupDB() error {
 	db, err := bolt.Open(database, fileMode, nil)
 
@@ -37,7 +37,7 @@ func SetupDB() error {
 	return nil
 }
 
-//SetUserData adds User data to nitr database with default values
+// SetUserData adds User data to nitr database with default values
 func SetUserData(id string, user models.User) error {
 	db, err := bolt.Open(database, fileMode, nil)
 
@@ -61,7 +61,7 @@ func SetUserData(id string, user models.User) error {
 	return err
 }
 
-//GetUserByID returns User by ID
+// GetUserByID returns User by ID
 func GetUserByID(id string) (models.User, error) {
 	db, err := bolt.Open(database, fileMode, nil)
 
@@ -87,7 +87,7 @@ func GetUserByID(id string) (models.User, error) {
 	return userData, nil
 }
 
-//GetApiKey returns current User Api Key
+// GetApiKey returns current User Api Key
 func GetApiKey() (string, error) {
 	nitrUser, err := GetUserByID("1")
 	if err != nil {
