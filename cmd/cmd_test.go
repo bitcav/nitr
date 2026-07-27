@@ -256,6 +256,72 @@ func TestQrCodeWrong(t *testing.T) {
 	assert.Contains(t, out, "Wrong password")
 }
 
+// TestSubcommandsFailWithoutDB guards the regression at the heart of this
+// package: key, passwd, and qr must NOT provision a database when run in a
+// directory that doesn't have one. They must fail with a clear, actionable
+// error naming the working directory and pointing at the server, and they
+// must leave the directory empty. Silently minting an empty credential
+// store is how a user ends up with a second database that diverges from the
+// one the server actually uses.
+//
+// It also guards the SilenceUsage-on-this-error-only behaviour in
+// requireNitrDB: cobra must print the Error: line and nothing else. A usage
+// block would send the user hunting for a syntax mistake that does not
+// exist, burying the actionable message.
+//
+// Uses rootCmd.Execute directly because ExecuteArgs os.Exit(1)s on error,
+// which would terminate the test binary before any assertion can run —
+// the same reason unknown-command provisioning is not covered here.
+func TestSubcommandsFailWithoutDB(t *testing.T) {
+	for _, name := range []string{"key", "passwd", "qr"} {
+		t.Run(name, func(t *testing.T) {
+			cdTemp(t)
+			viper.Reset()
+
+			var err error
+			stderr := captureStderr(t, func() {
+				rootCmd.SetArgs([]string{name})
+				err = rootCmd.Execute()
+			})
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "no nitr database found")
+			assert.Contains(t, err.Error(), "start the nitr server")
+			// The Error: line is still cobra's, but the usage block that
+			// normally follows it must be suppressed — see requireNitrDB.
+			assert.Contains(t, stderr, "Error:")
+			assert.NotContains(t, stderr, "Usage:")
+			assert.NotContains(t, stderr, "Flags:")
+			assertNoProvisioningSideEffects(t)
+		})
+	}
+}
+
+// captureStderr runs fn with os.Stderr replaced by an in-memory pipe and
+// returns whatever was written. Used to assert on what cobra prints below
+// the Error: line. fn must be short: the pipe is drained only after fn
+// returns, so writes larger than the OS pipe buffer (~64KB) would deadlock
+// — withIO is the tool for large output.
+func captureStderr(t *testing.T, fn func()) string {
+	t.Helper()
+	r, w, err := os.Pipe()
+	require.NoError(t, err)
+	oldErr := os.Stderr
+	os.Stderr = w
+	defer func() { os.Stderr = oldErr }()
+
+	type readResult struct{ b []byte }
+	resultCh := make(chan readResult, 1)
+	go func() {
+		b, _ := io.ReadAll(r)
+		resultCh <- readResult{b}
+	}()
+
+	fn()
+
+	require.NoError(t, w.Close())
+	return string((<-resultCh).b)
+}
+
 // TestWithIODrainsLargeOutput guards the pipe-buffer deadlock fixed in withIO.
 // Without a concurrent reader, any command that writes more than the OS pipe
 // buffer (~64KB on Linux, ~16KB on macOS) before returning blocks forever.
