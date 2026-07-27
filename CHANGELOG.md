@@ -10,16 +10,54 @@ behavioral and API changes that would be considered breaking after 1.0; patch
 
 ## [Unreleased]
 
-### Fixed
+### ⚠ Breaking changes
 
-- `nitr version` printed no trailing newline, so its output ran into the next
-  shell prompt. ([1b7549b](https://github.com/bitcav/nitr/commit/1b7549b))
-- `program.Stop` — the service-manager shutdown hook — was an empty stub that
-  returned `nil` without stopping anything, so stopping the Nitr service left
-  the HTTP server running. It now calls `app.Shutdown()`. ([c1389a0](https://github.com/bitcav/nitr/commit/c1389a0))
+- **`nitr key`, `nitr passwd`, and `nitr qr` now fail when `nitr.db` is absent
+  instead of silently creating one.** They previously provisioned a fresh
+  `nitr.db` and `config.ini` (with the default `123456` user) on every
+  invocation, so running them in a directory where the server had never been
+  started minted a second, divergent credential store. They now exit with a
+  clear error naming the working directory and pointing at the server, which
+  remains the only thing that creates the database. `nitr version` likewise no
+  longer leaves `nitr.db` and `config.ini` behind as a side effect — it and
+  the other informational commands (`-h`, `help`, unknown commands) keep the
+  working directory clean. If you scripted `key`/`passwd`/`qr` against an
+  empty directory expecting them to provision, start the server there first. ([cd09fb1](https://github.com/bitcav/nitr/commit/cd09fb1), [836a422](https://github.com/bitcav/nitr/commit/836a422))
+- **The web panel no longer honours a `remember` cookie.** Login and the auth
+  middleware granted access on `Cookie: remember=1`, a value the server never
+  set, so anyone who could reach the panel could authenticate by sending it.
+  Authentication is now session-only; no legitimate session is affected. See
+  **Security** below for the full rationale. ([4db6420](https://github.com/bitcav/nitr/commit/4db6420))
+
+### Added
+
+- Prometheus `/metrics` endpoint, emitting the standard exposition format
+  behind the same `x-api-key` header as the JSON API. Exposed series are
+  `nitr_cpu_seconds_total{cpu,mode}` (a counter; derive utilisation with
+  `rate()` in PromQL), `nitr_ram_{total,free,used}_bytes`, and
+  `nitr_disk_{free,size,used}_bytes{mountpoint}` — all `nitr_`-prefixed,
+  snake_case, base units. Per-interface bandwidth is deliberately not exposed:
+  `bandwidth.Info` sleeps 1s to derive a netdev delta, which would cause
+  scrape timeouts; it will land with a background sampler. The README
+  documents a working `scrape_config` that passes the key via
+  `http_headers.secrets`. ([ac9cdb8](https://github.com/bitcav/nitr/commit/ac9cdb8))
+- The test suite now runs on Windows (`windows-2025`) alongside Linux, with a
+  per-leg smoke test that builds the real binary and runs `nitr version` on
+  each OS and asserts a sane version string. This is the guard that would have
+  caught the v0.8.0 `init()`-panic class of bug, where every compiled binary
+  died before `main` while `go test` stayed green. ([7584cd2](https://github.com/bitcav/nitr/commit/7584cd2), [dc3c547](https://github.com/bitcav/nitr/commit/dc3c547), [8c1c0cf](https://github.com/bitcav/nitr/commit/8c1c0cf))
 
 ### Changed
 
+- The README was overhauled: a 30-second quick start, a platform badge, a
+  rewritten intro, and a reorganised table of contents. It now also documents
+  the CLI database precondition (`key`/`passwd`/`qr` operate on the database
+  in the current working directory and require the server to have run there)
+  and states which platforms CI actually verifies on each push. ([b8fc37d](https://github.com/bitcav/nitr/commit/b8fc37d), [d65060a](https://github.com/bitcav/nitr/commit/d65060a))
+- The README network table was corrected: `/network` returns an array of
+  objects (`[{"ip": ...}]`), not an array of strings as previously documented.
+  A JSON example was added, since the nested shape is not expressible in the
+  flat key/type table. ([34235f2](https://github.com/bitcav/nitr/commit/34235f2))
 - The API field reference moved out of `README.md` into a new `docs/API.md`.
   Those 16 sections previously lived inside collapsed `<details>` blocks, so
   every "JSON Data" link in the endpoint table scrolled to hidden content; the
@@ -32,6 +70,50 @@ behavioral and API changes that would be considered breaking after 1.0; patch
   requires it wholesale. ([faab898](https://github.com/bitcav/nitr/commit/faab898))
 - The README endpoint table now documents `GET /api/v1/`, which was routed but
   previously undocumented. ([faab898](https://github.com/bitcav/nitr/commit/faab898))
+
+### Fixed
+
+- `nitr version` printed no trailing newline, so its output ran into the next
+  shell prompt. ([1b7549b](https://github.com/bitcav/nitr/commit/1b7549b))
+- `program.Stop` — the service-manager shutdown hook — was an empty stub that
+  returned `nil` without stopping anything, so stopping the Nitr service left
+  the HTTP server running. It now calls `app.Shutdown()`. ([c1389a0](https://github.com/bitcav/nitr/commit/c1389a0))
+- The `/status` websocket reader ran on a hijacked-connection goroutine that
+  fiber's `recover` middleware does not cover, so a panic while handling an
+  inbound message crashed the whole process. It now recovers explicitly, logs
+  the panic, and lets the library release the connection. ([f1a2af8](https://github.com/bitcav/nitr/commit/f1a2af8))
+- A startup failure opening `nitr.log` (when `save_logs` is on) called
+  `log.Fatalf` from the background goroutine spawned by the service manager,
+  `os.Exit`-ing the process from outside `main`'s error-reporting path. The
+  error is now returned through `main` and reported cleanly. ([76f329f](https://github.com/bitcav/nitr/commit/76f329f))
+- CLI argument routing through the internal dispatch path now forwards its
+  arguments to the subcommand parser instead of falling back to `os.Args`.
+  The two were equivalent for normal `nitr <command>` use, so no production
+  behaviour changed, but dispatch now routes as its signature promised and is
+  testable without parsing the test binary's own flags. ([20eb9b9](https://github.com/bitcav/nitr/commit/20eb9b9))
+- The password-change success message read "Password changed succesfully!"
+  ("succesfully" → "successfully"). ([a2182c7](https://github.com/bitcav/nitr/commit/a2182c7))
+
+### Security
+
+- **Removed a forgeable `remember` cookie that bypassed panel login.** Both
+  the login redirect and the auth middleware granted access when
+  `c.Cookies("remember") == "1"`, but nothing in the codebase ever set that
+  cookie — it was the surviving read half of a "remember me" feature with no
+  write path. Anyone who could reach the panel could authenticate by sending
+  `Cookie: remember=1`, gaining the panel, host info, and the API key, and
+  through it the entire `/api/v1` surface. Both checks are now session-only.
+  This is also called out under **⚠ Breaking changes** above. ([4db6420](https://github.com/bitcav/nitr/commit/4db6420))
+- Migrated from the end-of-life `gofiber/fiber` v1.11.1 to `fiber/v2`
+  (v2.52.14), closing the four outstanding `govulncheck` findings the
+  `[0.8.0]` Security entry attributed to EOL fiber v1 and explicitly deferred
+  as "tracked separately." That promise is now closed: handler signatures
+  return `error`, `Send` → `SendString`, `app.Serve` → `app.Listener`, and
+  bundled middleware (logger, recover, session, filesystem) replaces the old
+  standalone `gofiber/{embed,recover,logger,session}` modules. Two transitive
+  advisories Dependabot flags regardless of reachability were bumped alongside
+  it (`golang.org/x/text` and `golang.org/x/sys`). `govulncheck ./...` at this
+  commit reports **no vulnerabilities** (the four fiber-v1 findings are gone). ([e79ba5d](https://github.com/bitcav/nitr/commit/e79ba5d))
 
 ## [0.8.1] - 2026-07-27
 
