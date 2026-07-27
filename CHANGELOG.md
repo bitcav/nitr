@@ -34,7 +34,7 @@ visible breaking change to the HTTP API.
   `handlers`, `models`, `utils`, `version`, and `main`. ([57bcfd6](https://github.com/bitcav/nitr/commit/57bcfd6))
 - `Draft Release` CI job that, on a `v*` tag push, attaches the four
   cross-compiled binaries (`nitr_linux_amd64`, `nitr_linux_386`,
-  `nitr_windows_amd64.exe`, `nitr_windows_386.exe`) to a draft GitHub release. ([32deb54](https://github.com/bitcav/nitr/commit/32deb54))
+  `nitr_windows_amd64.exe`, `nitr_windows_386.exe`) to a draft GitHub release. ([32deb54](https://github.com/bitcav/nitr/commit/32deb54), [468e3ee](https://github.com/bitcav/nitr/commit/468e3ee))
 
 ### Changed
 
@@ -55,12 +55,10 @@ visible breaking change to the HTTP API.
 
 ### Fixed
 
-- The `Draft Release` job now triggers on tag pushes (`refs/tags/v*`) instead of
-  on every push to `master`, so releases are no longer drafted prematurely and
-  do get drafted on actual tags. ([468e3ee](https://github.com/bitcav/nitr/commit/468e3ee))
-- Test correctness: removed an `assert.NoError` that ran after `fiber.Ctx.Test()`
-  had already timed out, which could dereference a nil context and panic the
-  test run rather than reporting the real timeout failure. ([d88e164](https://github.com/bitcav/nitr/commit/d88e164))
+- Test correctness: changed `assert.NoError` to `require.NoError` after
+  `app.Test(req, timeout)` so that a timeout — which returns a nil
+  `*http.Response` — stops the test immediately instead of letting the next
+  line dereference `resp.StatusCode` and panic over the real timeout failure. ([d88e164](https://github.com/bitcav/nitr/commit/d88e164))
 
 ### Security
 
