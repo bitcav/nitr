@@ -10,6 +10,7 @@ import (
 	"github.com/bitcav/nitr/models"
 	"github.com/bitcav/nitr/utils"
 	"github.com/bitcav/nitr/version"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -86,6 +87,31 @@ func TestExecuteVersion(t *testing.T) {
 	// Execute provisions config + db on the way through
 	assert.FileExists(t, "config.ini")
 	assert.FileExists(t, "nitr.db")
+}
+
+func TestExecuteNoDuplicateRegistration(t *testing.T) {
+	cdTemp(t)
+	viper.Reset()
+
+	oldArgs := os.Args
+	os.Args = []string{"nitr", "version"}
+	defer func() { os.Args = oldArgs }()
+
+	withIO(t, "", func() { Execute() })
+	withIO(t, "", func() { Execute() })
+
+	// cobra lazily injects help/completion during Execute(), so total command
+	// count is not stable. Assert each of our subcommands is registered exactly
+	// once instead — repeated Execute() must not re-run AddCommand.
+	for _, want := range []*cobra.Command{VersionCmd, ApiKey, Passwd, QrCode} {
+		n := 0
+		for _, c := range rootCmd.Commands() {
+			if c == want {
+				n++
+			}
+		}
+		assert.Equalf(t, 1, n, "%s registered %d times, want 1", want.Name(), n)
+	}
 }
 
 func TestApiKeyCorrect(t *testing.T) {
