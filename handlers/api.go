@@ -1,7 +1,8 @@
 package handlers
 
 import (
-	"fmt"
+	"errors"
+	"io/fs"
 	"net/http"
 
 	"github.com/bitcav/go-memdev"
@@ -129,11 +130,22 @@ func RAM(c *fiber.Ctx) error {
 	return c.JSON(ram.Info())
 }
 
+// memdevInfoFunc is a seam so tests can stub memdev.Info() without needing
+// SMBIOS access. It points at memdev.Info in production.
+var memdevInfoFunc = memdev.Info
+
 // Memory returns a JSON response of the Memory Devices
 func Memory(c *fiber.Ctx) error {
-	memInfo, err := memdev.Info()
+	memInfo, err := memdevInfoFunc()
 	if err != nil {
-		fmt.Println(err)
+		code := http.StatusInternalServerError
+		if errors.Is(err, fs.ErrPermission) {
+			code = http.StatusForbidden
+		}
+		return c.Status(code).JSON(fiber.Map{
+			"message": err.Error(),
+			"status":  code,
+		})
 	}
 	return c.JSON(memInfo)
 }
