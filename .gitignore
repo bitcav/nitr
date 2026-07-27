@@ -3,3 +3,5 @@
 *.exe
 config.ini
 nitr
+coverage.out
+coverage.html

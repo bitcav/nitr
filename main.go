@@ -118,27 +118,49 @@ func (p *program) Stop(s service.Service) error {
 }
 
 func main() {
-	if len(os.Args) > 1 {
-		cmd.Execute()
+	if dispatch(os.Args) {
 		return
 	}
 
+	s, lg, err := initService()
+	if err != nil {
+		log.Fatal(err)
+	}
+	logger = lg
+
+	if err := s.Run(); err != nil {
+		logger.Error(err)
+	}
+}
+
+// dispatch runs the CLI when the process is started with extra arguments
+// (e.g. "nitr version"). It returns true when the CLI handled the invocation,
+// in which case the caller must not start the host service.
+func dispatch(args []string) bool {
+	if len(args) > 1 {
+		cmd.Execute()
+		return true
+	}
+	return false
+}
+
+// initService builds the Nitr host service together with its logger. It is
+// extracted from main() so the construction logic can be exercised by tests.
+func initService() (service.Service, service.Logger, error) {
 	svcConfig := &service.Config{
 		Name:        "NitrService",
 		Description: "A Remote Monitoring Tool for system information gathering, making it available through a JSON API.",
 	}
 
-	prg := &program{}
-	s, err := service.New(prg, svcConfig)
+	s, err := service.New(&program{}, svcConfig)
 	if err != nil {
-		log.Fatal(err)
+		return nil, nil, err
 	}
-	logger, err = s.Logger(nil)
+
+	lg, err := s.Logger(nil)
 	if err != nil {
-		log.Fatal(err)
+		return nil, nil, err
 	}
-	err = s.Run()
-	if err != nil {
-		logger.Error(err)
-	}
+
+	return s, lg, nil
 }
