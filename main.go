@@ -9,12 +9,11 @@ import (
 	db "github.com/bitcav/nitr/database"
 	"github.com/bitcav/nitr/handlers"
 	"github.com/bitcav/nitr/utils"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/filesystem"
+	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/gofiber/websocket/v2"
 	"github.com/kardianos/service"
-
-	"github.com/gofiber/embed"
-	"github.com/gofiber/fiber"
-	"github.com/gofiber/recover"
-	"github.com/gofiber/websocket"
 )
 
 func server() {
@@ -25,21 +24,19 @@ func server() {
 	db.SetAPIData()
 
 	//App Config
-	app := fiber.New(&fiber.Settings{
+	app := fiber.New(fiber.Config{
 		DisableStartupMessage: true,
 	})
 
 	//In Memory Static Assets
-	app.Use("/assets", embed.New(embed.Config{
+	app.Use("/assets", filesystem.New(filesystem.Config{
 		Root: rice.MustFindBox("app/assets").HTTPBox(),
 	}))
 
 	//Checks if logs saving is activated
 	utils.Logs(app)
 
-	app.Use(recover.New(recover.Config{
-		Handler: handlers.Recover,
-	}))
+	app.Use(recover.New())
 
 	//API Config
 	api := app.Group("/api")

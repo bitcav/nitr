@@ -9,9 +9,9 @@ import (
 	db "github.com/bitcav/nitr/database"
 	"github.com/bitcav/nitr/models"
 	"github.com/bitcav/nitr/utils"
-	"github.com/gofiber/fiber"
-	"github.com/gofiber/session"
-	"github.com/gofiber/websocket"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/session"
+	"github.com/gofiber/websocket/v2"
 	"github.com/hoisie/mustache"
 )
 
@@ -19,23 +19,25 @@ var sessions = session.New()
 
 var ViewsBox *rice.Box
 
-func Login(c *fiber.Ctx) {
-	store := sessions.Get(c)
-	if store.Get("UserID") == "1" || c.Cookies("remember") == "1" {
-		c.Redirect("/panel")
-	} else {
-		loginView, err := ViewsBox.String("login.mustache")
-		utils.LogError(err)
-
-		layoutView, err := ViewsBox.String("layout/default.mustache")
-		utils.LogError(err)
-
-		c.Type("html")
-		c.Send(mustache.RenderInLayout(loginView, layoutView))
+func Login(c *fiber.Ctx) error {
+	store, err := sessions.Get(c)
+	if err != nil {
+		return err
 	}
+	if store.Get("UserID") == "1" || c.Cookies("remember") == "1" {
+		return c.Redirect("/panel")
+	}
+	loginView, err := ViewsBox.String("login.mustache")
+	utils.LogError(err)
+
+	layoutView, err := ViewsBox.String("layout/default.mustache")
+	utils.LogError(err)
+
+	c.Type("html")
+	return c.SendString(mustache.RenderInLayout(loginView, layoutView))
 }
 
-func LoginSubmit(c *fiber.Ctx) {
+func LoginSubmit(c *fiber.Ctx) error {
 	login := new(models.Login)
 
 	if err := c.BodyParser(login); err != nil {
@@ -44,21 +46,23 @@ func LoginSubmit(c *fiber.Ctx) {
 
 	nitrUser, err := db.GetUserByID("1")
 	if err != nil {
-		c.SendString(err.Error())
-		c.SendStatus(500)
-		return
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
 	if utils.PasswordHash(login.Password) == nitrUser.Password {
-		store := sessions.Get(c)
-		defer store.Save()
+		store, err := sessions.Get(c)
+		if err != nil {
+			return err
+		}
+		defer func() {
+			utils.LogError(store.Save())
+		}()
 		store.Set("UserID", "1")
-		c.Redirect("/panel")
-	} else {
-		c.Redirect("/")
+		return c.Redirect("/panel")
 	}
+	return c.Redirect("/")
 }
 
-func Panel(c *fiber.Ctx) {
+func Panel(c *fiber.Ctx) error {
 	panelView, err := ViewsBox.String("panel.html")
 	utils.LogError(err)
 
@@ -66,17 +70,17 @@ func Panel(c *fiber.Ctx) {
 	utils.LogError(err)
 
 	c.Type("html")
-	c.Send(mustache.RenderInLayout(panelView, layoutView))
+	err = c.SendString(mustache.RenderInLayout(panelView, layoutView))
+	utils.LogError(err)
 
 	log.Println("Session started")
+	return nil
 }
 
-func PanelContent(c *fiber.Ctx) {
+func PanelContent(c *fiber.Ctx) error {
 	apiKey, err := db.GetApiKey()
 	if err != nil {
-		c.SendString(err.Error())
-		c.SendStatus(500)
-		return
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
 	hostInfo := models.HostInfo{
 		Name:        host.Info().Name,
@@ -93,10 +97,10 @@ func PanelContent(c *fiber.Ctx) {
 
 	hostInfo.QrCode = string(hostInfoJSON)
 
-	c.JSON(hostInfo)
+	return c.JSON(hostInfo)
 }
 
-func GenerateApiKey(c *fiber.Ctx) {
+func GenerateApiKey(c *fiber.Ctx) error {
 	newAPIKey := utils.RandString(10)
 
 	hostInfo := models.HostInfo{
@@ -114,23 +118,23 @@ func GenerateApiKey(c *fiber.Ctx) {
 
 	nitrUser, err := db.GetUserByID("1")
 	if err != nil {
-		c.SendString(err.Error())
-		c.SendStatus(500)
-		return
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
 	user := models.User{Password: nitrUser.Password, Apikey: newAPIKey}
 	err = db.SetUserData("1", user)
 	utils.LogError(err)
 
-	c.JSON(models.ApiKey{
+	err = c.JSON(models.ApiKey{
 		Key:    newAPIKey,
 		QrCode: string(hostInfoJSON),
 	})
+	utils.LogError(err)
 
 	log.Println("New Api key generated")
+	return nil
 }
 
-func Password(c *fiber.Ctx) {
+func Password(c *fiber.Ctx) error {
 	passwordView, err := ViewsBox.String("password.html")
 	utils.LogError(err)
 
@@ -138,10 +142,10 @@ func Password(c *fiber.Ctx) {
 	utils.LogError(err)
 
 	c.Type("html")
-	c.Send(mustache.RenderInLayout(passwordView, layoutView))
+	return c.SendString(mustache.RenderInLayout(passwordView, layoutView))
 }
 
-func PasswordSubmit(c *fiber.Ctx) {
+func PasswordSubmit(c *fiber.Ctx) error {
 	password := new(models.Password)
 
 	if err := c.BodyParser(password); err != nil {
@@ -150,20 +154,17 @@ func PasswordSubmit(c *fiber.Ctx) {
 
 	nitrUser, err := db.GetUserByID("1")
 	if err != nil {
-		c.SendString(err.Error())
-		c.SendStatus(500)
-		return
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
 
 	if utils.PasswordHash(password.CurrentPassword) == nitrUser.Password {
 		user := models.User{Password: utils.PasswordHash(password.NewPassword), Apikey: nitrUser.Apikey}
 		err := db.SetUserData("1", user)
 		utils.LogError(err)
-		c.SendStatus(200)
 		log.Println("Password changed")
-	} else {
-		c.SendStatus(304)
+		return c.SendStatus(fiber.StatusOK)
 	}
+	return c.SendStatus(fiber.StatusNotModified)
 }
 
 func SocketReader(c *websocket.Conn) {
@@ -179,22 +180,19 @@ func SocketReader(c *websocket.Conn) {
 }
 
 // Auth Middleware
-func Auth(c *fiber.Ctx) {
-	store := sessions.Get(c)
-	if store.Get("UserID") == "1" || c.Cookies("remember") == "1" {
-		c.Next()
-	} else {
-		c.Redirect("/")
+func Auth(c *fiber.Ctx) error {
+	store, err := sessions.Get(c)
+	if err != nil {
+		return err
 	}
+	if store.Get("UserID") == "1" || c.Cookies("remember") == "1" {
+		return c.Next()
+	}
+	return c.Redirect("/")
 }
 
-func Logout(c *fiber.Ctx) {
+func Logout(c *fiber.Ctx) error {
 	c.ClearCookie()
-	c.Redirect("/")
 	log.Println("Session closed")
-}
-
-func Recover(c *fiber.Ctx, err error) {
-	c.SendString(err.Error())
-	c.SendStatus(500)
+	return c.Redirect("/")
 }

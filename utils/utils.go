@@ -2,7 +2,6 @@ package utils
 
 import (
 	"crypto/sha256"
-	"crypto/tls"
 	"encoding/hex"
 	"fmt"
 	"log"
@@ -15,8 +14,8 @@ import (
 	"time"
 
 	"github.com/bitcav/nitr/version"
-	"github.com/gofiber/fiber"
-	"github.com/gofiber/logger"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/spf13/viper"
 )
 
@@ -162,18 +161,12 @@ func GetLocalPort() string {
 
 func StartServer(app *fiber.App) {
 	port := GetLocalPort()
+	addr := ":" + port
 	sslEnabled := viper.GetBool("ssl_enabled")
 	if sslEnabled {
 		cert := viper.GetString("ssl_certificate")
 		key := viper.GetString("ssl_certificate_key")
 
-		cer, err := tls.LoadX509KeyPair(cert, key)
-		if err != nil {
-			log.Println("Invalid ssl certificate")
-			LogError(err)
-		}
-
-		config := &tls.Config{Certificates: []tls.Certificate{cer}}
 		StartMessage("https", port)
 
 		openBrowser := viper.GetBool("open_browser_on_startup")
@@ -183,7 +176,7 @@ func StartServer(app *fiber.App) {
 
 		log.Println("Starting server")
 
-		err = app.Listen(port, config)
+		err := app.ListenTLS(addr, cert, key)
 		if err != nil {
 			fmt.Println(err, "\nCheck settings at config.ini file")
 		}
@@ -198,7 +191,7 @@ func StartServer(app *fiber.App) {
 
 		log.Println("Starting server")
 
-		err := app.Listen(port)
+		err := app.Listen(addr)
 		if err != nil {
 			fmt.Println(err, "\nCheck settings at config.ini file")
 		}

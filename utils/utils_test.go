@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/bitcav/nitr/version"
-	"github.com/gofiber/fiber"
+	"github.com/gofiber/fiber/v2"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -192,8 +192,8 @@ func TestStartServerHTTP(t *testing.T) {
 	viper.Set("ssl_enabled", false)
 	viper.Set("open_browser_on_startup", false)
 
-	app := fiber.New(&fiber.Settings{DisableStartupMessage: true})
-	app.Get("/", func(c *fiber.Ctx) { c.Send("ok") })
+	app := fiber.New(fiber.Config{DisableStartupMessage: true})
+	app.Get("/", func(c *fiber.Ctx) error { return c.SendString("ok") })
 
 	done := make(chan struct{})
 	go func() {
@@ -255,7 +255,7 @@ func TestStartServerHTTPListenError(t *testing.T) {
 	var buf bytes.Buffer
 	log.SetOutput(&buf)
 
-	app := fiber.New(&fiber.Settings{DisableStartupMessage: true})
+	app := fiber.New(fiber.Config{DisableStartupMessage: true})
 	// Should return (listen error path prints + logs but does not fatal).
 	assert.NotPanics(t, func() { StartServer(app) })
 	// StartServer must return to its caller instead of os.Exit-ing.
@@ -288,7 +288,7 @@ func TestStartServerSSLError(t *testing.T) {
 	var buf bytes.Buffer
 	log.SetOutput(&buf)
 
-	app := fiber.New(&fiber.Settings{DisableStartupMessage: true})
+	app := fiber.New(fiber.Config{DisableStartupMessage: true})
 	// invalid cert path -> "Invalid ssl certificate" then listen error -> returns
 	assert.NotPanics(t, func() { StartServer(app) })
 	assert.NotContains(t, buf.String(), "exit status")

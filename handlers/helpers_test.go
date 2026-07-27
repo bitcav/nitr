@@ -12,7 +12,7 @@ import (
 	db "github.com/bitcav/nitr/database"
 	"github.com/bitcav/nitr/models"
 	"github.com/bitcav/nitr/utils"
-	"github.com/gofiber/fiber"
+	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/require"
 )
 
@@ -50,14 +50,14 @@ func setupEnv(t *testing.T) {
 // third-party call (e.g. the ISP endpoint hitting the network) cannot crash the
 // whole test binary.
 func newTestApp() *fiber.App {
-	app := fiber.New(&fiber.Settings{DisableStartupMessage: true})
-	app.Use(func(c *fiber.Ctx) {
+	app := fiber.New(fiber.Config{DisableStartupMessage: true})
+	app.Use(func(c *fiber.Ctx) error {
 		defer func() {
 			if r := recover(); r != nil {
-				c.Status(500).Send("recovered")
+				c.Status(500).SendString("recovered")
 			}
 		}()
-		c.Next()
+		return c.Next()
 	})
 	return app
 }
