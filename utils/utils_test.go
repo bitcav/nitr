@@ -178,25 +178,36 @@ func TestOpenBrowser(t *testing.T) {
 	}
 }
 
-func freePort(t *testing.T) string {
+// freeListener binds an ephemeral port and returns the held listener plus its
+// string form. The listener stays open so the OS cannot hand the same port to
+// another process between check and use: bind-close-rebind is a TOCTOU race
+// across the separate OS processes that `go test ./...` spawns per package.
+// The caller either hands the listener to the server (via ListenFunc, which
+// closes it on shutdown) or closes it itself; closing an already-closed
+// listener is a benign no-op whose error we ignore.
+func freeListener(t *testing.T) (net.Listener, string) {
 	t.Helper()
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
-	port := strconv.Itoa(ln.Addr().(*net.TCPAddr).Port)
-	require.NoError(t, ln.Close())
-	return port
+	return ln, strconv.Itoa(ln.Addr().(*net.TCPAddr).Port)
 }
 
 func TestStartServerHTTP(t *testing.T) {
 	cdTemp(t)
 	viper.Reset()
-	port := freePort(t)
+	ln, port := freeListener(t)
 	viper.Set("port", port)
 	viper.Set("ssl_enabled", false)
 	viper.Set("open_browser_on_startup", false)
 
 	app := fiber.New(fiber.Config{DisableStartupMessage: true})
 	app.Get("/", func(c *fiber.Ctx) error { return c.SendString("ok") })
+
+	// Serve on the held listener so there is no close-rebind window for
+	// another package's test binary to race on. fiber.Shutdown closes ln.
+	origListen := ListenFunc
+	ListenFunc = func(a *fiber.App, addr string) error { return a.Listener(ln) }
+	t.Cleanup(func() { ListenFunc = origListen })
 
 	done := make(chan struct{})
 	go func() {
@@ -236,7 +247,11 @@ func TestStartServerHTTPListenError(t *testing.T) {
 	cdTemp(t)
 	viper.Reset()
 
-	port := freePort(t)
+	// This test never actually binds (ListenFunc is stubbed to error), so it
+	// takes no part in the close-rebind TOCTOU race; closing the held
+	// listener immediately returns its port to the ephemeral pool.
+	ln, port := freeListener(t)
+	ln.Close()
 	viper.Set("port", port)
 	viper.Set("ssl_enabled", false)
 	viper.Set("open_browser_on_startup", true) // exercise open-browser path
@@ -252,11 +267,11 @@ func TestStartServerHTTPListenError(t *testing.T) {
 	// relying on a double-bind to fail: Windows socket semantics (SO_REUSEADDR
 	// vs. SO_EXCLUSIVEADDRUSE) permit a second bind that Linux refuses, so a
 	// real second bind is not a portable way to provoke a listen error and
-	// would hang this test on Windows. Stubbing listenFunc makes the failure
+	// would hang this test on Windows. Stubbing ListenFunc makes the failure
 	// deterministic and bounded to seconds.
-	origListen := listenFunc
-	listenFunc = func(*fiber.App, string) error { return errors.New("stub: listen disabled") }
-	t.Cleanup(func() { listenFunc = origListen })
+	origListen := ListenFunc
+	ListenFunc = func(*fiber.App, string) error { return errors.New("stub: listen disabled") }
+	t.Cleanup(func() { ListenFunc = origListen })
 
 	// Capture log output so we can assert the browser-open error is logged
 	// (non-fatal) rather than crashing the process via log.Fatal.

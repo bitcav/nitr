@@ -13,7 +13,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bitcav/nitr/utils"
 	"github.com/bitcav/nitr/version"
+	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -32,16 +34,23 @@ func cdTempMain(t *testing.T) string {
 	return dir
 }
 
-func freePortStr(t *testing.T) string {
+// freeListener binds an ephemeral port and returns the held listener plus its
+// string form. The listener stays open so the OS cannot hand the same port to
+// another process between check and use: bind-close-rebind is a TOCTOU race
+// across the separate OS processes that `go test ./...` spawns per package
+// (the ephemeral port space is OS-global). Tests that actually start a server
+// hand the listener to it via utils.ListenFunc (which closes it on shutdown);
+// closing an already-closed listener is a benign no-op whose error we ignore.
+func freeListener(t *testing.T) (net.Listener, string) {
 	t.Helper()
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
-	port := strconv.Itoa(ln.Addr().(*net.TCPAddr).Port)
-	require.NoError(t, ln.Close())
-	return port
+	return ln, strconv.Itoa(ln.Addr().(*net.TCPAddr).Port)
 }
 
-// TestProgramStop covers the trivial no-op Stop handler.
+// TestProgramStop covers the nil-app path of Stop (a program that was never
+// started has nothing to shut down); the shutdown path is exercised by
+// TestServerBootsViaProgramStart.
 func TestProgramStop(t *testing.T) {
 	p := &program{}
 	assert.NoError(t, p.Stop(nil))
@@ -89,9 +98,17 @@ func TestInitService(t *testing.T) {
 // utils.StartServer). Setup now runs synchronously inside Start and only the
 // blocking listener is backgrounded, so the app is ready to answer by the
 // time Start returns; we still poll to tolerate listener ramp-up.
+//
+// The listener is held open (not closed-and-rebound) and handed to the server
+// via utils.ListenFunc, closing the TOCTOU window that two `go test ./...`
+// package binaries open when each frees a port and rebinds it against a
+// global ephemeral port space. p.Stop (registered as the LAST cleanup, so it
+// runs FIRST under LIFO) must run before cdTempMain's cleanup restores cwd
+// and deletes the temp dir, otherwise the server goroutine would keep
+// resolving nitr.db/config.ini against whatever directory is current.
 func TestServerBootsViaProgramStart(t *testing.T) {
 	dir := cdTempMain(t)
-	port := freePortStr(t)
+	ln, port := freeListener(t)
 
 	// Pre-seed config.ini so ConfigFileSetup does not overwrite our values and
 	// so StartServer uses a known free port without spawning a browser.
@@ -102,9 +119,30 @@ func TestServerBootsViaProgramStart(t *testing.T) {
 	require.NoError(t, ioutil.WriteFile("config.ini", []byte(cfg), 0666))
 
 	p := &program{}
+	// Serve on the held listener so there is no close-rebind window for
+	// another package's test binary to race on. fiber.Shutdown closes ln.
+	origListen := utils.ListenFunc
+	utils.ListenFunc = func(app *fiber.App, addr string) error { return app.Listener(ln) }
+	t.Cleanup(func() { utils.ListenFunc = origListen })
+
 	// Start runs setup synchronously and backgrounds only the blocking
 	// listener, so it returns once the app is assembled.
 	require.NoError(t, p.Start(nil))
+
+	// t.Cleanup is LIFO: this was registered AFTER cdTempMain's cleanup, so
+	// it runs BEFORE cwd is restored and the temp dir deleted — exactly the
+	// order a leaked server goroutine would corrupt if reversed.
+	t.Cleanup(func() {
+		assert.NoError(t, p.Stop(nil))
+		// Demonstrate the listener is gone: rebinding the same address must
+		// succeed because fiber.Shutdown closed it. A leaked server would
+		// hold the port and this bind would fail with "address in use".
+		probe, err := net.Listen("tcp", ln.Addr().String())
+		if !assert.NoError(t, err, "port %s still in use after Stop — listener leaked", port) {
+			return
+		}
+		probe.Close()
+	})
 
 	base := "http://127.0.0.1:" + port + "/"
 	cli := &http.Client{
@@ -144,7 +182,11 @@ func TestServerBootsViaProgramStart(t *testing.T) {
 // observe the error rather than let log.Fatalf kill the test run.
 func TestStartPropagatesLogsError(t *testing.T) {
 	cdTempMain(t)
-	port := freePortStr(t)
+	// This test never reaches ListenFunc (Start errors inside Logs), so it
+	// takes no part in the close-rebind TOCTOU race; closing the held
+	// listener immediately returns its port to the ephemeral pool.
+	ln, port := freeListener(t)
+	ln.Close()
 
 	// A directory where the file should be makes os.OpenFile fail
 	// (EISDIR on Linux, the equivalent error on Windows), which is the

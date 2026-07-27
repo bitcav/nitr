@@ -76,11 +76,13 @@ func OpenBrowser(domain, port string) error {
 // spawning a real process. It points at OpenBrowser in production.
 var openBrowserFunc = OpenBrowser
 
-// listenFunc is a seam so tests can force StartServer down its listen-error
-// path without depending on OS socket-binding semantics, which differ between
-// Linux and Windows (Windows permits some double-binds Linux refuses). It
-// calls app.Listen in production.
-var listenFunc = func(app *fiber.App, addr string) error {
+// ListenFunc is a seam so tests can serve on a pre-bound listener (closing
+// the TOCTOU window of bind-close-rebind across the separate OS processes
+// that `go test ./...` spawns per package) or force StartServer down its
+// listen-error path without depending on OS socket-binding semantics, which
+// differ between Linux and Windows (Windows permits some double-binds Linux
+// refuses). It calls app.Listen in production.
+var ListenFunc = func(app *fiber.App, addr string) error {
 	return app.Listen(addr)
 }
 
@@ -204,7 +206,7 @@ func StartServer(app *fiber.App) {
 
 		log.Println("Starting server")
 
-		err := listenFunc(app, addr)
+		err := ListenFunc(app, addr)
 		if err != nil {
 			fmt.Println(err, "\nCheck settings at config.ini file")
 		}

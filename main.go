@@ -108,7 +108,13 @@ func server() (*fiber.App, error) {
 	return app, nil
 }
 
-type program struct{}
+type program struct {
+	// app holds the server started by Start so Stop can shut it down. It is
+	// the minimal seam for deterministic listener teardown in tests; a full
+	// graceful-shutdown design (bbolt handle lifecycle, signal handling,
+	// shutdown timeouts) belongs to a separate ticket.
+	app *fiber.App
+}
 
 var logger service.Logger
 
@@ -122,11 +128,15 @@ func (p *program) Start(s service.Service) error {
 	if err != nil {
 		return err
 	}
+	p.app = app
 	go utils.StartServer(app)
 	return nil
 }
 
 func (p *program) Stop(s service.Service) error {
+	if p.app != nil {
+		return p.app.Shutdown()
+	}
 	return nil
 }
 
