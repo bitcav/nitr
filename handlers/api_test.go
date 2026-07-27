@@ -4,6 +4,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/bitcav/nitr-core/bandwidth"
+	"github.com/bitcav/nitr-core/isp"
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -49,6 +51,18 @@ func TestAuthAPIDeniedWrongKey(t *testing.T) {
 
 func TestAPIEndpoints(t *testing.T) {
 	setupEnv(t)
+
+	// bandwidth.Info() sleeps a hardcoded 1s and isp.Info() makes an
+	// outbound, timeout-less HTTP call to speedtest.net. Stub both via
+	// the package-level seams so the test stays local and fast.
+	origBandwidth := bandwidthInfoFunc
+	origISP := ispInfoFunc
+	bandwidthInfoFunc = func() []bandwidth.NetworkDeviceBandwidth { return nil }
+	ispInfoFunc = func() isp.Setting { return isp.Setting{} }
+	t.Cleanup(func() {
+		bandwidthInfoFunc = origBandwidth
+		ispInfoFunc = origISP
+	})
 
 	type tc struct {
 		path    string
