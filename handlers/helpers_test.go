@@ -30,9 +30,17 @@ func cdTemp(t *testing.T) string {
 	return dir
 }
 
+// TestMain loads the view templates once for the entire handlers test suite.
+// Doing it here (rather than a nil-check inside setupEnv) avoids a check-then-set
+// race on ViewsBox the moment any test opts into t.Parallel().
+func TestMain(m *testing.M) {
+	ViewsBox = rice.MustFindBox("../app/views")
+	os.Exit(m.Run())
+}
+
 // setupEnv provisions an isolated working dir with a database containing the
-// default test user (password "123456", api key "testapikey") and loads the
-// view templates so the rendering handlers can execute.
+// default test user (password "123456", api key "testapikey"). View templates
+// are loaded once by TestMain.
 func setupEnv(t *testing.T) {
 	t.Helper()
 	cdTemp(t)
@@ -41,9 +49,6 @@ func setupEnv(t *testing.T) {
 		Password: utils.PasswordHash("123456"),
 		Apikey:   "testapikey",
 	}))
-	if ViewsBox == nil {
-		ViewsBox = rice.MustFindBox("../app/views")
-	}
 }
 
 // newTestApp returns a Fiber app with a panic-recovery middleware so a failing
