@@ -1,6 +1,6 @@
 module github.com/bitcav/nitr
 
-go 1.21
+go 1.26
 
 toolchain go1.26.5
 
