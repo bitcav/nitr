@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"testing"
 	"time"
@@ -168,8 +169,8 @@ func TestStartPropagatesLogsError(t *testing.T) {
 // in-process from the source tree and never touch the appended-zip path. This
 // test builds the real binary and executes it, so a regression of that init()
 // panic surfaces as a non-zero exit (with the panic on stderr) instead of
-// shipping green. It runs in t.TempDir() because the binary writes a database
-// and log on startup and must not litter the repo.
+// shipping green. It runs the binary from t.TempDir() for defensive isolation,
+// keeping any cwd-relative I/O out of the repo.
 func TestBuiltBinaryRuns(t *testing.T) {
 	if _, err := exec.LookPath("go"); err != nil {
 		t.Skipf("go toolchain not available, skipping binary build test: %v", err)
@@ -177,6 +178,9 @@ func TestBuiltBinaryRuns(t *testing.T) {
 
 	tmp := t.TempDir()
 	bin := filepath.Join(tmp, "nitr")
+	if runtime.GOOS == "windows" {
+		bin += ".exe" // Windows cannot exec a binary without the .exe suffix
+	}
 
 	build := exec.Command("go", "build", "-o", bin, ".")
 	if out, err := build.CombinedOutput(); err != nil {
@@ -184,10 +188,16 @@ func TestBuiltBinaryRuns(t *testing.T) {
 	}
 
 	run := exec.Command(bin, "version")
-	run.Dir = tmp // startup writes config.ini/db/log here, not in the repo
+	run.Dir = tmp // defensive isolation: keep any cwd-relative I/O out of the repo
 	out, err := run.CombinedOutput()
 	if err != nil {
-		t.Fatalf("built `nitr version` exited non-zero (init panic?): %v\n%s", err, out)
+		// Distinguish "the binary never ran at all" (e.g. wrong name /
+		// missing .exe on Windows, ENOEXEC) from "it ran and exited
+		// non-zero" (the init()-panic class this test exists to catch).
+		if _, notStarted := err.(*exec.Error); notStarted {
+			t.Fatalf("built `nitr version` could not be executed at all: %v\n%s", err, out)
+		}
+		t.Fatalf("built `nitr version` ran but exited non-zero (init panic?): %v\n%s", err, out)
 	}
 	assert.Contains(t, string(out), "Nitr v")
 }
