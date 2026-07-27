@@ -99,6 +99,7 @@ func TestVersionCmdRun(t *testing.T) {
 		VersionCmd.Run(VersionCmd, nil)
 	})
 	assert.Contains(t, out, "Nitr v"+version.Version)
+	assert.True(t, strings.HasSuffix(out, "\n"), "version output must end with a newline")
 }
 
 func TestExecuteVersion(t *testing.T) {
