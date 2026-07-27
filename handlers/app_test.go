@@ -1,19 +1,19 @@
 package handlers
 
 import (
-	"fmt"
 	"net"
 	"testing"
 	"time"
 
 	db "github.com/bitcav/nitr/database"
 	"github.com/bitcav/nitr/utils"
-	"github.com/gofiber/fiber"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	ws "github.com/fasthttp/websocket"
-	fws "github.com/gofiber/websocket"
+	websocket "github.com/gofiber/websocket/v2"
 )
 
 func TestLoginRendersWhenUnauthenticated(t *testing.T) {
@@ -153,7 +153,7 @@ func TestAuthMiddlewareAllowsSession(t *testing.T) {
 	setupEnv(t)
 	app := newTestApp()
 	app.Post("/", LoginSubmit)
-	app.Get("/panel", Auth, func(c *fiber.Ctx) { c.Send("granted") })
+	app.Get("/panel", Auth, func(c *fiber.Ctx) error { return c.SendString("granted") })
 
 	resp := post(t, app, "/", "password=123456")
 	cookie := sessionCookie(resp)
@@ -167,7 +167,7 @@ func TestAuthMiddlewareAllowsSession(t *testing.T) {
 func TestAuthMiddlewareAllowsRememberCookie(t *testing.T) {
 	setupEnv(t)
 	app := newTestApp()
-	app.Get("/panel", Auth, func(c *fiber.Ctx) { c.Send("granted") })
+	app.Get("/panel", Auth, func(c *fiber.Ctx) error { return c.SendString("granted") })
 
 	resp := getWithCookie(t, app, "/panel", "remember=1")
 	assert.Equal(t, 200, resp.StatusCode)
@@ -177,7 +177,7 @@ func TestAuthMiddlewareAllowsRememberCookie(t *testing.T) {
 func TestAuthMiddlewareRedirectsWhenUnauthenticated(t *testing.T) {
 	setupEnv(t)
 	app := newTestApp()
-	app.Get("/panel", Auth, func(c *fiber.Ctx) { c.Send("granted") })
+	app.Get("/panel", Auth, func(c *fiber.Ctx) error { return c.SendString("granted") })
 
 	resp := get(t, app, "/panel")
 	assert.Equal(t, 302, resp.StatusCode)
@@ -196,16 +196,9 @@ func TestLogout(t *testing.T) {
 
 func TestRecoverHandler(t *testing.T) {
 	setupEnv(t)
-	app := fiber.New(&fiber.Settings{DisableStartupMessage: true})
-	app.Use(func(c *fiber.Ctx) {
-		defer func() {
-			if r := recover(); r != nil {
-				Recover(c, fmt.Errorf("%v", r))
-			}
-		}()
-		c.Next()
-	})
-	app.Get("/boom", func(c *fiber.Ctx) { panic("kaboom") })
+	app := fiber.New(fiber.Config{DisableStartupMessage: true})
+	app.Use(recover.New())
+	app.Get("/boom", func(c *fiber.Ctx) error { panic("kaboom") })
 
 	resp := get(t, app, "/boom")
 	assert.Equal(t, 500, resp.StatusCode)
@@ -214,14 +207,14 @@ func TestRecoverHandler(t *testing.T) {
 
 func TestSocketReader(t *testing.T) {
 	setupEnv(t)
-	app := fiber.New(&fiber.Settings{DisableStartupMessage: true})
-	app.Get("/ws", fws.New(SocketReader))
+	app := fiber.New(fiber.Config{DisableStartupMessage: true})
+	app.Get("/ws", websocket.New(SocketReader))
 
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
 	addr := ln.Addr().String()
 
-	go func() { _ = app.Serve(ln) }()
+	go func() { _ = app.Listener(ln) }()
 	t.Cleanup(func() { _ = app.Shutdown() })
 
 	dialer := ws.Dialer{HandshakeTimeout: 2 * time.Second}

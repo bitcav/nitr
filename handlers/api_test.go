@@ -4,7 +4,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gofiber/fiber"
+	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -12,7 +12,7 @@ import (
 func TestAuthAPIAllowed(t *testing.T) {
 	setupEnv(t)
 	app := newTestApp()
-	app.Get("/cpu", AuthAPI, func(c *fiber.Ctx) { c.Send("granted") })
+	app.Get("/cpu", AuthAPI, func(c *fiber.Ctx) error { return c.SendString("granted") })
 
 	req := httptest.NewRequest("GET", "/cpu", nil)
 	req.Header.Set("x-api-key", "testapikey")
@@ -25,7 +25,7 @@ func TestAuthAPIAllowed(t *testing.T) {
 func TestAuthAPIDeniedMissingKey(t *testing.T) {
 	setupEnv(t)
 	app := newTestApp()
-	app.Get("/cpu", AuthAPI, func(c *fiber.Ctx) { c.Send("granted") })
+	app.Get("/cpu", AuthAPI, func(c *fiber.Ctx) error { return c.SendString("granted") })
 
 	resp := get(t, app, "/cpu")
 	assert.Equal(t, 401, resp.StatusCode)
@@ -37,7 +37,7 @@ func TestAuthAPIDeniedMissingKey(t *testing.T) {
 func TestAuthAPIDeniedWrongKey(t *testing.T) {
 	setupEnv(t)
 	app := newTestApp()
-	app.Get("/cpu", AuthAPI, func(c *fiber.Ctx) { c.Send("granted") })
+	app.Get("/cpu", AuthAPI, func(c *fiber.Ctx) error { return c.SendString("granted") })
 
 	req := httptest.NewRequest("GET", "/cpu", nil)
 	req.Header.Set("x-api-key", "wrong")
