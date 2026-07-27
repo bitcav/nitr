@@ -73,6 +73,10 @@ func OpenBrowser(domain, port string) error {
 	return nil
 }
 
+//openBrowserFunc is a seam so tests can stub browser opening without
+//spawning a real process. It points at OpenBrowser in production.
+var openBrowserFunc = OpenBrowser
+
 const charset = "abcdefghijkmnpqrstuvwxyz" +
 	"123456789"
 
@@ -174,7 +178,7 @@ func StartServer(app *fiber.App) {
 
 		openBrowser := viper.GetBool("open_browser_on_startup")
 		if openBrowser {
-			LogError(OpenBrowser("https://localhost", port))
+			LogError(openBrowserFunc("https://localhost", port))
 		}
 
 		log.Println("Starting server")
@@ -189,7 +193,7 @@ func StartServer(app *fiber.App) {
 		StartMessage("http", port)
 		openBrowser := viper.GetBool("open_browser_on_startup")
 		if openBrowser {
-			LogError(OpenBrowser("http://localhost", port))
+			LogError(openBrowserFunc("http://localhost", port))
 		}
 
 		log.Println("Starting server")
