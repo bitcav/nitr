@@ -6,7 +6,7 @@
 
 <div align="center">
 
-![go](https://raw.githubusercontent.com/bitcav/nitr/master/images/goversion.svg) [![CI](https://github.com/bitcav/nitr/actions/workflows/ci.yml/badge.svg)](https://github.com/bitcav/nitr/actions/workflows/ci.yml) ![Release](https://raw.githubusercontent.com/bitcav/nitr/master/images/release.svg)  [![Go Report Card](https://goreportcard.com/badge/github.com/bitcav/nitr)](https://goreportcard.com/report/github.com/bitcav/nitr) [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/bitcav/nitr/blob/master/LICENSE)
+![go](https://raw.githubusercontent.com/bitcav/nitr/master/images/goversion.svg) [![CI](https://github.com/bitcav/nitr/actions/workflows/ci.yml/badge.svg)](https://github.com/bitcav/nitr/actions/workflows/ci.yml) ![Release](https://raw.githubusercontent.com/bitcav/nitr/master/images/release.svg)  ![go report](https://raw.githubusercontent.com/bitcav/nitr/master/images/goreport.svg) [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/bitcav/nitr/blob/master/LICENSE)
 
 </div>
 
