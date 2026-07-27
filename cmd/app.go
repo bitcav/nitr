@@ -14,8 +14,9 @@ import (
 )
 
 var Passwd = &cobra.Command{
-	Use:   "passwd",
-	Short: "Changes current password.",
+	Use:    "passwd",
+	Short:  "Changes current password.",
+	PreRun: provisionConfigAndDB,
 	Run: func(cmd *cobra.Command, args []string) {
 		var currentPassword string
 		var newPassword string
@@ -58,8 +59,9 @@ var Passwd = &cobra.Command{
 }
 
 var ApiKey = &cobra.Command{
-	Use:   "key",
-	Short: "Returns the host API key",
+	Use:    "key",
+	Short:  "Returns the host API key",
+	PreRun: provisionConfigAndDB,
 	Run: func(cmd *cobra.Command, args []string) {
 		var password string
 		fmt.Print("Enter password: ")
@@ -81,8 +83,9 @@ var ApiKey = &cobra.Command{
 }
 
 var QrCode = &cobra.Command{
-	Use:   "qr",
-	Short: "Prints host QR Code.",
+	Use:    "qr",
+	Short:  "Prints host QR Code.",
+	PreRun: provisionConfigAndDB,
 	Run: func(cmd *cobra.Command, args []string) {
 		var password string
 		fmt.Print("Enter password: ")
