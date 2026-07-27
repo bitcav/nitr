@@ -6,6 +6,8 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strconv"
 	"testing"
 	"time"
@@ -101,4 +103,34 @@ func TestServerBootsViaProgramStart(t *testing.T) {
 	assert.NotEmpty(t, b) // the login view HTML
 
 	_ = dir
+}
+
+// TestBuiltBinaryRuns guards against the go.rice/go.zipexe init() panic class
+// of bug: every compiled nitr binary panicked before main ran on Go 1.26 ELF,
+// while the whole test suite stayed green because tests call rice.MustFindBox
+// in-process from the source tree and never touch the appended-zip path. This
+// test builds the real binary and executes it, so a regression of that init()
+// panic surfaces as a non-zero exit (with the panic on stderr) instead of
+// shipping green. It runs in t.TempDir() because the binary writes a database
+// and log on startup and must not litter the repo.
+func TestBuiltBinaryRuns(t *testing.T) {
+	if _, err := exec.LookPath("go"); err != nil {
+		t.Skipf("go toolchain not available, skipping binary build test: %v", err)
+	}
+
+	tmp := t.TempDir()
+	bin := filepath.Join(tmp, "nitr")
+
+	build := exec.Command("go", "build", "-o", bin, ".")
+	if out, err := build.CombinedOutput(); err != nil {
+		t.Fatalf("go build failed: %v\n%s", err, out)
+	}
+
+	run := exec.Command(bin, "version")
+	run.Dir = tmp // startup writes config.ini/db/log here, not in the repo
+	out, err := run.CombinedOutput()
+	if err != nil {
+		t.Fatalf("built `nitr version` exited non-zero (init panic?): %v\n%s", err, out)
+	}
+	assert.Contains(t, string(out), "Nitr v")
 }
