@@ -156,6 +156,13 @@ func TestGetLocalIP(t *testing.T) {
 }
 
 func TestOpenBrowser(t *testing.T) {
+	// OpenBrowser spawns a real OS browser process; skip it during normal
+	// `go test ./...` runs. Opt in explicitly with NITR_TEST_REAL_BROWSER=1
+	// to exercise the real xdg-open/open/rundll32 path.
+	if os.Getenv("NITR_TEST_REAL_BROWSER") != "1" {
+		t.Skip("skipping real browser open; set NITR_TEST_REAL_BROWSER=1 to run")
+	}
+
 	// OpenBrowser must not fatal/panic on a missing browser-opener binary;
 	// it surfaces the error to the caller instead.
 	err := OpenBrowser("http://127.0.0.1", "1")
@@ -236,6 +243,13 @@ func TestStartServerHTTPListenError(t *testing.T) {
 	viper.Set("ssl_enabled", false)
 	viper.Set("open_browser_on_startup", true) // exercise open-browser path
 
+	// Stub the browser opener so the test never spawns a real process; the
+	// test only asserts that an error is logged non-fatally, so a canned
+	// error exercises exactly the same code path.
+	origOpen := openBrowserFunc
+	openBrowserFunc = func(string, string) error { return errors.New("stub: browser disabled") }
+	t.Cleanup(func() { openBrowserFunc = origOpen })
+
 	// Capture log output so we can assert the browser-open error is logged
 	// (non-fatal) rather than crashing the process via log.Fatal.
 	var buf bytes.Buffer
@@ -263,6 +277,11 @@ func TestStartServerSSLError(t *testing.T) {
 	viper.Set("ssl_certificate", "")
 	viper.Set("ssl_certificate_key", "")
 	viper.Set("open_browser_on_startup", true)
+
+	// Stub the browser opener so the test never spawns a real process.
+	origOpen := openBrowserFunc
+	openBrowserFunc = func(string, string) error { return errors.New("stub: browser disabled") }
+	t.Cleanup(func() { openBrowserFunc = origOpen })
 
 	// Capture log output so we can assert any browser-open error is logged
 	// (non-fatal) rather than crashing the process via log.Fatal.
