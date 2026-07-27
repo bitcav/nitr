@@ -75,6 +75,15 @@ func server() (*fiber.App, error) {
 	//Prometheus /metrics endpoint, behind the same x-api-key auth as /api/v1/*.
 	app.Get("/metrics", handlers.AuthAPI, handlers.Metrics)
 
+	//Liveness and readiness probes. Registered on `app` (not `v1`, so they
+	//skip the x-api-key middleware) and BEFORE app.Use(handlers.Auth) below,
+	//so they answer without credentials and never redirect to the login page.
+	//Health touches nothing; Ready only stats nitr.db. Both stay fast and
+	//side-effect-free so Docker/Compose/Kubernetes/uptime checkers can poll
+	//them without auth or backpressure.
+	app.Get("/health", handlers.Health)
+	app.Get("/ready", handlers.Ready)
+
 	//Login View
 	handlers.ViewsBox = rice.MustFindBox("app/views")
 	app.Get("/", handlers.Login)
