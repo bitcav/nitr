@@ -76,6 +76,14 @@ func OpenBrowser(domain, port string) error {
 // spawning a real process. It points at OpenBrowser in production.
 var openBrowserFunc = OpenBrowser
 
+// listenFunc is a seam so tests can force StartServer down its listen-error
+// path without depending on OS socket-binding semantics, which differ between
+// Linux and Windows (Windows permits some double-binds Linux refuses). It
+// calls app.Listen in production.
+var listenFunc = func(app *fiber.App, addr string) error {
+	return app.Listen(addr)
+}
+
 const charset = "abcdefghijkmnpqrstuvwxyz" +
 	"123456789"
 
@@ -191,7 +199,7 @@ func StartServer(app *fiber.App) {
 
 		log.Println("Starting server")
 
-		err := app.Listen(addr)
+		err := listenFunc(app, addr)
 		if err != nil {
 			fmt.Println(err, "\nCheck settings at config.ini file")
 		}
