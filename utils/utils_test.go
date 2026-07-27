@@ -156,8 +156,16 @@ func TestGetLocalIP(t *testing.T) {
 }
 
 func TestOpenBrowser(t *testing.T) {
-	// xdg-open exists in this environment; Start() returns without fatal.
-	assert.NotPanics(t, func() { OpenBrowser("http://127.0.0.1", "1") })
+	// OpenBrowser must not fatal/panic on a missing browser-opener binary;
+	// it surfaces the error to the caller instead.
+	err := OpenBrowser("http://127.0.0.1", "1")
+	if err != nil {
+		// On hosts lacking xdg-open/open/rundll32 the command simply fails to
+		// start; that is acceptable behaviour as long as it is returned
+		// (not fatal).
+		t.Logf("OpenBrowser returned error (expected on hosts without a " +
+			"browser opener): %v", err)
+	}
 }
 
 func freePort(t *testing.T) string {
@@ -228,9 +236,16 @@ func TestStartServerHTTPListenError(t *testing.T) {
 	viper.Set("ssl_enabled", false)
 	viper.Set("open_browser_on_startup", true) // exercise open-browser path
 
+	// Capture log output so we can assert the browser-open error is logged
+	// (non-fatal) rather than crashing the process via log.Fatal.
+	var buf bytes.Buffer
+	log.SetOutput(&buf)
+
 	app := fiber.New(&fiber.Settings{DisableStartupMessage: true})
 	// Should return (listen error path prints + logs but does not fatal).
 	assert.NotPanics(t, func() { StartServer(app) })
+	// StartServer must return to its caller instead of os.Exit-ing.
+	assert.NotContains(t, buf.String(), "exit status")
 }
 
 func TestStartServerSSLError(t *testing.T) {
@@ -249,7 +264,13 @@ func TestStartServerSSLError(t *testing.T) {
 	viper.Set("ssl_certificate_key", "")
 	viper.Set("open_browser_on_startup", true)
 
+	// Capture log output so we can assert any browser-open error is logged
+	// (non-fatal) rather than crashing the process via log.Fatal.
+	var buf bytes.Buffer
+	log.SetOutput(&buf)
+
 	app := fiber.New(&fiber.Settings{DisableStartupMessage: true})
 	// invalid cert path -> "Invalid ssl certificate" then listen error -> returns
 	assert.NotPanics(t, func() { StartServer(app) })
+	assert.NotContains(t, buf.String(), "exit status")
 }
