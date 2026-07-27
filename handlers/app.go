@@ -24,7 +24,7 @@ func Login(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	if store.Get("UserID") == "1" || c.Cookies("remember") == "1" {
+	if store.Get("UserID") == "1" {
 		return c.Redirect("/panel")
 	}
 	loginView, err := ViewsBox.String("login.mustache")
@@ -185,7 +185,7 @@ func Auth(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	if store.Get("UserID") == "1" || c.Cookies("remember") == "1" {
+	if store.Get("UserID") == "1" {
 		return c.Next()
 	}
 	return c.Redirect("/")

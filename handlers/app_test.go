@@ -26,15 +26,17 @@ func TestLoginRendersWhenUnauthenticated(t *testing.T) {
 	assert.Contains(t, body(t, resp), "password")
 }
 
-func TestLoginRedirectsOnRememberCookie(t *testing.T) {
+func TestLoginIgnoresForgedRememberCookie(t *testing.T) {
 	setupEnv(t)
 	app := newTestApp()
 	app.Get("/", Login)
 
+	// remember cookie is never issued by the server; a forged value must not
+	// authenticate. The login page (with its password form) should render.
 	resp := getWithCookie(t, app, "/", "remember=1")
-	assert.Equal(t, 302, resp.StatusCode)
-	loc := resp.Header.Get("Location")
-	assert.Equal(t, "/panel", loc)
+	assert.Equal(t, 200, resp.StatusCode)
+	assert.NotEqual(t, "/panel", resp.Header.Get("Location"))
+	assert.Contains(t, body(t, resp), "password")
 }
 
 func TestLoginRedirectsOnSession(t *testing.T) {
@@ -164,14 +166,16 @@ func TestAuthMiddlewareAllowsSession(t *testing.T) {
 	assert.Equal(t, "granted", body(t, resp))
 }
 
-func TestAuthMiddlewareAllowsRememberCookie(t *testing.T) {
+func TestAuthMiddlewareRejectsForgedRememberCookie(t *testing.T) {
 	setupEnv(t)
 	app := newTestApp()
 	app.Get("/panel", Auth, func(c *fiber.Ctx) error { return c.SendString("granted") })
 
+	// remember cookie is never issued by the server; a forged value must not
+	// pass the auth middleware.
 	resp := getWithCookie(t, app, "/panel", "remember=1")
-	assert.Equal(t, 200, resp.StatusCode)
-	assert.Equal(t, "granted", body(t, resp))
+	assert.Equal(t, 302, resp.StatusCode)
+	assert.Equal(t, "/", resp.Header.Get("Location"))
 }
 
 func TestAuthMiddlewareRedirectsWhenUnauthenticated(t *testing.T) {
