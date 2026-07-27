@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+    tags: ['v*']
+  pull_request:
+    branches: [master]
+
+jobs:
+  test:
+    name: Vet & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+          cache: true
+      - name: Download dependencies
+        run: go mod download
+      - name: Vet
+        run: go vet ./...
+      - name: Test
+        run: go test ./...
+
+  build:
+    name: Cross-compile binaries
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+          cache: true
+      - name: Build Linux amd64
+        env:
+          GOOS: linux
+          GOARCH: amd64
+        run: go build -o nitr_linux_amd64
+      - name: Build Linux 386
+        env:
+          GOOS: linux
+          GOARCH: '386'
+        run: go build -o nitr_linux_386
+      - name: Install goversioninfo
+        run: go install github.com/josephspurrier/goversioninfo/cmd/goversioninfo@latest
+      - name: Generate Windows resource (icon)
+        run: goversioninfo -platform-specific -icon=./images/app.ico
+      - name: Build Windows amd64
+        env:
+          GOOS: windows
+          GOARCH: amd64
+        run: go build -o nitr_windows_amd64.exe
+      - name: Build Windows 386
+        env:
+          GOOS: windows
+          GOARCH: '386'
+        run: go build -o nitr_windows_386.exe
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nitr-binaries
+          path: |
+            nitr_linux_amd64
+            nitr_linux_386
+            nitr_windows_amd64.exe
+            nitr_windows_386.exe
+
+  release:
+    name: Draft Release
+    needs: [test, build]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: nitr-binaries
+      - name: Create draft release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          name: nitr ${{ github.sha }}
+          files: |
+            nitr_linux_amd64
+            nitr_linux_386
+            nitr_windows_amd64.exe
+            nitr_windows_386.exe
