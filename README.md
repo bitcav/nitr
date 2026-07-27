@@ -143,6 +143,11 @@ Print QR code:
 nitr qr
 ```
 
+> `nitr passwd`, `nitr key`, and `nitr qr` operate on the database in the **current working directory** and need the server to have been started there first — running the server is the only thing that creates `nitr.db`. Without it they refuse and exit 1, creating nothing:
+> ```
+> Error: no nitr database found in /path/to/dir — start the nitr server in this directory first
+> ```
+
 ## Docker
 
 Build image using command:
@@ -638,6 +643,8 @@ Nitr publishes release binaries for **Linux** and **Windows**, on **amd64** and 
 | Windows | yes   | yes |
 
 Download them from the [latest release](https://github.com/bitcav/nitr/releases/latest).
+
+Every push runs the full test suite on two CI runners — `ubuntu-latest` and `windows-2025` — and on each leg additionally builds the real binary and runs `nitr version`, asserting it exits 0 and prints a sane version string. The 386 builds in the table above are cross-compiled by CI but are not executed there.
 
 ## Powered by
 
