@@ -65,6 +65,7 @@ See [Usage](#usage) for the full endpoint list and response shapes.
 - [Usage](#usage)
   - [Example](#example)
 - [Prometheus metrics](#prometheus-metrics)
+- [Health and readiness probes](#health-and-readiness-probes)
 - [API v1](#api-v1)
   - [Available endpoints](#available-endpoints)
   - [JSON data references](#json-data-references)
@@ -174,6 +175,8 @@ Run container:
 ```
 docker run -d -p 8000:8000 nitr:latest
 ```
+
+The image ships a `HEALTHCHECK` (30s interval, 5s timeout, 10s start period, 3 retries) that runs `wget -q -O /dev/null http://localhost:8000/health`, so `docker ps` reports a health status for the container alongside its uptime. `/health` needs no API key and no login, so the probe works out of the box. The health-status lifecycle is Docker's general `HEALTHCHECK` behaviour and was not separately observed for this image in the run that added it.
 
 ## Web panel
 
@@ -286,6 +289,26 @@ nitr_disk_free_bytes{mountpoint="/"} 1.2345678e+07
 # TYPE nitr_ram_total_bytes gauge
 nitr_ram_total_bytes 8.3319750656e+09
 ```
+
+## Health and readiness probes
+
+Nitr exposes two unauthenticated probes at the root of the server — `GET /health` and `GET /ready` — for Docker, Compose, Kubernetes, and any external uptime checker. Both are registered on the root app **before** the `x-api-key` middleware and the panel session auth, so they answer with **no API key and no login**, and never redirect to the login page. They are deliberately not under `/api/v1`.
+
+`GET /health` is the liveness probe. It performs no I/O, touches no collector and no database handle, and cannot fail for reasons unrelated to the process being alive:
+
+```bash
+curl http://localhost:8000/health
+{"status":"ok","version":"0.9.0"}
+```
+
+`GET /ready` is the readiness probe. It reports `200` only once `nitr.db` is present in the working directory; `503` otherwise:
+
+```bash
+curl http://localhost:8000/ready
+{"status":"ready"}
+```
+
+It does an `os.Stat("nitr.db")` and nothing more. That is a narrow, honest check: it confirms the database file exists — which only happens once the server's setup has run — but it does **not** confirm bolt can be opened right now, nor that the DB is uncorrupted. `database/database.go` opens bolt with nil options, so its exclusive `flock` has no timeout and blocks forever under contention; a readiness probe that opened the DB itself could pile up blocked goroutines when polled every few seconds. If you need a true open-and-read probe, wait for that to land — do not treat `/ready` as a database-connectivity check, because it is not one.
 
 ## API v1
 
