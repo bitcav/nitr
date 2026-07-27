@@ -10,8 +10,28 @@ behavioral and API changes that would be considered breaking after 1.0; patch
 
 ## [Unreleased]
 
-_Nothing yet. Move entries here as they land on master, then promote them under
-a new version heading at release time (see RELEASING.md)._
+### Fixed
+
+- `nitr version` printed no trailing newline, so its output ran into the next
+  shell prompt. ([1b7549b](https://github.com/bitcav/nitr/commit/1b7549b))
+- `program.Stop` — the service-manager shutdown hook — was an empty stub that
+  returned `nil` without stopping anything, so stopping the Nitr service left
+  the HTTP server running. It now calls `app.Shutdown()`. ([c1389a0](https://github.com/bitcav/nitr/commit/c1389a0))
+
+### Changed
+
+- The API field reference moved out of `README.md` into a new `docs/API.md`.
+  Those 16 sections previously lived inside collapsed `<details>` blocks, so
+  every "JSON Data" link in the endpoint table scrolled to hidden content; the
+  table now links across to `docs/API.md`, where the targets are ordinary
+  visible headings. No field-reference content changed. ([faab898](https://github.com/bitcav/nitr/commit/faab898))
+- The README quick start no longer opens with `sudo` and states plainly that
+  Nitr does not need root to run. Privilege notes are now per-field rather than
+  per-endpoint: only `serial`/`uuid` on the DMI endpoints require root
+  (verified against the kernel's `drivers/firmware/dmi-id.c`), while `/memory`
+  requires it wholesale. ([faab898](https://github.com/bitcav/nitr/commit/faab898))
+- The README endpoint table now documents `GET /api/v1/`, which was routed but
+  previously undocumented. ([faab898](https://github.com/bitcav/nitr/commit/faab898))
 
 ## [0.8.1] - 2026-07-27
 
