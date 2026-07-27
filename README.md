@@ -49,6 +49,7 @@ See [Usage](#usage) for the full endpoint list and response shapes.
 - [QR Code](#qr-code)
 - [Usage](#usage)
   - [Example](#example)
+- [Prometheus metrics](#prometheus-metrics)
 - [API v1](#api-v1)
   - [Available endpoints](#available-endpoints)
   - [JSON data references](#json-data-references)
@@ -205,6 +206,65 @@ Invoke-RestMethod -Uri http://localhost:8000/api/v1/cpu -H @{"x-api-key"="yourap
 				5.88235294118696
 	]
 }
+```
+
+## Prometheus metrics
+
+Nitr exposes a `/metrics` endpoint emitting the standard Prometheus exposition format, so Nitr becomes a drop-in scrape target for Grafana, Alertmanager, VictoriaMetrics, and any other monitoring stack that speaks Prometheus.
+
+The endpoint sits behind the **same `x-api-key` header** as the JSON API — the exposed data is hardware detail and should not be public. Prometheus passes custom headers through `http_headers` in `scrape_config` (`secrets:` rather than `values:` so the key is redacted on Prometheus's own config page):
+
+```yaml
+scrape_configs:
+  - job_name: nitr
+    scheme: http
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["localhost:8000"]
+    http_headers:
+      x-api-key:
+        secrets: [yourapikeyhere]
+```
+
+### Exposed metrics
+
+All metrics use the `nitr_` prefix, base units (seconds, bytes), and `snake_case`. CPU time is a counter (cumulative); the rest are gauges reflecting host state at scrape time.
+
+| Metric                       | Type      | Labels        | Description                                                     |
+|------------------------------|-----------|---------------|-----------------------------------------------------------------|
+| `nitr_cpu_seconds_total`     | counter   | `cpu`, `mode` | Cumulative CPU seconds per core and mode (user, system, idle...) |
+| `nitr_ram_total_bytes`       | gauge     |               | Total RAM in bytes                                              |
+| `nitr_ram_free_bytes`        | gauge     |               | Free RAM in bytes                                               |
+| `nitr_ram_used_bytes`        | gauge     |               | Used RAM in bytes                                               |
+| `nitr_disk_free_bytes`       | gauge     | `mountpoint`  | Free disk space in bytes                                        |
+| `nitr_disk_size_bytes`       | gauge     | `mountpoint`  | Total disk size in bytes                                        |
+| `nitr_disk_used_bytes`       | gauge     | `mountpoint`  | Used disk space in bytes                                        |
+
+CPU usage is not a separate metric; derive it from the counter with PromQL, e.g. average busy fraction per core over 5m:
+
+```promql
+1 - avg(rate(nitr_cpu_seconds_total{mode="idle"}[5m])) by (cpu)
+```
+
+Per-interface bandwidth is **not** exposed yet. `bandwidth.Info` derives a per-second delta by reading netdev counters twice with a 1s sleep, and a blocking scrape endpoint causes Prometheus scrape timeouts. It will be added once a background sampler lands.
+
+Example scrape with curl:
+
+```bash
+curl http://localhost:8000/metrics -H 'x-api-key: yourapikeyhere'
+```
+
+```text
+# HELP nitr_cpu_seconds_total Cumulative seconds the CPU has spent in each mode, per core. Counter; derive utilisation with avg(rate(nitr_cpu_seconds_total[5m])) by (mode).
+# TYPE nitr_cpu_seconds_total counter
+nitr_cpu_seconds_total{cpu="0",mode="idle"} 1.2345678e+06
+nitr_cpu_seconds_total{cpu="0",mode="user"} 3.4567890e+05
+# HELP nitr_disk_free_bytes Free disk space in bytes.
+# TYPE nitr_disk_free_bytes gauge
+nitr_disk_free_bytes{mountpoint="/"} 1.2345678e+07
+# HELP nitr_ram_total_bytes Total RAM in bytes.
+# TYPE nitr_ram_total_bytes gauge
+nitr_ram_total_bytes 8.3319750656e+09
 ```
 
 ## API v1
