@@ -42,7 +42,12 @@ func LoginSubmit(c *fiber.Ctx) {
 		log.Fatal(err)
 	}
 
-	nitrUser := db.GetUserByID("1")
+	nitrUser, err := db.GetUserByID("1")
+	if err != nil {
+		c.SendString(err.Error())
+		c.SendStatus(500)
+		return
+	}
 	if utils.PasswordHash(login.Password) == nitrUser.Password {
 		store := sessions.Get(c)
 		defer store.Save()
@@ -67,12 +72,18 @@ func Panel(c *fiber.Ctx) {
 }
 
 func PanelContent(c *fiber.Ctx) {
+	apiKey, err := db.GetApiKey()
+	if err != nil {
+		c.SendString(err.Error())
+		c.SendStatus(500)
+		return
+	}
 	hostInfo := models.HostInfo{
 		Name:        host.Info().Name,
 		Description: host.Info().Platform + "/" + host.Info().Arch,
 		IP:          utils.GetLocalIP(),
 		Port:        utils.GetLocalPort(),
-		Key:         db.GetApiKey(),
+		Key:         apiKey,
 	}
 
 	hostInfoJSON, err := json.Marshal(hostInfo)
@@ -101,7 +112,12 @@ func GenerateApiKey(c *fiber.Ctx) {
 		utils.LogError(err)
 	}
 
-	nitrUser := db.GetUserByID("1")
+	nitrUser, err := db.GetUserByID("1")
+	if err != nil {
+		c.SendString(err.Error())
+		c.SendStatus(500)
+		return
+	}
 	user := models.User{Password: nitrUser.Password, Apikey: newAPIKey}
 	err = db.SetUserData("1", user)
 	utils.LogError(err)
@@ -132,7 +148,12 @@ func PasswordSubmit(c *fiber.Ctx) {
 		log.Fatal(err)
 	}
 
-	nitrUser := db.GetUserByID("1")
+	nitrUser, err := db.GetUserByID("1")
+	if err != nil {
+		c.SendString(err.Error())
+		c.SendStatus(500)
+		return
+	}
 
 	if utils.PasswordHash(password.CurrentPassword) == nitrUser.Password {
 		user := models.User{Password: utils.PasswordHash(password.NewPassword), Apikey: nitrUser.Apikey}

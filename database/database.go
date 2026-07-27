@@ -62,11 +62,11 @@ func SetUserData(id string, user models.User) error {
 }
 
 //GetUserByID returns User by ID
-func GetUserByID(id string) models.User {
+func GetUserByID(id string) (models.User, error) {
 	db, err := bolt.Open(database, fileMode, nil)
 
 	if err != nil {
-		fmt.Println("could not open db")
+		return models.User{}, fmt.Errorf("could not open db, %v", err)
 	}
 
 	defer db.Close()
@@ -76,21 +76,24 @@ func GetUserByID(id string) models.User {
 		b := tx.Bucket([]byte("users"))
 		user := b.Get([]byte(id))
 		if err := json.Unmarshal(user, &userData); err != nil {
-			panic(err)
+			return fmt.Errorf("could not unmarshal user %q: %v", id, err)
 		}
 
 		return nil
 	})
 	if err != nil {
-		log.Fatal(err)
+		return models.User{}, err
 	}
-	return userData
+	return userData, nil
 }
 
 //GetApiKey returns current User Api Key
-func GetApiKey() string {
-	nitrUser := GetUserByID("1")
-	return nitrUser.Apikey
+func GetApiKey() (string, error) {
+	nitrUser, err := GetUserByID("1")
+	if err != nil {
+		return "", err
+	}
+	return nitrUser.Apikey, nil
 }
 
 func SetAPIData() {

@@ -24,7 +24,11 @@ var Passwd = &cobra.Command{
 		fmt.Println("\033[8m")
 		fmt.Scan(&currentPassword)
 		fmt.Println("\033[28m")
-		user := database.GetUserByID("1")
+		user, err := database.GetUserByID("1")
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 
 		if utils.PasswordHash(currentPassword) == user.Password {
 			fmt.Print("Enter a new password: ")
@@ -62,7 +66,11 @@ var ApiKey = &cobra.Command{
 		fmt.Println("\033[8m")
 		fmt.Scan(&password)
 		fmt.Println("\033[28m")
-		user := database.GetUserByID("1")
+		user, err := database.GetUserByID("1")
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 
 		if utils.PasswordHash(password) == user.Password {
 			fmt.Println("Your api key is:", user.Apikey)
@@ -81,15 +89,24 @@ var QrCode = &cobra.Command{
 		fmt.Println("\033[8m")
 		fmt.Scan(&password)
 		fmt.Println("\033[28m")
-		user := database.GetUserByID("1")
+		user, err := database.GetUserByID("1")
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 
 		if utils.PasswordHash(password) == user.Password {
+			apiKey, err := database.GetApiKey()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
 			hostInfo := models.HostInfo{
 				Name:        host.Info().Name,
 				Description: host.Info().Platform + "/" + host.Info().Arch,
 				IP:          utils.GetLocalIP(),
 				Port:        utils.GetLocalPort(),
-				Key:         database.GetApiKey(),
+				Key:         apiKey,
 			}
 
 			hostInfoJSON, err := json.Marshal(hostInfo)

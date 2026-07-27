@@ -113,7 +113,9 @@ func TestPasswdCorrect(t *testing.T) {
 
 	out := withIO(t, "123456\nnewpass\nnewpass\n", func() { Passwd.Run(Passwd, nil) })
 	assert.Contains(t, out, "Password changed succesfully!")
-	assert.Equal(t, utils.PasswordHash("newpass"), database.GetUserByID("1").Password)
+	u, err := database.GetUserByID("1")
+	require.NoError(t, err)
+	assert.Equal(t, utils.PasswordHash("newpass"), u.Password)
 }
 
 func TestPasswdWrongCurrent(t *testing.T) {
@@ -133,7 +135,9 @@ func TestPasswdMismatch(t *testing.T) {
 	out := withIO(t, "123456\naaa\nbbb\n", func() { Passwd.Run(Passwd, nil) })
 	assert.Contains(t, out, "don't match")
 	// password must remain unchanged
-	assert.Equal(t, utils.PasswordHash("123456"), database.GetUserByID("1").Password)
+	u, err := database.GetUserByID("1")
+	require.NoError(t, err)
+	assert.Equal(t, utils.PasswordHash("123456"), u.Password)
 }
 
 func TestQrCodeCorrect(t *testing.T) {
