@@ -1,8 +1,8 @@
 .PHONY: test cover cover-html build vet clean
 
-## build compiles the nitr binary and all packages
+## build compiles the nitr binary into the repo root
 build:
-	go build ./...
+	go build -o nitr
 
 ## test runs the full test suite
 test:
@@ -24,4 +24,4 @@ vet:
 
 ## clean removes generated artefacts and test output
 clean:
-	rm -f coverage.out coverage.html
+	rm -f coverage.out coverage.html nitr
