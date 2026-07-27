@@ -6,6 +6,7 @@ import (
 
 	"github.com/gofiber/fiber"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAuthAPIAllowed(t *testing.T) {
@@ -81,7 +82,7 @@ func TestAPIEndpoints(t *testing.T) {
 			req := httptest.NewRequest("GET", c.path, nil)
 			req.Header.Set("x-api-key", "testapikey")
 			resp, err := app.Test(req, 30000)
-			assert.NoError(t, err)
+			require.NoError(t, err, "app.Test timed out or failed; resp would be nil")
 			// the handler must have executed (status not mutated -> 200,
 			// or 500 if a system call panicked and was recovered).
 			assert.Contains(t, []int{200, 500}, resp.StatusCode)
