@@ -13,6 +13,13 @@ var rootCmd = &cobra.Command{
 	Short: "Nitr is a remote monitoring tool for system information gathering.",
 }
 
+func init() {
+	rootCmd.AddCommand(VersionCmd)
+	rootCmd.AddCommand(ApiKey)
+	rootCmd.AddCommand(Passwd)
+	rootCmd.AddCommand(QrCode)
+}
+
 func Execute() {
 	//Set Config.ini Default Values
 	utils.ConfigFileSetup()
@@ -20,10 +27,6 @@ func Execute() {
 	//Set API Server default Data
 	database.SetAPIData()
 
-	rootCmd.AddCommand(VersionCmd)
-	rootCmd.AddCommand(ApiKey)
-	rootCmd.AddCommand(Passwd)
-	rootCmd.AddCommand(QrCode)
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}
