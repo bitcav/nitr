@@ -134,7 +134,10 @@ func TestLogsDisabled(t *testing.T) {
 	viper.Reset()
 	viper.Set("save_logs", false)
 	app := fiber.New()
-	assert.NotPanics(t, func() { Logs(app) })
+	assert.NotPanics(t, func() {
+		err := Logs(app)
+		assert.NoError(t, err)
+	})
 	// no log file should be created when disabled
 	_, err := os.Stat("nitr.log")
 	assert.True(t, os.IsNotExist(err))
@@ -145,7 +148,7 @@ func TestLogsEnabled(t *testing.T) {
 	viper.Reset()
 	viper.Set("save_logs", true)
 	app := fiber.New()
-	Logs(app)
+	require.NoError(t, Logs(app))
 	assert.FileExists(t, "nitr.log")
 }
 

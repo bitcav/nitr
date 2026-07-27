@@ -16,7 +16,13 @@ import (
 	"github.com/kardianos/service"
 )
 
-func server() {
+// server performs all non-blocking startup (config, routes, middleware,
+// log wiring) and returns the assembled app ready to listen. Setup errors
+// are returned rather than killing the process: server used to run entirely
+// on the goroutine spawned by Start, so a log.Fatalf from utils.Logs would
+// os.Exit the program from outside main's error-reporting path. The blocking
+// listen is left to Start so this function stays quick.
+func server() (*fiber.App, error) {
 	//Set Config.ini Default Values
 	utils.ConfigFileSetup()
 
@@ -34,7 +40,9 @@ func server() {
 	}))
 
 	//Checks if logs saving is activated
-	utils.Logs(app)
+	if err := utils.Logs(app); err != nil {
+		return nil, err
+	}
 
 	app.Use(recover.New())
 
@@ -94,20 +102,25 @@ func server() {
 
 	app.Get("/status", websocket.New(handlers.SocketReader))
 
-	//Server startup
-	utils.StartServer(app)
+	return app, nil
 }
 
 type program struct{}
 
 var logger service.Logger
 
+// Start runs server setup synchronously and backgrounds only the blocking
+// listener, matching the kardianos/service contract that Start return within
+// a few seconds. Setup errors (e.g. nitr.log not writable) are returned
+// here so main's error-reporting path handles them, instead of being raised
+// by log.Fatalf on the background goroutine.
 func (p *program) Start(s service.Service) error {
-	go p.run()
+	app, err := server()
+	if err != nil {
+		return err
+	}
+	go utils.StartServer(app)
 	return nil
-}
-func (p *program) run() {
-	server()
 }
 
 func (p *program) Stop(s service.Service) error {

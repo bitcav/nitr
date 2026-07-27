@@ -119,12 +119,16 @@ Go to admin panel at %v://localhost:%v
 `, version.Version, protocol, port)
 }
 
-func Logs(app *fiber.App) {
+// Logs wires request logging to nitr.log when save_logs is enabled. It
+// returns an error rather than terminating the process: Logs is reached
+// during startup (program.Start -> server), where a log.Fatalf would
+// os.Exit the whole program from outside main's error-reporting path.
+func Logs(app *fiber.App) error {
 	saveLogs := viper.GetBool("save_logs")
 	if saveLogs {
 		logFile, err := os.OpenFile("nitr.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 		if err != nil {
-			log.Fatalf("error opening file: %v", err)
+			return fmt.Errorf("opening nitr.log: %w", err)
 		}
 		//defer logFile.Close()
 
@@ -139,6 +143,7 @@ func Logs(app *fiber.App) {
 		app.Use(logger.New(cfg))
 	}
 
+	return nil
 }
 
 func LogError(e error) {
