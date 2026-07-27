@@ -1,10 +1,13 @@
 package cmd
 
 import (
+	"io"
 	"io/ioutil"
 	"os"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/bitcav/nitr/database"
 	"github.com/bitcav/nitr/models"
@@ -42,9 +45,13 @@ func provisionDefaultUser(t *testing.T) {
 
 // withIO replaces os.Stdin with the given input, runs fn, and returns whatever
 // was written to os.Stdout during the run.
+//
+// The stdout pipe is drained concurrently with fn: a command may write far
+// more than the OS pipe buffer (~64KB on Linux, ~16KB on macOS) before it
+// returns, and reading only after fn would deadlock with no reader attached.
 func withIO(t *testing.T, input string, fn func()) string {
 	t.Helper()
-	tmp, err := ioutil.TempFile("", "nitrstdin")
+	tmp, err := os.CreateTemp("", "nitrstdin")
 	require.NoError(t, err)
 	_, _ = tmp.WriteString(input)
 	_, _ = tmp.Seek(0, 0)
@@ -59,12 +66,32 @@ func withIO(t *testing.T, input string, fn func()) string {
 	os.Stdout = w
 	defer func() { os.Stdout = oldOut }()
 
+	// Read continuously in the background so writers larger than the pipe
+	// buffer never block. The result comes back over a buffered channel so
+	// the goroutine can publish even if the test bails out elsewhere.
+	type readResult struct {
+		b   []byte
+		err error
+	}
+	resultCh := make(chan readResult, 1)
+	go func() {
+		b, err := io.ReadAll(r)
+		resultCh <- readResult{b, err}
+	}()
+
+	// Close the writer exactly once on every exit path — including a panic
+	// inside fn — so the reader always sees EOF and the goroutine cannot
+	// leak. sync.Once keeps the happy path and the deferred close idempotent.
+	var closeOnce sync.Once
+	closeWriter := func() { closeOnce.Do(func() { _ = w.Close() }) }
+	defer closeWriter()
+
 	fn()
 
-	require.NoError(t, w.Close())
-	out, err := ioutil.ReadAll(r)
-	require.NoError(t, err)
-	return string(out)
+	closeWriter()
+	res := <-resultCh
+	require.NoError(t, res.err)
+	return string(res.b)
 }
 
 func TestVersionCmdRun(t *testing.T) {
@@ -185,4 +212,30 @@ func TestQrCodeWrong(t *testing.T) {
 
 	out := withIO(t, "bad\n", func() { QrCode.Run(QrCode, nil) })
 	assert.Contains(t, out, "Wrong password")
+}
+
+// TestWithIODrainsLargeOutput guards the pipe-buffer deadlock fixed in withIO.
+// Without a concurrent reader, any command that writes more than the OS pipe
+// buffer (~64KB on Linux, ~16KB on macOS) before returning blocks forever.
+// The payload here is 4x the larger Linux buffer. The select bounds the
+// failure mode so a regression fails the package in seconds instead of
+// hanging until the test binary's overall timeout.
+func TestWithIODrainsLargeOutput(t *testing.T) {
+	const payloadSize = 256 * 1024
+	payload := strings.Repeat("x", payloadSize)
+
+	type result struct{ out string }
+	done := make(chan result, 1)
+	go func() {
+		done <- result{out: withIO(t, "", func() {
+			_, _ = io.WriteString(os.Stdout, payload)
+		})}
+	}()
+
+	select {
+	case res := <-done:
+		assert.Len(t, res.out, payloadSize)
+	case <-time.After(10 * time.Second):
+		t.Fatal("withIO hung while draining large output; concurrent pipe drain regressed")
+	}
 }
