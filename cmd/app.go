@@ -45,7 +45,7 @@ var Passwd = &cobra.Command{
 				if err != nil {
 					fmt.Println(err)
 				}
-				fmt.Println("Password changed succesfully!")
+				fmt.Println("Password changed successfully!")
 			} else {
 				fmt.Println("Passwords don't match")
 

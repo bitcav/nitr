@@ -138,7 +138,7 @@ func TestPasswdCorrect(t *testing.T) {
 	provisionDefaultUser(t)
 
 	out := withIO(t, "123456\nnewpass\nnewpass\n", func() { Passwd.Run(Passwd, nil) })
-	assert.Contains(t, out, "Password changed succesfully!")
+	assert.Contains(t, out, "Password changed successfully!")
 	u, err := database.GetUserByID("1")
 	require.NoError(t, err)
 	assert.Equal(t, utils.PasswordHash("newpass"), u.Password)
