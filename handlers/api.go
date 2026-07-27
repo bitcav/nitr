@@ -40,9 +40,13 @@ func AuthAPI(c *fiber.Ctx) error {
 	})
 }
 
+// bandwidthInfoFunc is a seam so tests can stub bandwidth.Info() without
+// paying its hardcoded 1s sleep. It points at bandwidth.Info in production.
+var bandwidthInfoFunc = bandwidth.Info
+
 // Bandwidth returns a JSON response of the Bandwidth information
 func Bandwidth(c *fiber.Ctx) error {
-	return c.JSON(bandwidth.Info())
+	return c.JSON(bandwidthInfoFunc())
 }
 
 // Baseboard returns a JSON response of the Baseboard information
@@ -90,9 +94,14 @@ func Host(c *fiber.Ctx) error {
 	return c.JSON(host.Info())
 }
 
+// ispInfoFunc is a seam so tests can stub isp.Info() without making its
+// outbound, timeout-less HTTP call to speedtest.net. It points at
+// isp.Info in production.
+var ispInfoFunc = isp.Info
+
 // ISP returns a JSON response of the ISP information
 func ISP(c *fiber.Ctx) error {
-	return c.JSON(isp.Info())
+	return c.JSON(ispInfoFunc())
 }
 
 // Network returns a JSON response of the Network information
