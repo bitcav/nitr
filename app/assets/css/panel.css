@@ -1,0 +1,129 @@
+/* Nitr panel: dark theme overrides + responsive helpers.
+   Theme is applied via data-theme on <html>, set by the inline boot script in
+   layout/default.mustache (localStorage "nitr-theme", falling back to
+   prefers-color-scheme). Only the UIkit 3.4.6 components the views actually
+   use are overridden — this is not a full dark UIkit theme. */
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  background: #1a1d21;
+}
+
+html[data-theme="dark"] body {
+  background: #1a1d21;
+  color: #b8bcc2;
+}
+
+html[data-theme="dark"] h1,
+html[data-theme="dark"] h2,
+html[data-theme="dark"] h3,
+html[data-theme="dark"] h4,
+html[data-theme="dark"] h5,
+html[data-theme="dark"] h6,
+html[data-theme="dark"] .uk-logo,
+html[data-theme="dark"] .uk-text-large,
+html[data-theme="dark"] .uk-text-bold {
+  color: #e5e7eb;
+}
+
+html[data-theme="dark"] a { color: #6ea8fe; }
+html[data-theme="dark"] .uk-text-muted { color: #7d828a !important; }
+html[data-theme="dark"] hr { border-top-color: #33383f; }
+
+html[data-theme="dark"] .uk-navbar-container:not(.uk-navbar-transparent) {
+  background: #21252b;
+}
+html[data-theme="dark"] .uk-navbar-container.uk-navbar-transparent {
+  background: transparent;
+}
+
+html[data-theme="dark"] .uk-card-default {
+  background: #21252b;
+  color: #b8bcc2;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+}
+
+html[data-theme="dark"] .uk-input,
+html[data-theme="dark"] .uk-select,
+html[data-theme="dark"] .uk-textarea {
+  background: #262a31;
+  color: #d7dae0;
+  border-color: #3a3f47;
+}
+html[data-theme="dark"] .uk-input:focus,
+html[data-theme="dark"] .uk-select:focus,
+html[data-theme="dark"] .uk-textarea:focus {
+  background: #2a2f37;
+  color: #e5e7eb;
+  border-color: #6ea8fe;
+}
+html[data-theme="dark"] .uk-input::placeholder { color: #6b7078; }
+
+html[data-theme="dark"] .uk-section-muted { background: #1a1d21; }
+
+html[data-theme="dark"] .uk-button-default {
+  background: #262a31;
+  color: #d7dae0;
+  border-color: #3a3f47;
+}
+html[data-theme="dark"] .uk-button-default:hover,
+html[data-theme="dark"] .uk-button-default:focus {
+  background: #2d323a;
+  border-color: #4a505a;
+}
+
+html[data-theme="dark"] .uk-tab > * > a {
+  color: #7d828a;
+  border-bottom-color: transparent;
+}
+html[data-theme="dark"] .uk-tab > * > a:hover,
+html[data-theme="dark"] .uk-tab > .uk-active > a {
+  color: #e5e7eb;
+  border-color: #6ea8fe;
+}
+html[data-theme="dark"] .uk-tab::before { border-bottom-color: #33383f; }
+
+html[data-theme="dark"] .uk-modal-dialog {
+  background: #21252b;
+  color: #b8bcc2;
+}
+html[data-theme="dark"] .uk-notification-message {
+  background: #2a2f37;
+  color: #d7dae0;
+}
+html[data-theme="dark"] .uk-overlay-primary {
+  background: rgba(26, 29, 33, 0.85);
+}
+html[data-theme="dark"] .uk-tooltip {
+  background: #2a2f37;
+  color: #d7dae0;
+}
+
+/* QR canvas: qrcode.min.js hard-codes width/height 240 on the canvas; cap it
+   so it reflows inside narrow viewports instead of overflowing the column. */
+#qrcode canvas,
+#qrcode img {
+  max-width: 100%;
+  height: auto;
+}
+html[data-theme="dark"] #qrcode {
+  background: #fff; /* keep QR scannable: dark modules on light quiet zone */
+  display: inline-block;
+  padding: 8px;
+  border-radius: 4px;
+}
+
+/* Charts: full-width, keep a sane height on phones. */
+.chart-wrap {
+  width: 100%;
+  min-height: 200px;
+}
+
+/* Metric cards: stretch to equal height; a long mount list scrolls inside the
+   DISK card instead of stretching it. Each row is a flex line: the mount path
+   ellipsizes, the numbers stay on one line and never wrap mid-value. */
+.metric-card { height: 100%; box-sizing: border-box; }
+#diskUsage { max-height: 84px; overflow-y: auto; }
+.disk-row { display: flex; align-items: baseline; font-size: 0.875rem; font-weight: normal; }
+.disk-mount { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.disk-nums { margin-left: auto; padding-left: 0.5em; white-space: nowrap; }
