@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net"
+	"runtime"
 	"testing"
 	"time"
 
@@ -289,4 +290,87 @@ func TestSocketReaderRecoversFromPanic(t *testing.T) {
 	}
 	require.NotNil(t, c2, "server not accepting new connections after a handler panic")
 	require.NoError(t, c2.Close())
+}
+
+// TestSocketReaderNoGoroutineLeak opens several sockets (each spawns the
+// metrics-writer goroutine in SocketReader), closes them, and asserts the
+// goroutine count returns to baseline. A leak (a writer goroutine that never
+// stops when the client disconnects) would leave one goroutine per closed
+// socket and this test would time out / fail. The writer's stop signal is the
+// `done` channel closed in SocketReader's deferred close; if that path breaks,
+// the count stays elevated and this test fails.
+func TestSocketReaderNoGoroutineLeak(t *testing.T) {
+	setupEnv(t)
+	app := fiber.New(fiber.Config{DisableStartupMessage: true})
+	app.Get("/ws", websocket.New(SocketReader))
+
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	addr := ln.Addr().String()
+	go func() { _ = app.Listener(ln) }()
+	t.Cleanup(func() { _ = app.Shutdown() })
+
+	dialer := ws.Dialer{HandshakeTimeout: 2 * time.Second}
+	dial := func() *ws.Conn {
+		for i := 0; i < 50; i++ {
+			conn, _, derr := dialer.Dial("ws://"+addr+"/ws", nil)
+			if derr == nil {
+				return conn
+			}
+			time.Sleep(20 * time.Millisecond)
+		}
+		require.Fail(t, "could not dial websocket server")
+		return nil
+	}
+
+	settle := func() {
+		// runtime.NumGoroutine can briefly over-count as goroutines exit;
+		// a GC + short sleep lets it settle to the true live count.
+		runtime.GC()
+		time.Sleep(150 * time.Millisecond)
+	}
+
+	// Warm up: open/close once so any one-time server goroutines (listener
+	// bookkeeping, etc.) are already accounted for in the baseline.
+	w := dial()
+	time.Sleep(150 * time.Millisecond)
+	require.NoError(t, w.Close())
+	settle()
+
+	baseline := runtime.NumGoroutine()
+	t.Logf("baseline goroutines: %d", baseline)
+
+	// Open a batch of sockets. Each live socket should add the SocketReader
+	// goroutine plus its metrics writer.
+	var conns []*ws.Conn
+	const n = 5
+	for i := 0; i < n; i++ {
+		conns = append(conns, dial())
+	}
+	time.Sleep(300 * time.Millisecond) // let writers spin up + do their first write
+	during := runtime.NumGoroutine()
+	t.Logf("goroutines with %d sockets open: %d", n, during)
+	require.Greater(t, during, baseline, "opening sockets did not spawn the expected goroutines")
+
+	// Close every socket and wait for the server to tear them down.
+	for _, c := range conns {
+		require.NoError(t, c.Close())
+	}
+
+	// Poll until the count returns to baseline or we give up (failure).
+	deadline := time.Now().Add(3 * time.Second)
+	var after int
+	for {
+		settle()
+		after = runtime.NumGoroutine()
+		if after <= baseline {
+			break
+		}
+		if time.Now().After(deadline) {
+			break
+		}
+	}
+	t.Logf("goroutines after close: %d", after)
+	assert.LessOrEqual(t, after, baseline,
+		"goroutine leak: %d sockets closed but %d goroutines remain (baseline %d)", n, after-baseline, baseline)
 }

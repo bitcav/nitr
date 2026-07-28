@@ -32,6 +32,8 @@ func ConfigFileSetup() {
 			"ssl_enabled: false",
 			"# ssl_certificate: /path/to/file.crt ",
 			"# ssl_certificate_key: /path/to/file.key",
+			"# seconds between live-metrics pushes over the /status socket (default 3)",
+			"metrics_push_interval: 3",
 		}
 
 		defaultConfig := strings.Join(defaultConfigOpts, "\n")
@@ -172,6 +174,18 @@ func GetLocalPort() string {
 		port = "8000"
 	}
 	return port
+}
+
+// MetricsPushInterval returns the cadence at which the /status socket streams
+// live host metrics to the panel. It reads metrics_push_interval (seconds)
+// from config.ini, defaulting to 3s and clamping to a 1s floor so a missing
+// or bogus value cannot busy-loop the socket and starve a slow client.
+func MetricsPushInterval() time.Duration {
+	seconds := viper.GetInt("metrics_push_interval")
+	if seconds < 1 {
+		seconds = 3
+	}
+	return time.Duration(seconds) * time.Second
 }
 
 func StartServer(app *fiber.App) {
