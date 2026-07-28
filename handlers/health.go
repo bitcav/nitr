@@ -3,6 +3,7 @@ package handlers
 import (
 	"os"
 
+	"github.com/bitcav/nitr/database"
 	"github.com/bitcav/nitr/version"
 	"github.com/gofiber/fiber/v2"
 )
@@ -19,7 +20,9 @@ func Health(c *fiber.Ctx) error {
 }
 
 // Ready is the readiness probe at /ready. It reports 200 only once nitr.db is
-// present and stat-able from the working directory; 503 otherwise.
+// present and stat-able at its resolved location (database.DBPath — the
+// --data-dir flag / NITR_DATA_DIR env / data_dir key, else the working
+// directory); 503 otherwise.
 //
 // It deliberately does NOT call bolt.Open: database.SetupDB opens with nil
 // options, and bbolt's exclusive flock with no timeout blocks forever on lock
@@ -32,10 +35,7 @@ func Health(c *fiber.Ctx) error {
 // bolt.Open, which lives in database/database.go and is owned by ticket
 // r66mnwooz52l.
 func Ready(c *fiber.Ctx) error {
-	// The "nitr.db" literal is duplicated here because database.database is
-	// unexported and that file is owned by another ticket. If the path ever
-	// moves, export it from the database package and reference it here.
-	if _, err := os.Stat("nitr.db"); err != nil {
+	if _, err := os.Stat(database.DBPath()); err != nil {
 		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
 			"status": "not ready",
 			"error":  err.Error(),
