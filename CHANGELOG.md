@@ -53,8 +53,9 @@ behavioral and API changes that would be considered breaking after 1.0; patch
   server always listened on all interfaces; the default remains `0.0.0.0`
   (all interfaces), so behaviour without configuration is unchanged and the
   security-relevant default did not change. `--data-dir` relocates `nitr.db`
-  (the directory is created if missing); `config.ini` and `nitr.log` are not
-  affected and stay in the working directory. The config file is named
+  (the directory is created if missing); `nitr.log` follows `--data-dir`
+  when `save_logs` is on. `config.ini` is not affected and stays in the
+  working directory. The config file is named
   `config.ini` but is **parsed as YAML** — write `key: value`, not INI
   `key=value` or `[sections]` — and keeps its name to avoid breaking existing
   installs. Verified against the built binary: `--port`, `--host`,
@@ -68,7 +69,8 @@ behavioral and API changes that would be considered breaking after 1.0; patch
   the point being that Docker / Compose / Kubernetes / uptime checkers can
   poll them unauthenticated. `/health` does no I/O and returns
   `200 {"status":"ok","version":"0.9.0"}`. `/ready` does an
-  `os.Stat("nitr.db")` and nothing more: `200 {"status":"ready"}` when the
+  `os.Stat(database.DBPath())` — the resolved `nitr.db` path, honouring
+  `--data-dir` — and nothing more: `200 {"status":"ready"}` when the
   file is present, `503 {"status":"not ready","error":"..."}` (the raw stat
   error) when it is not. It confirms the database file exists; it does **not**
   confirm bolt can be opened right now, nor that the DB is uncorrupted —
@@ -130,6 +132,33 @@ behavioral and API changes that would be considered breaking after 1.0; patch
   sudo" hint, so "needs root" stays distinguishable from "broken". Verified
   against the built binary: `nitr status` on a bare host prints
   `"NitrService" is not installed on this host (linux-systemd).` and exits 0. ([032fac2](https://github.com/bitcav/nitr/commit/032fac2))
+- **`nitr server`** — an explicit subcommand for starting the host service.
+  Bare `nitr` still starts it too and is **not deprecated**: the Dockerfile
+  `CMD ["./nitr"]` and the README Windows double-click flow both depend on
+  the zero-argument default, which is unchanged. `nitr server` exists so the
+  spelling is self-documenting — it is what `nitr --help` lists, what the
+  installed system service's `ExecStart` invokes (`ServiceConfig.Arguments`
+  is now `["server"]`), and what reads clearly in a process list. It
+  inherits the root command's persistent flags (`nitr server --port 9000`
+  works). Verified against the built binary: `nitr --help` lists `server`,
+  and both `nitr` and `nitr server` reach the server entry point. ([96e3361](https://github.com/bitcav/nitr/commit/96e3361))
+- **Admin panel redesign** at `/`: **dark mode** following the OS
+  `prefers-color-scheme` with a manual toggle in the header (the choice
+  persists in `localStorage` and overrides the OS in both directions);
+  **tabbed navigation** split into Overview and Metrics where the page
+  previously had a single view; **live CPU and RAM line charts** on the
+  Metrics tab, fed from the existing `/status` WebSocket stream; and a
+  **mobile-usable layout** that reflows to a single column with pinch-zoom
+  re-enabled (the viewport meta no longer pins `maximum-scale=1.0`). The
+  charts are **session-only browser history** — roughly the last six
+  minutes (120 samples at the default 3s push interval), held in the
+  browser, **nothing persisted server-side** — and start empty on each
+  page load; historical retention is a separate, unbuilt feature. The
+  uPlot chart library (~50 KB) is vendored into the binary, so no CDN is
+  used and no build step was added — the panel still works air-gapped.
+  Verified by logging into the running panel: the Overview/Metrics tabs,
+  the theme toggle (with `nitr-theme` in `localStorage`), and the
+  `cpuChart`/`ramChart` containers all render. ([ab5c032](https://github.com/bitcav/nitr/commit/ab5c032))
 
 ### Changed
 

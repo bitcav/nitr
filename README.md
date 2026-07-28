@@ -123,6 +123,8 @@ nitr.exe
 ```
 the server will start listening on port 8000 by default
 
+Both spellings — bare `nitr` and the explicit `nitr server` — start the server. Bare `nitr` is **not** deprecated: the Dockerfile's `CMD` and the Windows double-click flow above rely on it, and it stays the zero-argument default. `nitr server` is the self-documenting form (it is what `nitr --help` lists, what the installed system service's `ExecStart` invokes, and what reads clearly in a process list) and accepts the same persistent flags as the root command, e.g. `nitr server --port 9000`.
+
 <p style="width:100%;">
     <img alt="app" src="https://raw.githubusercontent.com/bitcav/nitr/master/images/app-start.gif">
     <br>
@@ -188,6 +190,12 @@ Go to [http://localhost:8000](http://localhost:8000) in your web browser
 Access with default **password**: **123456**
 
 ![preview](https://raw.githubusercontent.com/bitcav/nitr/master/images/panel-web.png)
+
+The panel is organised into two tabs — **Overview** (host info, API key, QR code) and **Metrics** — and supports a **dark/light theme** that follows the OS `prefers-color-scheme` by default with a manual toggle in the header; the choice is stored in the browser's `localStorage` and overrides the OS setting in both directions.
+
+The **Metrics** tab shows live CPU and RAM usage as both numeric widgets and scrolling line charts (driven by the existing `/status` WebSocket stream). The charts hold **session-only history in the browser — roughly the last six minutes (120 samples at the default 3s push), with nothing persisted server-side**, so they start empty on every page load. Historical retention is a separate, unbuilt feature.
+
+The layout reflows to a single column on small screens, and pinch-zoom works on mobile clients. The chart library (uPlot) is vendored into the binary — no CDN is used and no build step is required, so the panel keeps working on an air-gapped host.
 
 ## QR Code
 
@@ -318,14 +326,14 @@ curl http://localhost:8000/health
 {"status":"ok","version":"0.9.0"}
 ```
 
-`GET /ready` is the readiness probe. It reports `200` only once `nitr.db` is present in the working directory; `503` otherwise:
+`GET /ready` is the readiness probe. It reports `200` only once `nitr.db` is present at its resolved location (under `--data-dir`, else the working directory); `503` otherwise:
 
 ```bash
 curl http://localhost:8000/ready
 {"status":"ready"}
 ```
 
-It does an `os.Stat("nitr.db")` and nothing more. That is a narrow, honest check: it confirms the database file exists — which only happens once the server's setup has run — but it does **not** confirm bolt can be opened right now, nor that the DB is uncorrupted. `database/database.go` opens bolt with nil options, so its exclusive `flock` has no timeout and blocks forever under contention; a readiness probe that opened the DB itself could pile up blocked goroutines when polled every few seconds. If you need a true open-and-read probe, wait for that to land — do not treat `/ready` as a database-connectivity check, because it is not one.
+It does an `os.Stat(database.DBPath())` — the resolved `nitr.db` path, honouring `--data-dir` — and nothing more. That is a narrow, honest check: it confirms the database file exists — which only happens once the server's setup has run — but it does **not** confirm bolt can be opened right now, nor that the DB is uncorrupted. `database/database.go` opens bolt with nil options, so its exclusive `flock` has no timeout and blocks forever under contention; a readiness probe that opened the DB itself could pile up blocked goroutines when polled every few seconds. If you need a true open-and-read probe, wait for that to land — do not treat `/ready` as a database-connectivity check, because it is not one.
 
 ## API v1
 
@@ -408,7 +416,7 @@ The directory holding `nitr.db`, via the `data_dir` key, the `--data-dir` flag, 
 data_dir: /var/lib/nitr
 ```
 
-This relocates **`nitr.db` only**. `config.ini` and `nitr.log` are not affected and remain in the working directory.
+This relocates **`nitr.db`** and, when `save_logs` is on, **`nitr.log`**; `config.ini` is not affected and stays in the working directory (use `--config` to relocate it).
 
 ### Open Browser on Startup
 
