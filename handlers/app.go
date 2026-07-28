@@ -3,9 +3,12 @@ package handlers
 import (
 	"encoding/json"
 	"log"
+	"time"
 
 	rice "github.com/GeertJohan/go.rice"
+	"github.com/bitcav/nitr-core/disk"
 	"github.com/bitcav/nitr-core/host"
+	"github.com/bitcav/nitr-core/overview"
 	db "github.com/bitcav/nitr/database"
 	"github.com/bitcav/nitr/models"
 	"github.com/bitcav/nitr/utils"
@@ -172,6 +175,14 @@ func PasswordSubmit(c *fiber.Ctx) error {
 // the only way to exercise SocketReader's recover path from outside the loop.
 var handleSocketMessageFunc = func(msg []byte) { log.Printf("%s", msg) }
 
+// liveMetrics is the JSON shape pushed to the panel on each tick. It embeds
+// overview.Overview (host + CPU usage + RAM, already assembled by nitr-core)
+// and adds per-disk usage so the panel can render CPU/RAM/disk widgets.
+type liveMetrics struct {
+	overview.Overview
+	Disks []disk.Disk `json:"disks"`
+}
+
 func SocketReader(c *websocket.Conn) {
 	// recover.New's deferred recover runs on the request goroutine, but
 	// fasthttp/websocket runs this handler on a separate hijacked-conn
@@ -184,6 +195,42 @@ func SocketReader(c *websocket.Conn) {
 			log.Printf("SocketReader recovered from panic: %v", r)
 		}
 	}()
+
+	// done is closed on every exit path — clean disconnect, read error, or a
+	// recovered panic — because this deferred close and the recover above both
+	// run during unwind. Closing it is the single signal that stops the metrics
+	// writer goroutine; without it the writer would tick forever, one leaked
+	// goroutine per closed socket.
+	done := make(chan struct{})
+	defer close(done)
+
+	// Metrics writer: the only goroutine that writes to this conn (the read
+	// loop below only reads), so there is no concurrent-write hazard. It stops
+	// when the client disconnects (done closed) or when its own write fails.
+	// Its own recover mirrors the one above: the writer runs on a separate
+	// goroutine that SocketReader's recover does not cover, so a panic in
+	// overview/disk collection here would otherwise crash the process.
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("SocketReader writer recovered from panic: %v", r)
+			}
+		}()
+		ticker := time.NewTicker(utils.MetricsPushInterval())
+		defer ticker.Stop()
+		writeMetrics(c) // first reading immediately, no full-interval wait
+		for {
+			select {
+			case <-done:
+				return
+			case <-ticker.C:
+				if !writeMetrics(c) {
+					return
+				}
+			}
+		}
+	}()
+
 	for {
 		_, msg, err := c.ReadMessage()
 		if err != nil {
@@ -192,6 +239,25 @@ func SocketReader(c *websocket.Conn) {
 		}
 		handleSocketMessageFunc(msg)
 	}
+}
+
+// writeMetrics marshals and pushes one live-metrics frame. It returns false
+// when the write failed (broken/closed conn), signalling the writer to stop.
+func writeMetrics(c *websocket.Conn) bool {
+	payload := liveMetrics{
+		Overview: overview.Info(),
+		Disks:    disk.Info(),
+	}
+	b, err := json.Marshal(payload)
+	if err != nil {
+		log.Println(err)
+		return true // marshal of a fixed struct shape won't fail; keep ticking
+	}
+	if err := c.WriteMessage(websocket.TextMessage, b); err != nil {
+		log.Println(err)
+		return false
+	}
+	return true
 }
 
 // Auth Middleware

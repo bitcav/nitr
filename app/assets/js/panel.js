@@ -4,6 +4,35 @@ function jsUcfirst(string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
+function humanBytes(bytes) {
+  var units = ["B", "KB", "MB", "GB", "TB"];
+  var i = 0;
+  var n = bytes;
+  while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
+  return (i === 0 ? n : n.toFixed(1)) + " " + units[i];
+}
+
+function renderMetrics(data) {
+  if (typeof data.cpuUsage === "number") {
+    $("#cpuUsage").text(data.cpuUsage.toFixed(1) + "%");
+  }
+  var ram = data.ram || {};
+  var ramUsed = ram.usage || 0;
+  var ramTotal = ram.total || 0;
+  var ramPct = ramTotal > 0 ? Math.round((ramUsed / ramTotal) * 100) : 0;
+  $("#ramUsage").html(humanBytes(ramUsed) + " / " + humanBytes(ramTotal) +
+    "<br><span class=\"uk-text-small uk-text-muted\">" + ramPct + "%</span>");
+  var disks = data.disks || [];
+  var html = disks.map(function (d) {
+    var pct = (typeof d.percent === "number") ? d.percent : (d.size > 0 ? (d.used / d.size) * 100 : 0);
+    return "<div class=\"uk-text-left\">" +
+      "<span class=\"uk-text-small uk-text-muted\">" + (d.mountPoint || "") + "</span> " +
+      humanBytes(d.used) + " / " + humanBytes(d.size) +
+      " <span class=\"uk-text-small\">" + pct.toFixed(0) + "%</span></div>";
+  }).join("");
+  $("#diskUsage").html(html || "--");
+}
+
 $(document).ready(function () {
   fetch("/content")
     .then(function (response) {
@@ -98,7 +127,9 @@ $(document).ready(function () {
     }
 
     ws.onmessage = function (e) {
-      console.log('Server:', e.data);
+      var data;
+      try { data = JSON.parse(e.data); } catch (err) { console.log("Server:", e.data); return; }
+      renderMetrics(data);
     };
 
     ws.onclose = function (e) {
