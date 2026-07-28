@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	bolt "go.etcd.io/bbolt"
 )
 
 func cdTemp(t *testing.T) string {
@@ -83,6 +84,40 @@ func TestGetUserByIDMissingReturnsError(t *testing.T) {
 	// bucket exists but key "missing" is absent -> json.Unmarshal(nil) errors
 	_, err := GetUserByID("missing")
 	assert.Error(t, err)
+}
+
+func TestGetUserByIDNoBucketReturnsError(t *testing.T) {
+	cdTemp(t)
+	// valid bbolt file with zero buckets (e.g. touched/restored empty nitr.db)
+	db, err := bolt.Open("nitr.db", 0600, nil)
+	require.NoError(t, err)
+	require.NoError(t, db.Close())
+
+	_, err = GetUserByID("1")
+	assert.Error(t, err)
+}
+
+func TestSetUserDataNoBucketReturnsError(t *testing.T) {
+	cdTemp(t)
+	db, err := bolt.Open("nitr.db", 0600, nil)
+	require.NoError(t, err)
+	require.NoError(t, db.Close())
+
+	err = SetUserData("1", models.User{})
+	assert.Error(t, err)
+}
+
+func TestSetAPIDataHealsBucketlessDB(t *testing.T) {
+	cdTemp(t)
+	viper.Reset()
+	db, err := bolt.Open("nitr.db", 0600, nil)
+	require.NoError(t, err)
+	require.NoError(t, db.Close())
+
+	SetAPIData()
+	require.NoError(t, SetUserData("1", models.User{Password: "p", Apikey: "k"}))
+	_, err = GetUserByID("1")
+	assert.NoError(t, err)
 }
 
 func TestGetUserByIDOpenError(t *testing.T) {

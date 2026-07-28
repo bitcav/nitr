@@ -51,7 +51,11 @@ func SetUserData(id string, user models.User) error {
 		return fmt.Errorf("could not marshal entry json: %v", err)
 	}
 	err = db.Update(func(tx *bolt.Tx) error {
-		err := tx.Bucket([]byte("users")).Put([]byte(id), []byte(userBytes))
+		b := tx.Bucket([]byte("users"))
+		if b == nil {
+			return fmt.Errorf("users bucket missing in %s: database is not initialised", database)
+		}
+		err := b.Put([]byte(id), []byte(userBytes))
 		if err != nil {
 			return fmt.Errorf("could not insert entry: %v", err)
 		}
@@ -74,6 +78,9 @@ func GetUserByID(id string) (models.User, error) {
 	var userData models.User
 	err = db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("users"))
+		if b == nil {
+			return fmt.Errorf("users bucket missing in %s: database is not initialised", database)
+		}
 		user := b.Get([]byte(id))
 		if err := json.Unmarshal(user, &userData); err != nil {
 			return fmt.Errorf("could not unmarshal user %q: %v", id, err)
@@ -97,12 +104,14 @@ func GetApiKey() (string, error) {
 }
 
 func SetAPIData() {
-	//DB Setup
-	if _, err := os.Stat("nitr.db"); err != nil {
-		log.Println("Database created")
-		err := SetupDB()
-		utils.LogError(err)
+	// DB Setup: CreateBucketIfNotExists is safe to re-run, so a bucket-less
+	// nitr.db (touched/restored empty) self-heals instead of panicking.
+	_, statErr := os.Stat("nitr.db")
+	err := SetupDB()
+	utils.LogError(err)
 
+	if statErr != nil {
+		log.Println("Database created")
 		log.Println("Adding default user")
 
 		APIKey := utils.RandString(10)
