@@ -200,7 +200,9 @@ func TestApiKeyCorrect(t *testing.T) {
 	viper.Reset()
 	provisionDefaultUser(t)
 
-	out := withIO(t, "123456\n", func() { ApiKey.Run(ApiKey, nil) })
+	out := withIO(t, "123456\n", func() {
+		assert.NoError(t, ApiKey.RunE(ApiKey, nil))
+	})
 	assert.Contains(t, out, "Your api key is: theapikey")
 }
 
@@ -209,8 +211,10 @@ func TestApiKeyWrong(t *testing.T) {
 	viper.Reset()
 	provisionDefaultUser(t)
 
-	out := withIO(t, "nope\n", func() { ApiKey.Run(ApiKey, nil) })
-	assert.Contains(t, out, "Wrong password")
+	var runErr error
+	withIO(t, "nope\n", func() { runErr = ApiKey.RunE(ApiKey, nil) })
+	require.Error(t, runErr)
+	assert.Contains(t, runErr.Error(), "Wrong password")
 }
 
 func TestPasswdCorrect(t *testing.T) {
@@ -218,7 +222,9 @@ func TestPasswdCorrect(t *testing.T) {
 	viper.Reset()
 	provisionDefaultUser(t)
 
-	out := withIO(t, "123456\nnewpass\nnewpass\n", func() { Passwd.Run(Passwd, nil) })
+	out := withIO(t, "123456\nnewpass\nnewpass\n", func() {
+		assert.NoError(t, Passwd.RunE(Passwd, nil))
+	})
 	assert.Contains(t, out, "Password changed successfully!")
 	u, err := database.GetUserByID("1")
 	require.NoError(t, err)
@@ -230,8 +236,10 @@ func TestPasswdWrongCurrent(t *testing.T) {
 	viper.Reset()
 	provisionDefaultUser(t)
 
-	out := withIO(t, "bad\n", func() { Passwd.Run(Passwd, nil) })
-	assert.Contains(t, out, "Wrong password")
+	var runErr error
+	withIO(t, "bad\n", func() { runErr = Passwd.RunE(Passwd, nil) })
+	require.Error(t, runErr)
+	assert.Contains(t, runErr.Error(), "Wrong password")
 }
 
 func TestPasswdMismatch(t *testing.T) {
@@ -239,8 +247,10 @@ func TestPasswdMismatch(t *testing.T) {
 	viper.Reset()
 	provisionDefaultUser(t)
 
-	out := withIO(t, "123456\naaa\nbbb\n", func() { Passwd.Run(Passwd, nil) })
-	assert.Contains(t, out, "don't match")
+	var runErr error
+	withIO(t, "123456\naaa\nbbb\n", func() { runErr = Passwd.RunE(Passwd, nil) })
+	require.Error(t, runErr)
+	assert.Contains(t, runErr.Error(), "don't match")
 	// password must remain unchanged
 	u, err := database.GetUserByID("1")
 	require.NoError(t, err)
@@ -252,7 +262,9 @@ func TestQrCodeCorrect(t *testing.T) {
 	viper.Reset()
 	provisionDefaultUser(t)
 
-	out := withIO(t, "123456\n", func() { QrCode.Run(QrCode, nil) })
+	out := withIO(t, "123456\n", func() {
+		assert.NoError(t, QrCode.RunE(QrCode, nil))
+	})
 	// QR output uses block characters; the success path must not print the
 	// "wrong password" message and must emit a non-empty payload.
 	assert.NotContains(t, out, "Wrong password")
@@ -264,8 +276,10 @@ func TestQrCodeWrong(t *testing.T) {
 	viper.Reset()
 	provisionDefaultUser(t)
 
-	out := withIO(t, "bad\n", func() { QrCode.Run(QrCode, nil) })
-	assert.Contains(t, out, "Wrong password")
+	var runErr error
+	withIO(t, "bad\n", func() { runErr = QrCode.RunE(QrCode, nil) })
+	require.Error(t, runErr)
+	assert.Contains(t, runErr.Error(), "Wrong password")
 }
 
 // TestSubcommandsFailWithoutDB guards the regression at the heart of this
