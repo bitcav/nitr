@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/bitcav/nitr-core/host"
 	"github.com/bitcav/nitr/database"
 	"github.com/bitcav/nitr/models"
 	"github.com/bitcav/nitr/utils"
@@ -124,16 +123,9 @@ var QrCode = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		localIP, err := utils.GetLocalIP()
+		hostInfo, err := models.NewHostInfo(apiKey)
 		if err != nil {
 			return err
-		}
-		hostInfo := models.HostInfo{
-			Name:        host.Info().Name,
-			Description: host.Info().Platform + "/" + host.Info().Arch,
-			IP:          localIP,
-			Port:        utils.GetLocalPort(),
-			Key:         apiKey,
 		}
 
 		hostInfoJSON, err := json.Marshal(hostInfo)
