@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"errors"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -17,7 +19,13 @@ import (
 
 func buildNitr(t *testing.T) string {
 	t.Helper()
+	if _, err := exec.LookPath("go"); err != nil {
+		t.Skipf("go toolchain not available, skipping binary build test: %v", err)
+	}
 	bin := filepath.Join(t.TempDir(), "nitr")
+	if runtime.GOOS == "windows" {
+		bin += ".exe" // Windows cannot exec a binary without the .exe suffix
+	}
 	out, err := exec.Command("go", "build", "-o", bin, "github.com/bitcav/nitr").CombinedOutput()
 	require.NoError(t, err, string(out))
 	return bin
@@ -36,6 +44,13 @@ func runNitr(t *testing.T, bin, dir string, stdin *strings.Reader, args ...strin
 	out, err := c.CombinedOutput()
 	if err == nil {
 		return string(out), 0
+	}
+	// Distinguish "the binary never ran at all" (e.g. wrong name /
+	// missing .exe on Windows, ENOEXEC) from "it ran and exited
+	// non-zero" (the exit-code policy these tests exist to pin).
+	var execErr *exec.Error
+	if errors.As(err, &execErr) {
+		t.Fatalf("the built binary %q could not be executed at all: %v\n%s", bin, err, out)
 	}
 	var exitErr *exec.ExitError
 	require.ErrorAs(t, err, &exitErr)
