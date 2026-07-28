@@ -4,6 +4,15 @@
     </a>
   </div>
   <div class="uk-navbar-right">
+    <button id="themeToggle" type="button" class="uk-button uk-button-default uk-margin-right"
+      uk-tooltip="title: Toggle dark/light theme;" aria-label="Toggle theme">
+      <!-- Inline SVG: vendored paint-bucket icon has no fill attr (renders
+           black-on-dark). currentColor tracks the button text in both themes. -->
+      <svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true" style="vertical-align: -2px">
+        <circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2"/>
+        <path d="M10 3a7 7 0 0 1 0 14z" fill="currentColor"/>
+      </svg>
+    </button>
     <a href="/password" class="uk-button uk-button-secondary uk-margin-right">Change Password</a>
     <form action="/logout" method="POST" style="margin-block-end: 0;">
       <button class="uk-button uk-button-danger uk-margin-right">Logout</button>
@@ -15,78 +24,101 @@
     <img alt="nitr logo" src="/assets/images/logo.png" width="160" class="uk-margin-small-bottom">
   </div>
   <hr>
-  <div class="uk-container" uk-grid>
-    <div id="mainOverlay" class="uk-overlay uk-overlay-primary uk-position-cover">
-    </div>
-    <div class="server uk-width-3-5">
-      <form class="uk-form-horizontal uk-margin-large">
-        <h4>Host Info</h4>
-        <div class="uk-margin">
-          <label class="uk-form-label" for="hostname">NAME:</label>
-          <div class="uk-form-controls">
-            <input class="uk-input" id="hostname" type="text" placeholder="" readonly=readonly>
-          </div>
+  <ul class="uk-tab" uk-tab="connect: #panelSections; swiping: false;">
+    <li class="uk-active"><a href="#">Overview</a></li>
+    <li><a href="#">Metrics</a></li>
+  </ul>
+  <ul id="panelSections" class="uk-switcher uk-margin">
+    <li>
+      <div class="uk-container" uk-grid>
+        <div id="mainOverlay" class="uk-overlay uk-overlay-primary uk-position-cover">
         </div>
-        <div class="uk-margin">
-          <label class="uk-form-label" for="platform">PLATFORM:</label>
-          <div class="uk-form-controls">
-            <input class="uk-input" id="platform" type="text" placeholder="" readonly=readonly>
-          </div>
-        </div>
-        <div class="uk-margin">
-          <label class="uk-form-label" for="form-stacked-select">IP ADDRESS:</label>
-          <div class="uk-form-controls">
-            <input class="uk-input" id="ip" type="text" placeholder="" readonly=readonly>
-          </div>
-        </div>
-        <div class="uk-margin">
-          <label class="uk-form-label" for="form-stacked-select">PORT:</label>
-          <div class="uk-form-controls">
-            <input class="uk-input" id="port" type="text" placeholder="" readonly=readonly>
-          </div>
-        </div>
-        <div class="uk-margin">
-          <label class="uk-form-label" for="key">API KEY:</label>
-          <div class="uk-form-controls">
-            <div class="uk-inline uk-width-1-1">
-              <button type="button" data-clipboard-target="#key" class="uk-form-icon uk-form-icon-flip copy"
-                uk-icon="icon: copy" uk-tooltip="title: Copy;"></button>
-              <input class="uk-input" id="key" type="text" placeholder="" readonly=readonly>
+        <div class="server uk-width-3-5@m uk-width-1-1">
+          <form class="uk-form-horizontal uk-margin-large">
+            <h4>Host Info</h4>
+            <div class="uk-margin">
+              <label class="uk-form-label" for="hostname">NAME:</label>
+              <div class="uk-form-controls">
+                <input class="uk-input" id="hostname" type="text" placeholder="" readonly=readonly>
+              </div>
             </div>
+            <div class="uk-margin">
+              <label class="uk-form-label" for="platform">PLATFORM:</label>
+              <div class="uk-form-controls">
+                <input class="uk-input" id="platform" type="text" placeholder="" readonly=readonly>
+              </div>
+            </div>
+            <div class="uk-margin">
+              <label class="uk-form-label" for="form-stacked-select">IP ADDRESS:</label>
+              <div class="uk-form-controls">
+                <input class="uk-input" id="ip" type="text" placeholder="" readonly=readonly>
+              </div>
+            </div>
+            <div class="uk-margin">
+              <label class="uk-form-label" for="form-stacked-select">PORT:</label>
+              <div class="uk-form-controls">
+                <input class="uk-input" id="port" type="text" placeholder="" readonly=readonly>
+              </div>
+            </div>
+            <div class="uk-margin">
+              <label class="uk-form-label" for="key">API KEY:</label>
+              <div class="uk-form-controls">
+                <div class="uk-inline uk-width-1-1">
+                  <button type="button" data-clipboard-target="#key" class="uk-form-icon uk-form-icon-flip copy"
+                    uk-icon="icon: copy" uk-tooltip="title: Copy;"></button>
+                  <input class="uk-input" id="key" type="text" placeholder="" readonly=readonly>
+                </div>
+              </div>
+            </div>
+            <button id="genBtn" class="uk-button uk-button-danger uk-button">
+              REGENERATE
+              API KEY
+            </button>
+          </form>
+        </div>
+        <div class="qrCode uk-width-2-5@m uk-width-1-1">
+          <div class="uk-text-center">
+            <div id="qrcode" class="uk-margin-top uk-display-inline-block"></div>
           </div>
         </div>
-        <button id="genBtn" class="uk-button uk-button-danger uk-button">
-          REGENERATE
-          API KEY
-        </button>
-      </form>
-    </div>
-    <div class="qrCode uk-width-2-5">
-      <div>
-        <div id="qrcode" class="uk-align-center uk-margin-top uk-margin-left"></div>
       </div>
-    </div>
-  </div>
-  <hr>
-  <h4>Live Metrics</h4>
-  <div class="uk-margin-large uk-grid-small uk-child-width-expand@s" uk-grid>
-    <div>
-      <div class="uk-card uk-card-default uk-card-body uk-text-center">
-        <div class="uk-text-muted uk-text-small">CPU</div>
-        <div id="cpuUsage" class="uk-text-large uk-text-bold">--%</div>
+    </li>
+    <li>
+      <h4>Live Metrics</h4>
+      <div class="uk-margin uk-grid-small uk-child-width-expand@s" uk-grid>
+        <div>
+          <div class="uk-card uk-card-default uk-card-body uk-text-center metric-card">
+            <div class="uk-text-muted uk-text-small">CPU</div>
+            <div id="cpuUsage" class="uk-text-large uk-text-bold">--%</div>
+          </div>
+        </div>
+        <div>
+          <div class="uk-card uk-card-default uk-card-body uk-text-center metric-card">
+            <div class="uk-text-muted uk-text-small">RAM</div>
+            <div id="ramUsage" class="uk-text-large uk-text-bold">-- / --</div>
+          </div>
+        </div>
+        <div>
+          <div class="uk-card uk-card-default uk-card-body uk-text-center metric-card">
+            <div class="uk-text-muted uk-text-small">DISK</div>
+            <div id="diskUsage" class="uk-text-large uk-text-bold">--</div>
+          </div>
+        </div>
       </div>
-    </div>
-    <div>
-      <div class="uk-card uk-card-default uk-card-body uk-text-center">
-        <div class="uk-text-muted uk-text-small">RAM</div>
-        <div id="ramUsage" class="uk-text-large uk-text-bold">-- / --</div>
+      <div class="uk-margin uk-child-width-1-1" uk-grid>
+        <div>
+          <div class="uk-card uk-card-default uk-card-body">
+            <div class="uk-text-muted uk-text-small uk-margin-small-bottom">CPU %</div>
+            <div id="cpuChart" class="chart-wrap"></div>
+          </div>
+        </div>
+        <div>
+          <div class="uk-card uk-card-default uk-card-body">
+            <div class="uk-text-muted uk-text-small uk-margin-small-bottom">RAM %</div>
+            <div id="ramChart" class="chart-wrap"></div>
+          </div>
+        </div>
       </div>
-    </div>
-    <div>
-      <div class="uk-card uk-card-default uk-card-body uk-text-center">
-        <div class="uk-text-muted uk-text-small">DISK</div>
-        <div id="diskUsage" class="uk-text-large uk-text-bold">--</div>
-      </div>
-    </div>
-  </div>
+    </li>
+  </ul>
 </div>

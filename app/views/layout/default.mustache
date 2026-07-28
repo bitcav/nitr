@@ -3,7 +3,19 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Theme boot: runs before first paint so there is no light flash in dark
+       mode. localStorage wins both ways; otherwise follow the OS. -->
+  <script>
+    (function () {
+      var t = null;
+      try { t = localStorage.getItem("nitr-theme"); } catch (e) {}
+      if (t !== "dark" && t !== "light") {
+        t = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
+      }
+      document.documentElement.setAttribute("data-theme", t);
+    })();
+  </script>
   <script src="/assets/js/jquery.min.js"></script>
   <script src="/assets/js/qrcode.min.js"></script>
   <!-- UIkit CSS -->
@@ -11,13 +23,21 @@
   <!-- UIkit JS -->
   <script src="/assets/js/uikit.min.js"></script>
   <script src="/assets/js/uikit-icons.min.js"></script>
+  <!-- uPlot 1.6.31 (MIT) — vendored, ~50 KB: smallest dependency-free canvas
+       chart lib; ships inside the binary so the panel works air-gapped. -->
+  <link rel="stylesheet" href="/assets/css/uplot.min.css" />
+  <script src="/assets/js/uplot.iife.min.js"></script>
+  <link rel="stylesheet" href="/assets/css/panel.css" />
   <link rel="icon" href="/assets/images/favicon.png">
   <title>Nitr</title>
 </head>
 
 <body>
   {{{content}}}
-  <div class="uk-position-bottom-center uk-position-small uk-visible@m uk-position-z-index">
+  <!-- Normal-flow footer: uk-position-bottom-center is absolutely positioned
+       against the initial containing block, so it overlapped cards on tall
+       pages. In-flow it always sits below the content. -->
+  <div class="uk-text-center uk-margin-top uk-margin-bottom uk-visible@m">
 		<span class="uk-text-small uk-text-muted">© <span id="year"></span> | Bit Cavalier  <a href="https://github.com/bitcav/nitr"><span uk-icon="icon: github;"></a> </span>
     </span>
 	</div>
