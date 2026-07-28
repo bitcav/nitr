@@ -34,6 +34,13 @@ func ConfigFileSetup() {
 			"# ssl_certificate_key: /path/to/file.key",
 			"# seconds between live-metrics pushes over the /status socket (default 3)",
 			"metrics_push_interval: 3",
+			"# max requests per minute per IP on the login POST (default 20)",
+			"# rate_limit_login_max: 20",
+			"# max requests per minute per IP on the /api endpoints (default 300)",
+			"# rate_limit_api_max: 300",
+			"# comma-separated browser origins allowed cross-origin API access;",
+			"# empty (the default) denies all cross-origin access",
+			"# cors_origins: https://grafana.example.com, https://dash.example.com",
 		}
 
 		defaultConfig := strings.Join(defaultConfigOpts, "\n")
@@ -139,13 +146,35 @@ func Logs(app *fiber.App) error {
 		cfg := logger.Config{
 			Output:     logFile,
 			TimeFormat: "2006/01/02 15:04:05",
-			Format:     "${time} - ${method} ${path} - ${ip}\n",
+			// requestid middleware sets locals("requestid"); logging it
+			// correlates an access-log line with error reports. The logger
+			// writes after c.Next returns, so the value is set even though
+			// logger is registered after requestid.
+			Format: "${time} - ${method} ${path} - ${ip} - ${locals:requestid}\n",
 		}
 
 		app.Use(logger.New(cfg))
 	}
 
 	return nil
+}
+
+// RateLimitMax returns the per-IP requests-per-minute cap for a rate limiter,
+// read from config.ini under key, falling back to def when unset or invalid.
+func RateLimitMax(key string, def int) int {
+	n := viper.GetInt(key)
+	if n < 1 {
+		n = def
+	}
+	return n
+}
+
+// CORSOrigins returns the comma-separated browser origins allowed cross-origin
+// API access. Empty (the default) means none: the caller must then skip
+// registering fiber's CORS middleware entirely, because fiber substitutes "*"
+// for an empty AllowOrigins, which would open rather than deny.
+func CORSOrigins() string {
+	return viper.GetString("cors_origins")
 }
 
 func LogError(e error) {
