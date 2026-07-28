@@ -218,19 +218,36 @@ func (p *program) Stop(s service.Service) error {
 }
 
 func main() {
+	// Bare `nitr` falls through dispatch and runs the service below;
+	// flag-carrying invocations (`nitr --port 9000`) are routed by dispatch
+	// into cobra, whose root RunE calls this same path via cmd.RunServer.
+	cmd.RunServer = runService
+
 	if dispatch(os.Args) {
 		return
 	}
 
+	if err := runService(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+// runService builds and runs the Nitr host service. It is the single server
+// entry point, reached directly for bare `nitr` and through cmd.RunServer
+// when cobra handles an invocation that carries flags. Init failures are
+// returned (main reports them via log.Fatal); a run failure is logged
+// through the service logger, matching the previous main() behaviour.
+func runService() error {
 	s, lg, err := initService()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	logger = lg
 
 	if err := s.Run(); err != nil {
 		logger.Error(err)
 	}
+	return nil
 }
 
 // dispatch runs the CLI when the process is started with extra arguments

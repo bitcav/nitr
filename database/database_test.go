@@ -3,6 +3,7 @@ package database
 import (
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/bitcav/nitr/models"
@@ -153,4 +154,32 @@ func TestSetAPIDataSubsequentRunNoop(t *testing.T) {
 	key, err := GetApiKey()
 	require.NoError(t, err)
 	assert.Equal(t, first, key)
+}
+
+// TestDataDirPutsDBThere is the guard for --data-dir / NITR_DATA_DIR /
+// data_dir: with data_dir set, the database file is created (including the
+// missing directory) and read back from THERE — not the cwd. The default
+// path is covered by every other test here, which all resolve to
+// ./nitr.db.
+func TestDataDirPutsDBThere(t *testing.T) {
+	cdTemp(t)
+	viper.Reset()
+	t.Cleanup(viper.Reset) // data_dir must not leak into the cwd-default tests
+
+	dir := filepath.Join("nested", "data")
+	viper.Set("data_dir", dir)
+
+	SetAPIData()
+	dbFile := filepath.Join(dir, "nitr.db")
+	assert.FileExists(t, dbFile)
+	assert.NoFileExists(t, "nitr.db", "with data_dir set, nothing may be written to the cwd")
+
+	user, err := GetUserByID("1")
+	require.NoError(t, err)
+	assert.Equal(t, utils.PasswordHash("123456"), user.Password)
+
+	// DBPath is the single resolution point and must reflect the key.
+	assert.Equal(t, dbFile, DBPath())
+	viper.Set("data_dir", "")
+	assert.Equal(t, "nitr.db", DBPath())
 }

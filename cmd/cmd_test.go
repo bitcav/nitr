@@ -170,6 +170,76 @@ func TestExecuteRootHelpClean(t *testing.T) {
 	assertNoProvisioningSideEffects(t)
 }
 
+// resetConfigFlags returns the persistent config flags to their unset state
+// and resets viper, so flag bindings and Changed markers from a flags test
+// cannot leak into other tests sharing the global rootCmd.
+func resetConfigFlags(t *testing.T) {
+	t.Helper()
+	flags := rootCmd.PersistentFlags()
+	for _, name := range []string{"config", "port", "host", "data-dir"} {
+		f := flags.Lookup(name)
+		if f == nil {
+			continue
+		}
+		_ = flags.Set(name, f.DefValue)
+		f.Changed = false
+	}
+	viper.Reset()
+}
+
+// TestConfigPrecedence makes the precedence order observable rather than
+// trusting viper's construction: flag > env > file > built-in default,
+// exercised through the real cobra entry path (rootCmd.Execute parses the
+// flags and PersistentPreRun binds them into viper).
+func TestConfigPrecedence(t *testing.T) {
+	cdTemp(t)
+	viper.Reset()
+	t.Cleanup(func() { resetConfigFlags(t) })
+
+	require.NoError(t, os.WriteFile("config.ini",
+		[]byte("port: 1111\nbind_address: 10.0.0.1\n"), 0666))
+	t.Setenv("NITR_PORT", "2222")
+
+	out := withIO(t, "", func() { ExecuteArgs([]string{"--port", "3333", "version"}) })
+	require.Contains(t, out, "Nitr v")
+
+	utils.ConfigFileSetup()
+
+	// file beats the built-in default (8000)
+	assert.Equal(t, "10.0.0.1", utils.BindAddress(), "config file must beat the default")
+	// env beats file
+	t.Setenv("NITR_BIND_ADDRESS", "192.168.0.1")
+	assert.Equal(t, "192.168.0.1", utils.BindAddress(), "NITR_BIND_ADDRESS must beat the file")
+	// flag beats env
+	assert.Equal(t, "3333", utils.GetLocalPort(), "--port must beat NITR_PORT")
+	assert.NoFileExists(t, "nitr.db", "version must stay side-effect free")
+}
+
+// TestBindFlagAliasesHost proves --bind parses as --host: the normalization
+// function maps the name, so the one viper binding (bind_address -> host)
+// sees the value.
+func TestBindFlagAliasesHost(t *testing.T) {
+	cdTemp(t)
+	viper.Reset()
+	t.Cleanup(func() { resetConfigFlags(t) })
+
+	out := withIO(t, "", func() { ExecuteArgs([]string{"--bind", "127.0.0.1", "version"}) })
+	require.Contains(t, out, "Nitr v")
+	assert.Equal(t, "127.0.0.1", viper.GetString("bind_address"))
+}
+
+// TestRootRunEWithoutServerHook covers the RunServer == nil branch (the
+// only state reachable in this package's tests): bare `nitr` prints help
+// and provisions nothing.
+func TestRootRunEWithoutServerHook(t *testing.T) {
+	cdTemp(t)
+	viper.Reset()
+
+	out := withIO(t, "", func() { ExecuteArgs([]string{}) })
+	assert.Contains(t, out, "Usage:")
+	assertNoProvisioningSideEffects(t)
+}
+
 func TestExecuteNoDuplicateRegistration(t *testing.T) {
 	cdTemp(t)
 	viper.Reset()

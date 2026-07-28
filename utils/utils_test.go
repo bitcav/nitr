@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"sync"
 	"testing"
@@ -144,6 +145,70 @@ func TestConfigFileSetupReadError(t *testing.T) {
 	// error branch (LogError) is exercised.
 	require.NoError(t, ioutil.WriteFile("config.ini", []byte(":\n  : [bad"), 0666))
 	assert.NotPanics(t, func() { ConfigFileSetup() })
+}
+
+// TestConfigEnvOverride proves the env layer works end-to-end: with
+// AutomaticEnv and the NITR prefix set by ConfigFileSetup, NITR_PORT beats
+// the port written in config.ini. Underscore keys need no replacer —
+// NITR_OPEN_BROWSER_ON_STARTUP maps to open_browser_on_startup as-is.
+func TestConfigEnvOverride(t *testing.T) {
+	cdTemp(t)
+	viper.Reset()
+	require.NoError(t, ioutil.WriteFile("config.ini",
+		[]byte("port: 1111\nopen_browser_on_startup: false\n"), 0666))
+	t.Setenv("NITR_PORT", "2222")
+	t.Setenv("NITR_OPEN_BROWSER_ON_STARTUP", "true")
+
+	ConfigFileSetup()
+	assert.Equal(t, "2222", GetLocalPort(), "NITR_PORT must override the config file")
+	assert.True(t, viper.GetBool("open_browser_on_startup"),
+		"NITR_OPEN_BROWSER_ON_STARTUP must override the config file without a key replacer")
+}
+
+// TestConfigFlagPath covers the --config key: it points ConfigFileSetup at
+// an arbitrary path, a default file is created there when missing, and its
+// values are the ones read back.
+func TestConfigFlagPath(t *testing.T) {
+	cdTemp(t)
+	viper.Reset()
+	require.NoError(t, os.Mkdir("conf", 0755))
+	custom := filepath.Join("conf", "custom.ini")
+	viper.Set("config", custom)
+
+	ConfigFileSetup()
+	assert.FileExists(t, custom)
+	assert.Equal(t, "8000", GetLocalPort(), "values must be read from the --config file")
+
+	// A value edited in the custom file is picked up on the next load,
+	// proving the read also honours --config rather than ./config.ini.
+	require.NoError(t, ioutil.WriteFile(custom, []byte("port: 9999\n"), 0666))
+	ConfigFileSetup()
+	assert.Equal(t, "9999", GetLocalPort())
+}
+
+// TestConfigZeroConfigPath is the regression guard for the zero-config
+// path: no flags, no env, no existing file — a default config.ini is
+// created in the cwd and port resolves to 8000, exactly as before flags
+// existed.
+func TestConfigZeroConfigPath(t *testing.T) {
+	cdTemp(t)
+	viper.Reset()
+
+	ConfigFileSetup()
+	assert.FileExists(t, "config.ini")
+	assert.Equal(t, "8000", GetLocalPort())
+	body, err := ioutil.ReadFile("config.ini")
+	require.NoError(t, err)
+	// The generated header must warn that the syntax is YAML, not INI.
+	assert.Contains(t, string(body), "Parsed as YAML despite the .ini extension")
+	assert.Contains(t, string(body), "bind_address: 0.0.0.0")
+}
+
+func TestBindAddress(t *testing.T) {
+	viper.Reset()
+	assert.Equal(t, "0.0.0.0", BindAddress(), "default must preserve listen-on-all-interfaces")
+	viper.Set("bind_address", "127.0.0.1")
+	assert.Equal(t, "127.0.0.1", BindAddress())
 }
 
 func TestLogsDisabled(t *testing.T) {
@@ -307,6 +372,33 @@ func TestStartServerHTTPListenError(t *testing.T) {
 	assert.NotPanics(t, func() { StartServer(app) })
 	// StartServer must return to its caller instead of os.Exit-ing.
 	assert.NotContains(t, buf.String(), "exit status")
+}
+
+// TestStartServerBindAddress proves the address handed to the listener is
+// bind_address:port — 0.0.0.0 by default (all interfaces, as before), and
+// the configured value when bind_address is set (e.g. --host 127.0.0.1).
+func TestStartServerBindAddress(t *testing.T) {
+	cdTemp(t)
+	viper.Reset()
+	viper.Set("port", "1")
+	viper.Set("ssl_enabled", false)
+	viper.Set("open_browser_on_startup", false)
+
+	var gotAddr string
+	origListen := ListenFunc
+	ListenFunc = func(_ *fiber.App, addr string) error {
+		gotAddr = addr
+		return errors.New("stub: stop after capturing addr")
+	}
+	t.Cleanup(func() { ListenFunc = origListen })
+
+	app := fiber.New(fiber.Config{DisableStartupMessage: true})
+	StartServer(app)
+	assert.Equal(t, "0.0.0.0:1", gotAddr, "unset bind_address must listen on all interfaces")
+
+	viper.Set("bind_address", "127.0.0.1")
+	StartServer(app)
+	assert.Equal(t, "127.0.0.1:1", gotAddr)
 }
 
 func TestStartServerSSLError(t *testing.T) {

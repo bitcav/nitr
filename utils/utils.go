@@ -19,45 +19,78 @@ import (
 	"github.com/spf13/viper"
 )
 
+// ConfigFileSetup loads configuration into viper, creating a default config
+// file when none exists. Every key resolves as:
+//
+//	--flag > NITR_* env var > config file > built-in default
+//
+// The config file is config.ini in the working directory unless the config
+// key (--config flag / NITR_CONFIG env) points elsewhere. Despite the .ini
+// extension it is parsed as YAML.
 func ConfigFileSetup() {
-	if _, err := os.Stat("config.ini"); err != nil {
-		configFile, err := os.OpenFile("config.ini", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-		LogError(err)
-		defer configFile.Close()
+	viper.SetEnvPrefix("NITR")
+	viper.AutomaticEnv()
 
-		defaultConfigOpts := []string{
-			"port: 8000",
-			"open_browser_on_startup: true",
-			"save_logs: false",
-			"ssl_enabled: false",
-			"# ssl_certificate: /path/to/file.crt ",
-			"# ssl_certificate_key: /path/to/file.key",
-			"# seconds between live-metrics pushes over the /status socket (default 3)",
-			"metrics_push_interval: 3",
-			"# max requests per minute per IP on the login POST (default 20)",
-			"# rate_limit_login_max: 20",
-			"# max requests per minute per IP on the /api endpoints (default 300)",
-			"# rate_limit_api_max: 300",
-			"# comma-separated browser origins allowed cross-origin API access;",
-			"# empty (the default) denies all cross-origin access",
-			"# cors_origins: https://grafana.example.com, https://dash.example.com",
+	if cfgFile := viper.GetString("config"); cfgFile != "" {
+		if _, err := os.Stat(cfgFile); err != nil {
+			writeDefaultConfig(cfgFile)
 		}
-
-		defaultConfig := strings.Join(defaultConfigOpts, "\n")
-		_, err = configFile.WriteString(defaultConfig)
+		viper.SetConfigFile(cfgFile)
+	} else {
+		if _, err := os.Stat("config.ini"); err != nil {
+			writeDefaultConfig("config.ini")
+		}
+		runPath, err := os.Getwd()
+		LogError(err)
+		viper.SetConfigName("config.ini")
+		viper.AddConfigPath(runPath)
+	}
+	viper.SetConfigType("yaml")
+	if err := viper.ReadInConfig(); err != nil {
 		LogError(err)
 	}
+}
 
-	runPath, err := os.Getwd()
-	LogError(err)
-
-	viper.SetConfigName("config.ini")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath(runPath)
-	err = viper.ReadInConfig()
+// writeDefaultConfig creates path with the default settings. The header
+// states plainly that the syntax is YAML despite the .ini extension — real
+// INI (key=value, [sections]) is silently ignored by the YAML parser.
+func writeDefaultConfig(path string) {
+	configFile, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		LogError(err)
+		return
 	}
+	defer configFile.Close()
+
+	defaultConfigOpts := []string{
+		"# Nitr configuration. Parsed as YAML despite the .ini extension:",
+		"# write `key: value` lines, not INI `key=value` or [sections].",
+		"# Precedence: --flags > NITR_* env vars (NITR_PORT, NITR_BIND_ADDRESS,",
+		"# NITR_DATA_DIR, ...) > this file > built-in defaults.",
+		"port: 8000",
+		"# address to bind: 0.0.0.0 is all interfaces, 127.0.0.1 localhost only",
+		"bind_address: 0.0.0.0",
+		"open_browser_on_startup: true",
+		"save_logs: false",
+		"ssl_enabled: false",
+		"# ssl_certificate: /path/to/file.crt ",
+		"# ssl_certificate_key: /path/to/file.key",
+		"# directory holding nitr.db (default: nitr's working directory)",
+		"# data_dir: /var/lib/nitr",
+		"# seconds between live-metrics pushes over the /status socket (default 3)",
+		"metrics_push_interval: 3",
+		"# max requests per minute per IP on the login POST (default 20)",
+		"# rate_limit_login_max: 20",
+		"# max requests per minute per IP on the /api endpoints (default 300)",
+		"# rate_limit_api_max: 300",
+		"# comma-separated browser origins allowed cross-origin API access;",
+		"# empty (the default) denies all cross-origin access",
+		"# cors_origins: https://grafana.example.com, https://dash.example.com",
+	}
+
+	defaultConfig := strings.Join(defaultConfigOpts, "\n")
+	_, err = configFile.WriteString(defaultConfig)
+	LogError(err)
 }
 
 // OpenBrowser opens default web browser in specific domain
@@ -207,6 +240,18 @@ func GetLocalPort() string {
 	return port
 }
 
+// BindAddress returns the interface address StartServer binds to: the
+// bind_address key (--host/--bind flag, NITR_BIND_ADDRESS env), defaulting
+// to 0.0.0.0 (all interfaces) so behaviour without configuration is
+// unchanged. Set 127.0.0.1 to serve localhost only.
+func BindAddress() string {
+	addr := viper.GetString("bind_address")
+	if addr == "" {
+		addr = "0.0.0.0"
+	}
+	return addr
+}
+
 // MetricsPushInterval returns the cadence at which the /status socket streams
 // live host metrics to the panel. It reads metrics_push_interval (seconds)
 // from config.ini, defaulting to 3s and clamping to a 1s floor so a missing
@@ -221,8 +266,15 @@ func MetricsPushInterval() time.Duration {
 
 func StartServer(app *fiber.App) {
 	port := GetLocalPort()
-	addr := ":" + port
+	addr := net.JoinHostPort(BindAddress(), port)
 	sslEnabled := viper.GetBool("ssl_enabled")
+
+	// The file settings actually came from, for the listen-error hint —
+	// "config.ini" is wrong when --config pointed elsewhere.
+	cfgFile := viper.ConfigFileUsed()
+	if cfgFile == "" {
+		cfgFile = "config.ini"
+	}
 	if sslEnabled {
 		cert := viper.GetString("ssl_certificate")
 		key := viper.GetString("ssl_certificate_key")
@@ -238,7 +290,7 @@ func StartServer(app *fiber.App) {
 
 		err := app.ListenTLS(addr, cert, key)
 		if err != nil {
-			fmt.Println(err, "\nCheck settings at config.ini file")
+			fmt.Println(err, "\nCheck settings at "+cfgFile)
 		}
 		LogError(err)
 
@@ -253,7 +305,7 @@ func StartServer(app *fiber.App) {
 
 		err := ListenFunc(app, addr)
 		if err != nil {
-			fmt.Println(err, "\nCheck settings at config.ini file")
+			fmt.Println(err, "\nCheck settings at "+cfgFile)
 		}
 		LogError(err)
 	}
