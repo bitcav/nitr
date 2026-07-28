@@ -57,6 +57,29 @@ behavioral and API changes that would be considered breaking after 1.0; patch
   `HEALTHCHECK` (`wget -q -O /dev/null http://localhost:8000/health`,
   30s interval / 5s timeout / 10s start period / 3 retries) makes `docker ps`
   report a health status for the container. ([0262123](https://github.com/bitcav/nitr/commit/0262123))
+- The panel now shows **live CPU, RAM, and disk usage**, streamed to it over
+  the existing `/status` WebSocket. The socket previously carried only
+  inbound messages; the server now pushes a metrics frame (host overview plus
+  per-disk usage) to every connected panel client — the first frame
+  immediately on connect, then one every `metrics_push_interval` seconds (a
+  new `config.ini` key, default `3`, clamped to a 1s floor) — and the panel
+  renders CPU/RAM/disk widgets from the stream. The route sits behind the
+  panel session auth, so the stream is only available to logged-in sessions.
+  Each connection's writer goroutine stops when the client disconnects, and
+  both the read loop and the writer recover their own panics, so a
+  metrics-collection panic cannot take the process down. ([c46e4b5](https://github.com/bitcav/nitr/commit/c46e4b5))
+- Service lifecycle commands: **`nitr install` / `uninstall` / `start` /
+  `stop` / `status`**. The binary could always *run* as a system service, but
+  shipped no way to register or control one — installation was a manual
+  exercise per platform. The new commands drive the host's service manager
+  (systemd, launchd, Windows SCM, via `kardianos/service`) under the service
+  name `NitrService`. `status` distinguishes installed-and-running,
+  installed-but-stopped, and not-installed; `start`/`stop` against a host
+  with no installed unit say to run `nitr install` first; and a failure that
+  reads like a permission denial carries a "try running as root or with
+  sudo" hint, so "needs root" stays distinguishable from "broken". Verified
+  against the built binary: `nitr status` on a bare host prints
+  `"NitrService" is not installed on this host (linux-systemd).` and exits 0. ([032fac2](https://github.com/bitcav/nitr/commit/032fac2))
 
 ### Changed
 
@@ -67,6 +90,18 @@ behavioral and API changes that would be considered breaking after 1.0; patch
   it is recorded separately because it is the mechanism, not just the symptom.
   No local `replace` directive is involved — `go.mod` resolves the published
   v0.1.0 directly.
+- Static assets and views are now embedded with the standard library's
+  **`go:embed`** instead of `go.rice`. This removes two dependencies
+  (`github.com/GeertJohan/go.rice` and `github.com/daaku/go.zipexe`), deletes
+  637 KB of committed generated source (`rice-box.go`), and drops the
+  `make rice-box` regeneration step — the embedded copy is compiled from
+  `app/assets` and `app/views` at build time, so it can never go stale, and
+  there is no generated file left to commit. It also retires the go.zipexe
+  runtime-executable-parsing path whose `init()` panic killed every published
+  v0.8.0 binary (see [0.8.1]): with no runtime parsing left, that failure
+  class is gone rather than patched. Nothing consumer-facing changes — the
+  panel and `/assets` are served exactly as before, and `go build` remains
+  the only build step. ([207bc2a](https://github.com/bitcav/nitr/commit/207bc2a))
 
 ### Fixed
 
@@ -78,6 +113,40 @@ behavioral and API changes that would be considered breaking after 1.0; patch
   break, and **will be removed** in a later breaking release — switch to
   `family`. Fixed in the `github.com/bitcav/nitr-core` dependency (v0.1.0,
   [51c5cc9](https://github.com/bitcav/nitr-core/commit/51c5cc98e13111e3be0bebaa1fad18fb09e63f5d)).
+- **An unauthenticated `POST /` with a malformed body killed the whole
+  server.** `LoginSubmit` — reachable with no credentials — called
+  `log.Fatal` when `BodyParser` failed, which `os.Exit(1)`s straight past
+  fiber's recover middleware: anyone who could reach the login page could
+  terminate the process with a single bad request, a remote denial of
+  service. The authenticated `PasswordSubmit` had the same bug. Both now
+  return `400 Bad Request`. The same commit fixes a second kill-the-server
+  path: `GetLocalIP` called `log.Fatal` when the dial fails, which happens on
+  any host with no default route (air-gapped box, restricted container,
+  egress-filtered network) — loading the panel on such a host took the
+  server down. It now returns an error that surfaces as a `500`. ([d35c6ed](https://github.com/bitcav/nitr/commit/d35c6ed))
+- **Concurrent API-key generation raced and could produce duplicate or
+  correlated keys.** `utils.RandString` — used for API keys (`POST
+  /generate` from the panel) and for the default user's key at first start —
+  shared a single `*rand.Rand` across goroutines, and `rand.Rand` is not
+  safe for concurrent use: simultaneous generation raced on its internal
+  state, and in a racy build the output can repeat or correlate — two keys
+  that are equal, or predictable from each other. It now uses the
+  `math/rand/v2` package-level source, which is goroutine-safe and
+  auto-seeded. ([1f038bf](https://github.com/bitcav/nitr/commit/1f038bf))
+- `database.GetUserByID` and `database.SetUserData` no longer panic against a
+  `nitr.db` that exists but is missing its `users` bucket (a touched or
+  restored-empty file): they return an error naming the database instead of
+  dereferencing a nil bucket. `SetAPIData` now re-runs bucket creation
+  unconditionally, so such a database self-heals on the next server start
+  instead of panicking. ([b8e7193](https://github.com/bitcav/nitr/commit/b8e7193))
+- **The five CLI password prompts no longer ignore input errors.** `nitr
+  passwd` (three prompts), `nitr key`, and `nitr qr` called `fmt.Scan`
+  without checking its return, so a closed or broken stdin left the password
+  variable empty and the command silently compared that empty string against
+  the stored hash — printing "Wrong password." for what was really a read
+  failure. Each prompt now reports the read error and aborts. Verified
+  against the built binary: `nitr passwd < /dev/null` prints `failed to read
+  password: EOF` instead of proceeding to compare. ([9517dbc](https://github.com/bitcav/nitr/commit/9517dbc))
 
 ## [0.9.0] - 2026-07-27
 
