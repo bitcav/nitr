@@ -5,3 +5,8 @@ config.ini
 nitr
 coverage.out
 coverage.html
+
+# Python artifacts from scripts/ (check_workflow_shell.py CI guard) — this is
+# a Go project, so the only .pyc source is running those scripts locally.
+__pycache__/
+*.pyc
