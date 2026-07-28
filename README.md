@@ -64,6 +64,7 @@ See [Usage](#usage) for the full endpoint list and response shapes.
 - [QR Code](#qr-code)
 - [Usage](#usage)
   - [Example](#example)
+- [HTTP behaviour](#http-behaviour)
 - [Prometheus metrics](#prometheus-metrics)
 - [Health and readiness probes](#health-and-readiness-probes)
 - [API v1](#api-v1)
@@ -231,6 +232,22 @@ Invoke-RestMethod -Uri http://localhost:8000/api/v1/cpu -H @{"x-api-key"="yourap
 }
 ```
 
+## HTTP behaviour
+
+A few cross-cutting behaviours apply to the server as a whole, regardless of which endpoint is called.
+
+**Rate limiting.** The login `POST /` is limited to `rate_limit_login_max` requests per minute per client IP (default 20), and `/api/v1/*` together with `/metrics` to `rate_limit_api_max` per minute per client IP (default 300). Over the limit, the server answers `429 Too Many Requests` — anyone polling the API in a tight loop should expect it and back off. Both limits are configurable; see [Settings](#settings).
+
+**CORS is deny-by-default.** A browser client on another origin gets no `Access-Control-Allow-Origin` header at all unless that origin is listed in `cors_origins` in `config.ini`, so a browser-hosted dashboard (Grafana, a custom admin panel) cannot call the API cross-origin out of the box. To allow it, list the origins comma-separated:
+
+```
+cors_origins: https://grafana.example.com, https://dash.example.com
+```
+
+**Compression and conditional requests.** Responses are gzipped when the client sends `Accept-Encoding: gzip`, and carry an `ETag`; a client that repeats a request with `If-None-Match` gets a `304 Not Modified` when the body has not changed, skipping the payload.
+
+**Security headers and request IDs.** Every response carries baseline security headers (`X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: no-referrer`, and friends) and an `X-Request-Id` unique to that request. When `save_logs` is on, the same ID ends each access-log line in `nitr.log`, so a client-side error report can be matched against the server's log.
+
 ## Prometheus metrics
 
 Nitr exposes a `/metrics` endpoint emitting the standard Prometheus exposition format, so Nitr becomes a drop-in scrape target for Grafana, Alertmanager, VictoriaMetrics, and any other monitoring stack that speaks Prometheus.
@@ -386,6 +403,31 @@ ssl_enabled: true
 ssl_certificate: /path/to/file.crt
 ssl_certificate_key: /path/to/file.key
 ```   
+
+### Rate Limits
+
+Per-client-IP request caps, in requests per minute. Exceeding one returns `429 Too Many Requests` (see [HTTP behaviour](#http-behaviour)). Unset or invalid values fall back to the defaults.
+
+```
+rate_limit_login_max: 20
+rate_limit_api_max: 300
+```
+
+### Cross-Origin (CORS) Access
+
+Comma-separated list of browser origins allowed to call the server cross-origin. Empty (the default) denies all cross-origin browser access — see [HTTP behaviour](#http-behaviour).
+
+```
+cors_origins: https://grafana.example.com, https://dash.example.com
+```
+
+### Live Metrics Push Interval
+
+Seconds between live CPU/RAM/disk pushes from the server to the web panel over the `/status` socket. Defaults to 3; values below 1 are clamped to 1.
+
+```
+metrics_push_interval: 3
+```
 
 ## Platform support
 

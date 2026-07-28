@@ -57,6 +57,30 @@ behavioral and API changes that would be considered breaking after 1.0; patch
   `HEALTHCHECK` (`wget -q -O /dev/null http://localhost:8000/health`,
   30s interval / 5s timeout / 10s start period / 3 retries) makes `docker ps`
   report a health status for the container. ([0262123](https://github.com/bitcav/nitr/commit/0262123))
+- The server now applies a baseline middleware stack to every response —
+  **rate limiting, opt-in CORS, gzip compression, ETags, security headers,
+  and per-request IDs** — with three new `config.ini` keys. **Rate
+  limiting:** the login `POST /` is capped at `rate_limit_login_max`
+  requests per minute per client IP (default 20) against password
+  brute-forcing, and `/api/v1/*` plus `/metrics` at `rate_limit_api_max`
+  (default 300); over the limit the server returns `429 Too Many Requests`,
+  which API pollers should expect and back off from. **CORS is
+  deny-by-default:** browser origins get no `Access-Control-Allow-Origin`
+  header unless listed in the new `cors_origins` key (comma-separated;
+  empty, the default, denies all) — a browser-hosted dashboard on another
+  origin needs it set before it can call the API cross-origin. Responses may
+  now be gzipped when the client sends `Accept-Encoding: gzip`
+  (`compress`), and may answer `304 Not Modified` to conditional
+  `If-None-Match` requests (`etag`), so polling the slow-moving endpoints
+  skips unchanged bodies. Every response carries the baseline security
+  headers (`helmet`) and an `X-Request-Id` unique to the request, which the
+  access log records per line when `save_logs` is on — a client-side error
+  report can now be matched against the server's log. Verified against the
+  running server: with `cors_origins` unset, a request carrying an `Origin`
+  header comes back with no `Access-Control-Allow-Origin`; the login POST
+  returns `302` for the first `rate_limit_login_max` attempts and `429`
+  thereafter; `/api/v1/cpu` returns `429` after 300 requests in a minute;
+  and a repeated `If-None-Match` request returns `304`. ([22a5ac8](https://github.com/bitcav/nitr/commit/22a5ac8))
 - The panel now shows **live CPU, RAM, and disk usage**, streamed to it over
   the existing `/status` WebSocket. The socket previously carried only
   inbound messages; the server now pushes a metrics frame (host overview plus
@@ -67,7 +91,12 @@ behavioral and API changes that would be considered breaking after 1.0; patch
   panel session auth, so the stream is only available to logged-in sessions.
   Each connection's writer goroutine stops when the client disconnects, and
   both the read loop and the writer recover their own panics, so a
-  metrics-collection panic cannot take the process down. ([c46e4b5](https://github.com/bitcav/nitr/commit/c46e4b5))
+  metrics-collection panic cannot take the process down. The WebSocket
+  handler also joins the writer goroutine before returning: a metrics tick
+  landing after the handler had released the connection wrote to freed
+  state, a use-after-free the race detector flagged, so the handler now
+  waits for the writer to stop first — and CI runs the suite with `-race`
+  to keep it that way. ([c46e4b5](https://github.com/bitcav/nitr/commit/c46e4b5), [752a686](https://github.com/bitcav/nitr/commit/752a686))
 - Service lifecycle commands: **`nitr install` / `uninstall` / `start` /
   `stop` / `status`**. The binary could always *run* as a system service, but
   shipped no way to register or control one — installation was a manual
@@ -139,14 +168,23 @@ behavioral and API changes that would be considered breaking after 1.0; patch
   dereferencing a nil bucket. `SetAPIData` now re-runs bucket creation
   unconditionally, so such a database self-heals on the next server start
   instead of panicking. ([b8e7193](https://github.com/bitcav/nitr/commit/b8e7193))
-- **The five CLI password prompts no longer ignore input errors.** `nitr
+- **The five CLI password prompts no longer ignore input errors, and every
+  failure path in the credential commands now exits non-zero.** `nitr
   passwd` (three prompts), `nitr key`, and `nitr qr` called `fmt.Scan`
   without checking its return, so a closed or broken stdin left the password
   variable empty and the command silently compared that empty string against
   the stored hash — printing "Wrong password." for what was really a read
-  failure. Each prompt now reports the read error and aborts. Verified
-  against the built binary: `nitr passwd < /dev/null` prints `failed to read
-  password: EOF` instead of proceeding to compare. ([9517dbc](https://github.com/bitcav/nitr/commit/9517dbc))
+  failure. Each prompt now reports the read error and aborts. On top of
+  that, the three commands converted from cobra `Run` to `RunE`: **all
+  failure paths — a read error, a wrong password, mismatched new passwords,
+  a database error — now exit 1**, where previously each printed its message
+  and exited 0. Any script wrapping `nitr passwd` / `key` / `qr` can now
+  branch on the exit status, and must: a wrong password previously looked
+  like success to the shell. Failures are reported as `Error: <message>`
+  (lowercased, e.g. `Error: wrong password`, `Error: passwords don't
+  match`). Verified against the built binary: `nitr passwd < /dev/null`
+  prints `Error: failed to read password: EOF` and exits 1; `nitr key` with
+  a wrong password prints `Error: wrong password` and exits 1. ([9517dbc](https://github.com/bitcav/nitr/commit/9517dbc), [a4fdc70](https://github.com/bitcav/nitr/commit/a4fdc70), [5e28eb9](https://github.com/bitcav/nitr/commit/5e28eb9))
 
 ## [0.9.0] - 2026-07-27
 
