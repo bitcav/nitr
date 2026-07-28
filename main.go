@@ -1,10 +1,12 @@
 package main
 
 import (
+	"embed"
+	"io/fs"
 	"log"
+	"net/http"
 	"os"
 
-	rice "github.com/GeertJohan/go.rice"
 	"github.com/bitcav/nitr/cmd"
 	db "github.com/bitcav/nitr/database"
 	"github.com/bitcav/nitr/handlers"
@@ -15,6 +17,23 @@ import (
 	"github.com/gofiber/websocket/v2"
 	"github.com/kardianos/service"
 )
+
+//go:embed app/assets
+var assetsFS embed.FS
+
+//go:embed app/views
+var viewsFS embed.FS
+
+// subFS strips the embed-retained directory prefix (e.g. "app/assets") so the
+// FS is rooted where go.rice's box used to root it. The sub directory exists
+// by construction (it is embedded at build time), so err is always nil.
+func subFS(fsys fs.FS, dir string) fs.FS {
+	sub, err := fs.Sub(fsys, dir)
+	if err != nil {
+		panic(err) // unreachable: dir is embedded at build time
+	}
+	return sub
+}
 
 // server performs all non-blocking startup (config, routes, middleware,
 // log wiring) and returns the assembled app ready to listen. Setup errors
@@ -36,7 +55,7 @@ func server() (*fiber.App, error) {
 
 	//In Memory Static Assets
 	app.Use("/assets", filesystem.New(filesystem.Config{
-		Root: rice.MustFindBox("app/assets").HTTPBox(),
+		Root: http.FS(subFS(assetsFS, "app/assets")),
 	}))
 
 	//Checks if logs saving is activated
@@ -85,7 +104,7 @@ func server() (*fiber.App, error) {
 	app.Get("/ready", handlers.Ready)
 
 	//Login View
-	handlers.ViewsBox = rice.MustFindBox("app/views")
+	handlers.ViewsFS = subFS(viewsFS, "app/views")
 	app.Get("/", handlers.Login)
 
 	//Login Submit

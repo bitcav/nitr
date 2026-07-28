@@ -205,14 +205,17 @@ func TestStartPropagatesLogsError(t *testing.T) {
 	assert.Contains(t, err.Error(), "nitr.log")
 }
 
-// TestBuiltBinaryRuns guards against the go.rice/go.zipexe init() panic class
-// of bug: every compiled nitr binary panicked before main ran on Go 1.26 ELF,
-// while the whole test suite stayed green because tests call rice.MustFindBox
-// in-process from the source tree and never touch the appended-zip path. This
-// test builds the real binary and executes it, so a regression of that init()
-// panic surfaces as a non-zero exit (with the panic on stderr) instead of
-// shipping green. It runs the binary from t.TempDir() for defensive isolation,
-// keeping any cwd-relative I/O out of the repo.
+// TestBuiltBinaryRuns guards against the class of bug exemplified by the
+// go.rice/go.zipexe init() panic: every compiled nitr binary panicked before
+// main ran on Go 1.26 ELF, while the whole test suite stayed green because
+// tests exercised the library in-process and never touched the appended-zip
+// path. (go.rice has since been replaced by go:embed, which does no runtime
+// executable parsing, but the guard stays: any future startup-time failure
+// still only surfaces by running a built binary.) This test builds the real
+// binary and executes it, so a regression of that kind surfaces as a
+// non-zero exit (with the panic on stderr) instead of shipping green. It runs
+// the binary from t.TempDir() for defensive isolation, keeping any
+// cwd-relative I/O out of the repo.
 func TestBuiltBinaryRuns(t *testing.T) {
 	if _, err := exec.LookPath("go"); err != nil {
 		t.Skipf("go toolchain not available, skipping binary build test: %v", err)

@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
-	rice "github.com/GeertJohan/go.rice"
 	db "github.com/bitcav/nitr/database"
 	"github.com/bitcav/nitr/models"
 	"github.com/bitcav/nitr/utils"
@@ -32,9 +32,15 @@ func cdTemp(t *testing.T) string {
 
 // TestMain loads the view templates once for the entire handlers test suite.
 // Doing it here (rather than a nil-check inside setupEnv) avoids a check-then-set
-// race on ViewsBox the moment any test opts into t.Parallel().
+// race on ViewsFS the moment any test opts into t.Parallel(). The path is made
+// absolute because cdTemp chdirs tests into temp dirs, which would break a
+// relative DirFS resolved lazily at request time.
 func TestMain(m *testing.M) {
-	ViewsBox = rice.MustFindBox("../app/views")
+	viewsDir, err := filepath.Abs("../app/views")
+	if err != nil {
+		panic(err)
+	}
+	ViewsFS = os.DirFS(viewsDir)
 	os.Exit(m.Run())
 }
 

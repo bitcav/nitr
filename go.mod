@@ -5,7 +5,6 @@ go 1.26
 toolchain go1.26.5
 
 require (
-	github.com/GeertJohan/go.rice v1.0.3
 	github.com/bitcav/go-memdev v0.2.0
 	github.com/bitcav/nitr-core v0.1.0
 	github.com/fasthttp/websocket v1.5.3
@@ -29,7 +28,6 @@ require (
 	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/daaku/go.zipexe v1.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/digitalocean/go-smbios v0.0.0-20180907143718-390a4f403a8e // indirect
 	github.com/fsnotify/fsnotify v1.4.7 // indirect
