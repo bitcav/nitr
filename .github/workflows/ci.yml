@@ -123,6 +123,22 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      # Workflow-shell guard: a `run:` step with no explicit `shell:` in a
+      # Windows-capable job executes under PowerShell by default — the
+      # windows-2025 gofmt break, 2026-07-28. actionlint does NOT catch this
+      # (it cannot infer the shell through `runs-on: ${{ matrix.os }}`, so it
+      # skips shellcheck), so scripts/check_workflow_shell.py enforces it.
+      # pyyaml is installed explicitly: the check must hard-fail, never
+      # silently pass, when its dependency is missing. The self-test runs
+      # first — a guard that has never failed is not known to work.
+      - name: Workflow shell check
+        run: |
+          python3 -m pip install --quiet pyyaml
+          python3 scripts/test_check_workflow_shell.py
+          python3 scripts/check_workflow_shell.py
       - uses: actions/setup-go@v7
         with:
           go-version: '1.26.5'
