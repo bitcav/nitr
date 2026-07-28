@@ -18,6 +18,11 @@ func init() {
 	rootCmd.AddCommand(ApiKey)
 	rootCmd.AddCommand(Passwd)
 	rootCmd.AddCommand(QrCode)
+	rootCmd.AddCommand(installCmd)
+	rootCmd.AddCommand(uninstallCmd)
+	rootCmd.AddCommand(startCmd)
+	rootCmd.AddCommand(stopCmd)
+	rootCmd.AddCommand(statusCmd)
 }
 
 func Execute() {

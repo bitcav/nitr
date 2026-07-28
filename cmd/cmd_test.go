@@ -123,12 +123,23 @@ func TestExecuteVersion(t *testing.T) {
 // in the test's cwd. Used by the side-effect-free command guards below.
 func assertNoProvisioningSideEffects(t *testing.T) {
 	t.Helper()
+	if present, name := provisioningSideEffectsPresent(); present {
+		t.Errorf("%s was created; informational commands must be side-effect free", name)
+	}
+}
+
+// provisioningSideEffectsPresent reports whether config.ini or nitr.db exist
+// in the working directory, returning the offending filename. assertNoProvision-
+// ingSideEffects wraps it; the helper is kept separate so a test can prove the
+// guard is not vacuous by creating the files and confirming this returns true.
+func provisioningSideEffectsPresent() (bool, string) {
 	if _, err := os.Stat("config.ini"); err == nil {
-		t.Errorf("config.ini was created; informational commands must be side-effect free")
+		return true, "config.ini"
 	}
 	if _, err := os.Stat("nitr.db"); err == nil {
-		t.Errorf("nitr.db was created; informational commands must be side-effect free")
+		return true, "nitr.db"
 	}
+	return false, ""
 }
 
 // TestExecuteVersionHelpClean and TestExecuteRootHelpClean guard the

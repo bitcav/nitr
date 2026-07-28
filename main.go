@@ -178,13 +178,10 @@ func dispatch(args []string) bool {
 
 // initService builds the Nitr host service together with its logger. It is
 // extracted from main() so the construction logic can be exercised by tests.
+// The Config is shared with the cmd lifecycle subcommands via cmd.ServiceConfig
+// so the running service and the installer always agree on Name/Description.
 func initService() (service.Service, service.Logger, error) {
-	svcConfig := &service.Config{
-		Name:        "NitrService",
-		Description: "A Remote Monitoring Tool for system information gathering, making it available through a JSON API.",
-	}
-
-	s, err := service.New(&program{}, svcConfig)
+	s, err := service.New(&program{}, cmd.ServiceConfig())
 	if err != nil {
 		return nil, nil, err
 	}
