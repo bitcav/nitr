@@ -23,7 +23,10 @@ var Passwd = &cobra.Command{
 		var newPasswordRepeat string
 		fmt.Print("Enter current password: ")
 		fmt.Println("\033[8m")
-		fmt.Scan(&currentPassword)
+		if _, err := fmt.Scan(&currentPassword); err != nil {
+			fmt.Println("failed to read password:", err)
+			return
+		}
 		fmt.Println("\033[28m")
 		user, err := database.GetUserByID("1")
 		if err != nil {
@@ -34,11 +37,17 @@ var Passwd = &cobra.Command{
 		if utils.PasswordHash(currentPassword) == user.Password {
 			fmt.Print("Enter a new password: ")
 			fmt.Println("\033[8m")
-			fmt.Scan(&newPassword)
+			if _, err := fmt.Scan(&newPassword); err != nil {
+				fmt.Println("failed to read password:", err)
+				return
+			}
 			fmt.Println("\033[28m")
 			fmt.Print("Repeat your new password: ")
 			fmt.Println("\033[8m")
-			fmt.Scan(&newPasswordRepeat)
+			if _, err := fmt.Scan(&newPasswordRepeat); err != nil {
+				fmt.Println("failed to read password:", err)
+				return
+			}
 			fmt.Println("\033[28m")
 			if newPassword == newPasswordRepeat {
 				user := models.User{Password: utils.PasswordHash(newPassword), Apikey: user.Apikey}
@@ -66,7 +75,10 @@ var ApiKey = &cobra.Command{
 		var password string
 		fmt.Print("Enter password: ")
 		fmt.Println("\033[8m")
-		fmt.Scan(&password)
+		if _, err := fmt.Scan(&password); err != nil {
+			fmt.Println("failed to read password:", err)
+			return
+		}
 		fmt.Println("\033[28m")
 		user, err := database.GetUserByID("1")
 		if err != nil {
@@ -90,7 +102,10 @@ var QrCode = &cobra.Command{
 		var password string
 		fmt.Print("Enter password: ")
 		fmt.Println("\033[8m")
-		fmt.Scan(&password)
+		if _, err := fmt.Scan(&password); err != nil {
+			fmt.Println("failed to read password:", err)
+			return
+		}
 		fmt.Println("\033[28m")
 		user, err := database.GetUserByID("1")
 		if err != nil {

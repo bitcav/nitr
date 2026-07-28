@@ -1,0 +1,22 @@
+version: "2"
+
+linters:
+  exclusions:
+    generated: lax
+    rules:
+      # Exclusions for pre-existing findings owned by other in-flight tickets;
+      # delete each rule as its owning ticket lands:
+      # - database/ -> r66mnwooz52l (defer db.Close) and kov2a7nybpr9
+      # - utils/    -> t10aypsofmx3
+      - path: database/
+        linters: [errcheck, ineffassign]
+      - path: utils/
+        linters: [errcheck]
+      # logger.Error is the last call before process exit; a failure there is
+      # invisible by design, so the unchecked return carries no information.
+      - path: main\.go$
+        linters: [errcheck]
+      # Test files: unchecked Close/SendString and deprecated io/ioutil in the
+      # test harness are pre-existing noise, not shipped code.
+      - path: _test\.go$
+        linters: [errcheck, staticcheck]

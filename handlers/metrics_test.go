@@ -31,9 +31,9 @@ func TestMetricsExpositionFormat(t *testing.T) {
 	require.NoError(t, err, "body must parse as Prometheus exposition format")
 
 	type expected struct {
-		name    string
-		mtype   string // Prometheus MetricType.String()
-		labels  []string
+		name   string
+		mtype  string // Prometheus MetricType.String()
+		labels []string
 	}
 	for _, e := range []expected{
 		{"nitr_cpu_seconds_total", "COUNTER", []string{"cpu", "mode"}},
