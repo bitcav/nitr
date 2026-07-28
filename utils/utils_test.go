@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"sync"
 	"testing"
 	"time"
 
@@ -53,6 +54,22 @@ func TestRandString(t *testing.T) {
 	assert.Equal(t, "", RandString(0))
 	// extremely likely to differ
 	assert.NotEqual(t, RandString(32), RandString(32))
+}
+
+// TestRandStringConcurrent guards the data race on the old shared
+// *rand.Rand source: it fails under -race with the pre-v2 implementation.
+func TestRandStringConcurrent(t *testing.T) {
+	const workers = 50
+	var wg sync.WaitGroup
+	wg.Add(workers)
+	for i := 0; i < workers; i++ {
+		go func() {
+			defer wg.Done()
+			s := RandString(10)
+			assert.Len(t, s, 10)
+		}()
+	}
+	wg.Wait()
 }
 
 func TestStringWithCharset(t *testing.T) {
