@@ -234,6 +234,38 @@ func TestLogsEnabled(t *testing.T) {
 	assert.FileExists(t, "nitr.log")
 }
 
+// TestLogPath proves nitr.log follows the same data_dir resolution as
+// database.DBPath: bare name in the cwd by default, joined under data_dir
+// when set. This is the regression guard for the bug that had /ready
+// ignoring --data-dir — Logs is the second caller of the same pattern and
+// would have drifted identically.
+func TestLogPath(t *testing.T) {
+	viper.Reset()
+	assert.Equal(t, "nitr.log", LogPath(), "no data_dir must keep nitr.log in cwd")
+
+	viper.Set("data_dir", "/var/lib/nitr")
+	assert.Equal(t, filepath.Join("/var/lib/nitr", "nitr.log"), LogPath())
+
+	viper.Set("data_dir", "data")
+	assert.Equal(t, filepath.Join("data", "nitr.log"), LogPath())
+}
+
+// TestLogsEnabledDataDir proves that with save_logs and data_dir both set,
+// nitr.log is created under data_dir and nothing is written to the cwd —
+// the actual filesystem behaviour, not just the resolved string.
+func TestLogsEnabledDataDir(t *testing.T) {
+	cdTemp(t)
+	viper.Reset()
+	viper.Set("save_logs", true)
+	viper.Set("data_dir", "data")
+	app := fiber.New()
+	require.NoError(t, Logs(app))
+
+	assert.FileExists(t, filepath.Join("data", "nitr.log"))
+	_, err := os.Stat("nitr.log")
+	assert.True(t, os.IsNotExist(err), "with data_dir set, nothing may be written to the cwd")
+}
+
 func TestGetLocalIP(t *testing.T) {
 	ip, err := GetLocalIP()
 	// On a host with no default route the dial fails; the binding requirement

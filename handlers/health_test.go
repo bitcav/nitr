@@ -7,7 +7,9 @@ import (
 	"path/filepath"
 	"testing"
 
+	db "github.com/bitcav/nitr/database"
 	"github.com/bitcav/nitr/version"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -82,5 +84,57 @@ func TestReadyNotReady(t *testing.T) {
 	resp := get(t, app, "/ready")
 	require.Equal(t, 503, resp.StatusCode)
 	assert.NotEqual(t, 302, resp.StatusCode, "must not redirect to login")
+	assert.Equal(t, "not ready", decodeJSON(t, resp)["status"])
+}
+
+// TestReadyHonorsDataDir is the regression guard for the bug this ticket
+// fixes: with --data-dir pointing somewhere other than the cwd, /ready must
+// stat nitr.db at database.DBPath(), not the bare "nitr.db" in the cwd.
+// The cwd stays empty (no nitr.db anywhere a bare stat could find) and the
+// DB is created under data_dir, so a 200 here proves the probe is looking
+// in the right place. A stubbed-fs unit test would pass both before and
+// after the fix; this one creates the real files.
+func TestReadyHonorsDataDir(t *testing.T) {
+	dir := cdTemp(t)
+	viper.Reset()
+	viper.Set("data_dir", filepath.Join(dir, "data"))
+
+	// Sanity: nothing in the cwd, and DBPath resolves under data_dir.
+	_, err := os.Stat("nitr.db")
+	require.True(t, os.IsNotExist(err), "cwd must be clean so a bare stat would fail")
+
+	// Provision the DB at the resolved location, exactly as the server does
+	// at startup (database.SetAPIData -> SetupDB).
+	require.NoError(t, db.SetupDB())
+
+	app := newTestApp()
+	app.Get("/ready", Ready)
+
+	resp := get(t, app, "/ready")
+	require.Equal(t, 200, resp.StatusCode)
+	assert.Equal(t, "ready", decodeJSON(t, resp)["status"])
+
+	// And the cwd still has no nitr.db — the 200 came from data_dir, not
+	// from a bare-stat accidentally finding one.
+	_, err = os.Stat("nitr.db")
+	assert.True(t, os.IsNotExist(err), "ready must not depend on a nitr.db in the cwd")
+}
+
+// TestReadyAbsentUnderDataDir proves the negative: with data_dir set and
+// nitr.db genuinely missing from it, /ready must still report 503. A probe
+// that cannot fail is worse than none.
+func TestReadyAbsentUnderDataDir(t *testing.T) {
+	dir := cdTemp(t)
+	viper.Reset()
+	// Point at a data_dir that exists but has no nitr.db inside.
+	dataDir := filepath.Join(dir, "data")
+	require.NoError(t, os.Mkdir(dataDir, 0755))
+	viper.Set("data_dir", dataDir)
+
+	app := newTestApp()
+	app.Get("/ready", Ready)
+
+	resp := get(t, app, "/ready")
+	require.Equal(t, 503, resp.StatusCode)
 	assert.Equal(t, "not ready", decodeJSON(t, resp)["status"])
 }

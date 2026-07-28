@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
@@ -165,12 +166,30 @@ Go to admin panel at %v://localhost:%v
 // returns an error rather than terminating the process: Logs is reached
 // during startup (program.Start -> server), where a fatal log would
 // os.Exit the whole program from outside main's error-reporting path.
+//
+// nitr.log lives under data_dir (the same --data-dir / NITR_DATA_DIR key
+// nitr.db uses) rather than under its own key: a separate log_file key
+// would need the same --flag / NITR_ env / config-file plumbing the other
+// keys have, and shipping a config key with no flag or env counterpart
+// would itself be an inconsistency. A single mounted directory is also the
+// simpler container story — the natural deployment for save_logs is a
+// container with one persisted volume. If log retention versus DB growth
+// ever needs to diverge, add a log_file key with the full flag/env/config
+// treatment at that point; it is not a reason to keep nitr.log drifting
+// from nitr.db in the meantime.
 func Logs(app *fiber.App) error {
 	saveLogs := viper.GetBool("save_logs")
 	if saveLogs {
-		logFile, err := os.OpenFile("nitr.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		logPath := LogPath()
+		if dir := filepath.Dir(logPath); dir != "." {
+			// A configured data dir may not exist yet (fresh Docker volume);
+			// the cwd default always does. Errors surface at OpenFile with
+			// context, matching database.SetupDB's handling of the same case.
+			_ = os.MkdirAll(dir, 0755)
+		}
+		logFile, err := os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 		if err != nil {
-			return fmt.Errorf("opening nitr.log: %w", err)
+			return fmt.Errorf("opening %s: %w", logPath, err)
 		}
 		//defer logFile.Close()
 
@@ -190,6 +209,21 @@ func Logs(app *fiber.App) error {
 	}
 
 	return nil
+}
+
+// LogPath is the single resolution point for nitr.log's location, mirroring
+// database.DBPath for nitr.db: the data_dir key (--data-dir flag /
+// NITR_DATA_DIR env / data_dir in the config file) joined with the file
+// name, or the bare file name — i.e. the working directory, exactly as
+// before — when data_dir is unset. utils cannot import database (database
+// imports utils), so this is the sibling, not a caller, of DBPath; the two
+// share the data_dir resolution pattern but each owns its own literal, so
+// a rename of either file touches exactly one place.
+func LogPath() string {
+	if dir := viper.GetString("data_dir"); dir != "" {
+		return filepath.Join(dir, "nitr.log")
+	}
+	return "nitr.log"
 }
 
 // RateLimitMax returns the per-IP requests-per-minute cap for a rate limiter,
