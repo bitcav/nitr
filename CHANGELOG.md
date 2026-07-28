@@ -40,6 +40,27 @@ behavioral and API changes that would be considered breaking after 1.0; patch
 
 ### Added
 
+- **Configuration via CLI flags, `NITR_*` environment variables, and a config
+  file**, with a documented precedence: **`--flags` > `NITR_*` env > config
+  file > built-in defaults.** Four new persistent flags — `--config`,
+  `--port`, `--host` (alias `--bind`), and `--data-dir` — bind to the same
+  keys the config file reads, and `viper.SetEnvPrefix("NITR")` plus
+  `AutomaticEnv` means **every** config key (not just the four with flags —
+  `save_logs`, `cors_origins`, `metrics_push_interval`, …) takes a `NITR_`
+  uppercase env override, which is what makes the Docker image configurable
+  without bind-mounting a config file. `--host 127.0.0.1` makes
+  **localhost-only binding possible for the first time** — previously the
+  server always listened on all interfaces; the default remains `0.0.0.0`
+  (all interfaces), so behaviour without configuration is unchanged and the
+  security-relevant default did not change. `--data-dir` relocates `nitr.db`
+  (the directory is created if missing); `config.ini` and `nitr.log` are not
+  affected and stay in the working directory. The config file is named
+  `config.ini` but is **parsed as YAML** — write `key: value`, not INI
+  `key=value` or `[sections]` — and keeps its name to avoid breaking existing
+  installs. Verified against the built binary: `--port`, `--host`,
+  `--data-dir`, `NITR_PORT`, and `--config <path>` all behave as documented,
+  and a flag beats the matching env var which beats the file value which
+  beats the default. ([73029b8](https://github.com/bitcav/nitr/commit/73029b8))
 - Liveness and readiness probes at `GET /health` and `GET /ready`, plus a
   Docker `HEALTHCHECK` that polls `/health`. Both routes are registered on the
   root app before the `x-api-key` middleware and the panel session auth, so

@@ -162,7 +162,7 @@ nitr qr
 
 > `nitr passwd`, `nitr key`, and `nitr qr` operate on the database in the **current working directory** and need the server to have been started there first — running the server is the only thing that creates `nitr.db`. Without it they refuse and exit 1, creating nothing:
 > ```
-> Error: no nitr database found in /path/to/dir — start the nitr server in this directory first
+> Error: no nitr database found at /path/to/nitr.db — start the nitr server there first
 > ```
 
 ## Docker
@@ -365,7 +365,20 @@ The per-endpoint field tables and `:lock:` privilege notes live in [docs/API.md]
 
 ## Settings
 
-The following settings are located in the `config.ini` file
+Nitr reads its settings from `config.ini` in the working directory by default. Every setting can also be supplied as a **`NITR_` environment variable** (uppercase, e.g. `NITR_PORT`, `NITR_SAVE_LOGS`, `NITR_CORS_ORIGINS`), which is what makes the Docker image configurable without bind-mounting a config file. Configuration resolves, highest priority first:
+
+> **`--flags`** > **`NITR_*`** environment variables > config file > built-in defaults
+
+| Flag | Env var | Config key | Default |
+|---|---|---|---|
+| `--config` | `NITR_CONFIG` | — | `./config.ini` |
+| `--port` | `NITR_PORT` | `port` | `8000` |
+| `--host` / `--bind` | `NITR_BIND_ADDRESS` | `bind_address` | `0.0.0.0` (all interfaces) |
+| `--data-dir` | `NITR_DATA_DIR` | `data_dir` | working directory |
+
+`--bind` is accepted as an alias of `--host`. Keys without a dedicated flag — `save_logs`, `cors_origins`, `metrics_push_interval`, and the rest below — are still settable via their `NITR_` env var.
+
+> The config file is named `config.ini` but is **parsed as YAML**: write `key: value` lines, not INI `key=value` or `[sections]` — real INI syntax is silently ignored. The file keeps its `.ini` name rather than being renamed, to avoid breaking existing installs.
 
 
 ### Server Port
@@ -376,6 +389,26 @@ By default, the web server starts on port 8000.
 ```
 port: 3000
 ```
+
+### Bind Address
+
+The interface address the server listens on, via the `bind_address` key, the `--host` (or `--bind`) flag, or the `NITR_BIND_ADDRESS` env var. The default is `0.0.0.0` — **all interfaces** — which preserves the previous behaviour: the server always listened on every interface, and with nothing set it still does. Setting `127.0.0.1` makes **localhost-only binding possible for the first time**:
+
+```
+bind_address: 127.0.0.1
+```
+
+For a tool that exposes host telemetry, restricting it to loopback is a security-relevant capability — a loopback-bound server is not reachable from the network.
+
+### Data Directory
+
+The directory holding `nitr.db`, via the `data_dir` key, the `--data-dir` flag, or the `NITR_DATA_DIR` env var. Defaults to the working directory. The directory is created if it does not exist.
+
+```
+data_dir: /var/lib/nitr
+```
+
+This relocates **`nitr.db` only**. `config.ini` and `nitr.log` are not affected and remain in the working directory.
 
 ### Open Browser on Startup
 
