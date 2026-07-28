@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
-	"math/rand"
+	"math/rand/v2"
 	"net"
 	"os"
 	"os/exec"
@@ -91,13 +91,11 @@ var ListenFunc = func(app *fiber.App, addr string) error {
 const charset = "abcdefghijkmnpqrstuvwxyz" +
 	"123456789"
 
-var seededRand *rand.Rand = rand.New(
-	rand.NewSource(time.Now().UnixNano()))
-
 func stringWithCharset(length int, charset string) string {
 	b := make([]byte, length)
 	for i := range b {
-		b[i] = charset[seededRand.Intn(len(charset))]
+		// package-level rand.IntN is goroutine-safe and auto-seeded
+		b[i] = charset[rand.IntN(len(charset))]
 	}
 	return string(b)
 }
