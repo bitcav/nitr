@@ -6,14 +6,21 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/bitcav/nitr/cmd"
 	db "github.com/bitcav/nitr/database"
 	"github.com/bitcav/nitr/handlers"
 	"github.com/bitcav/nitr/utils"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/compress"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/etag"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
+	"github.com/gofiber/fiber/v2/middleware/helmet"
+	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/gofiber/fiber/v2/middleware/requestid"
 	"github.com/gofiber/websocket/v2"
 	"github.com/kardianos/service"
 )
@@ -53,6 +60,33 @@ func server() (*fiber.App, error) {
 		DisableStartupMessage: true,
 	})
 
+	//recover stays outermost so panics from any middleware or handler below
+	//are still caught.
+	app.Use(recover.New())
+
+	//requestid early so every response carries X-Request-Id and the access
+	//log (wired by utils.Logs below) can record it.
+	app.Use(requestid.New())
+
+	//helmet's baseline security headers apply to every response, static
+	//assets included. CORS defaults to deny: the middleware is only
+	//registered when config.ini lists origins (cors_origins), because fiber
+	//substitutes "*" for an empty AllowOrigins — wiring it with no origins
+	//configured would open cross-origin access to host telemetry instead of
+	//denying it.
+	app.Use(helmet.New())
+	if origins := utils.CORSOrigins(); origins != "" {
+		app.Use(cors.New(cors.Config{
+			AllowOrigins: origins,
+		}))
+	}
+
+	//compress and etag wrap all bodies below: /processes and /devices are
+	//large JSON payloads, and the slow-moving endpoints (bios, baseboard,
+	//product, chassis) let polling clients skip unchanged bodies via 304.
+	app.Use(compress.New())
+	app.Use(etag.New())
+
 	//In Memory Static Assets
 	app.Use("/assets", filesystem.New(filesystem.Config{
 		Root: http.FS(subFS(assetsFS, "app/assets")),
@@ -63,11 +97,17 @@ func server() (*fiber.App, error) {
 		return nil, err
 	}
 
-	app.Use(recover.New())
-
 	//API Config
 	api := app.Group("/api")
 	v1 := api.Group("/v1")
+
+	//Rate limit the API per client IP (rate_limit_api_max in config.ini,
+	//default 300/min). Registered before AuthAPI so unauthenticated
+	//API-key guessing is throttled too.
+	v1.Use(limiter.New(limiter.Config{
+		Max:        utils.RateLimitMax("rate_limit_api_max", 300),
+		Expiration: time.Minute,
+	}))
 
 	//API Key auth middleware
 	v1.Use(handlers.AuthAPI)
@@ -91,8 +131,12 @@ func server() (*fiber.App, error) {
 	v1.Get("/product", handlers.Product)
 	v1.Get("/memory", handlers.Memory)
 
-	//Prometheus /metrics endpoint, behind the same x-api-key auth as /api/v1/*.
-	app.Get("/metrics", handlers.AuthAPI, handlers.Metrics)
+	//Prometheus /metrics endpoint, behind the same x-api-key auth as /api/v1/*
+	//and the same rate limit, since it is equally brute-forceable.
+	app.Get("/metrics", limiter.New(limiter.Config{
+		Max:        utils.RateLimitMax("rate_limit_api_max", 300),
+		Expiration: time.Minute,
+	}), handlers.AuthAPI, handlers.Metrics)
 
 	//Liveness and readiness probes. Registered on `app` (not `v1`, so they
 	//skip the x-api-key middleware) and BEFORE app.Use(handlers.Auth) below,
@@ -107,8 +151,13 @@ func server() (*fiber.App, error) {
 	handlers.ViewsFS = subFS(viewsFS, "app/views")
 	app.Get("/", handlers.Login)
 
-	//Login Submit
-	app.Post("/", handlers.LoginSubmit)
+	//Login Submit, rate-limited per client IP (rate_limit_login_max in
+	//config.ini, default 20/min) against password brute-forcing. Scoped to
+	//this route so panel polling is unaffected.
+	app.Post("/", limiter.New(limiter.Config{
+		Max:        utils.RateLimitMax("rate_limit_login_max", 20),
+		Expiration: time.Minute,
+	}), handlers.LoginSubmit)
 
 	//Auth middleware
 	app.Use(handlers.Auth)

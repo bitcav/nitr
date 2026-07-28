@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -203,6 +204,106 @@ func TestStartPropagatesLogsError(t *testing.T) {
 	err := p.Start(nil)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "nitr.log")
+}
+
+// TestServerMiddleware verifies the wired middlewares actually act on
+// requests rather than merely compiling in: the login limiter returns 429
+// after rate_limit_login_max attempts, CORS echoes only the configured
+// origin, helmet and requestid set their headers, etag answers 304 on a
+// conditional re-request, and compress gzips when the client accepts it.
+// app.Test sends every request from the same IP, which is what the limiter
+// keys on.
+func TestServerMiddleware(t *testing.T) {
+	cdTempMain(t)
+	cfg := "port: 1\nopen_browser_on_startup: false\nsave_logs: false\n" +
+		"ssl_enabled: false\nrate_limit_login_max: 3\n" +
+		"cors_origins: http://allowed.example\n"
+	require.NoError(t, ioutil.WriteFile("config.ini", []byte(cfg), 0666))
+
+	app, err := server()
+	require.NoError(t, err)
+
+	// limiter: the first rate_limit_login_max bad logins redirect (302),
+	// the next one is 429.
+	login := func() int {
+		req, _ := http.NewRequest("POST", "/", strings.NewReader("password=wrong"))
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		resp, err := app.Test(req)
+		require.NoError(t, err)
+		resp.Body.Close()
+		return resp.StatusCode
+	}
+	for i := 0; i < 3; i++ {
+		assert.Equal(t, 302, login(), "bad login attempt %d", i+1)
+	}
+	assert.Equal(t, 429, login())
+
+	// CORS: the configured origin is echoed back; any other origin gets no
+	// Access-Control-Allow-Origin header, so the browser blocks it.
+	corsOrigin := func(origin string) string {
+		req, _ := http.NewRequest("GET", "/", nil)
+		req.Header.Set("Origin", origin)
+		resp, err := app.Test(req)
+		require.NoError(t, err)
+		resp.Body.Close()
+		return resp.Header.Get("Access-Control-Allow-Origin")
+	}
+	assert.Equal(t, "http://allowed.example", corsOrigin("http://allowed.example"))
+	assert.Empty(t, corsOrigin("http://evil.example"))
+
+	// helmet and requestid headers on a panel-facing response, plus the
+	// ETag used for the conditional re-request below.
+	req, _ := http.NewRequest("GET", "/", nil)
+	resp, err := app.Test(req)
+	require.NoError(t, err)
+	assert.Equal(t, "nosniff", resp.Header.Get("X-Content-Type-Options"))
+	assert.NotEmpty(t, resp.Header.Get("X-Request-Id"))
+	etagVal := resp.Header.Get("ETag")
+	assert.NotEmpty(t, etagVal)
+	resp.Body.Close()
+
+	// etag: a conditional re-request of the same body gets a 304.
+	req, _ = http.NewRequest("GET", "/", nil)
+	req.Header.Set("If-None-Match", etagVal)
+	resp, err = app.Test(req)
+	require.NoError(t, err)
+	assert.Equal(t, 304, resp.StatusCode)
+	resp.Body.Close()
+
+	// compress: the body is gzipped when the client sends Accept-Encoding.
+	req, _ = http.NewRequest("GET", "/", nil)
+	req.Header.Set("Accept-Encoding", "gzip")
+	resp, err = app.Test(req)
+	require.NoError(t, err)
+	assert.Equal(t, "gzip", resp.Header.Get("Content-Encoding"))
+	resp.Body.Close()
+}
+
+// TestServerCORSDefaultDenies covers the DEFAULT configuration — no
+// cors_origins key, which is what every install ships. fiber substitutes "*"
+// for an empty AllowOrigins, so the middleware must be skipped entirely and
+// a request carrying an Origin header must come back with no
+// Access-Control-Allow-Origin header at all.
+func TestServerCORSDefaultDenies(t *testing.T) {
+	cdTempMain(t)
+	cfg := "port: 1\nopen_browser_on_startup: false\nsave_logs: false\nssl_enabled: false\n"
+	require.NoError(t, ioutil.WriteFile("config.ini", []byte(cfg), 0666))
+
+	app, err := server()
+	require.NoError(t, err)
+
+	req, _ := http.NewRequest("GET", "/", nil)
+	req.Header.Set("Origin", "http://evil.example")
+	resp, err := app.Test(req)
+	require.NoError(t, err)
+	resp.Body.Close()
+	assert.Empty(t, resp.Header.Get("Access-Control-Allow-Origin"),
+		"default config must not emit any Access-Control-Allow-Origin header")
+	// No CORS headers of any kind: not "null", not "*".
+	for name := range resp.Header {
+		assert.NotContains(t, strings.ToLower(name), "access-control",
+			"unexpected CORS header %q on default config", name)
+	}
 }
 
 // TestBuiltBinaryRuns guards against the class of bug exemplified by the
