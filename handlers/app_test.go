@@ -2,7 +2,9 @@ package handlers
 
 import (
 	"net"
+	"net/http/httptest"
 	"runtime"
+	"strings"
 	"testing"
 	"time"
 
@@ -78,6 +80,42 @@ func TestLoginSubmitWrongPassword(t *testing.T) {
 	assert.Equal(t, 302, resp.StatusCode)
 	assert.Equal(t, "/", resp.Header.Get("Location"))
 	assert.Empty(t, sessionCookie(resp))
+}
+
+func TestLoginSubmitMalformedBody(t *testing.T) {
+	setupEnv(t)
+	app := newTestApp()
+	app.Post("/", LoginSubmit)
+
+	// Unauthenticated malformed JSON: a client error, not a server-lifecycle
+	// event. Before the fix this os.Exit'd and the process never returned.
+	req := httptest.NewRequest("POST", "/", strings.NewReader("{"))
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := app.Test(req, 30000)
+	require.NoError(t, err)
+	assert.Equal(t, fiber.StatusBadRequest, resp.StatusCode)
+
+	// The assertion that actually proves survival: the app still serves
+	// requests after the malformed POST.
+	resp = post(t, app, "/", "password=123456")
+	assert.Equal(t, 302, resp.StatusCode)
+	assert.Equal(t, "/panel", resp.Header.Get("Location"))
+}
+
+func TestPasswordSubmitMalformedBody(t *testing.T) {
+	setupEnv(t)
+	app := newTestApp()
+	app.Post("/password", PasswordSubmit)
+
+	req := httptest.NewRequest("POST", "/password", strings.NewReader("{"))
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := app.Test(req, 30000)
+	require.NoError(t, err)
+	assert.Equal(t, fiber.StatusBadRequest, resp.StatusCode)
+
+	// Still alive: a well-formed submit is handled normally afterwards.
+	resp = post(t, app, "/password", "currentPassword=123456&newPassword=newpass&repeatNewPassword=newpass")
+	assert.Equal(t, 200, resp.StatusCode)
 }
 
 func TestPanelRender(t *testing.T) {

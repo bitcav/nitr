@@ -104,10 +104,15 @@ var QrCode = &cobra.Command{
 				fmt.Println(err)
 				return
 			}
+			localIP, err := utils.GetLocalIP()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
 			hostInfo := models.HostInfo{
 				Name:        host.Info().Name,
 				Description: host.Info().Platform + "/" + host.Info().Arch,
-				IP:          utils.GetLocalIP(),
+				IP:          localIP,
 				Port:        utils.GetLocalPort(),
 				Key:         apiKey,
 			}

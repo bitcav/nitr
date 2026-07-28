@@ -153,7 +153,14 @@ func TestLogsEnabled(t *testing.T) {
 }
 
 func TestGetLocalIP(t *testing.T) {
-	ip := GetLocalIP()
+	ip, err := GetLocalIP()
+	// On a host with no default route the dial fails; the binding requirement
+	// is that the error comes back to the caller instead of killing the
+	// process, so both outcomes are acceptable here.
+	if err != nil {
+		assert.Empty(t, ip)
+		return
+	}
 	assert.NotEmpty(t, ip)
 	assert.NotNil(t, net.ParseIP(ip))
 }
@@ -274,7 +281,7 @@ func TestStartServerHTTPListenError(t *testing.T) {
 	t.Cleanup(func() { ListenFunc = origListen })
 
 	// Capture log output so we can assert the browser-open error is logged
-	// (non-fatal) rather than crashing the process via log.Fatal.
+	// (non-fatal) rather than crashing the process via os.Exit.
 	var buf bytes.Buffer
 	log.SetOutput(&buf)
 
@@ -307,7 +314,7 @@ func TestStartServerSSLError(t *testing.T) {
 	t.Cleanup(func() { openBrowserFunc = origOpen })
 
 	// Capture log output so we can assert any browser-open error is logged
-	// (non-fatal) rather than crashing the process via log.Fatal.
+	// (non-fatal) rather than crashing the process via os.Exit.
 	var buf bytes.Buffer
 	log.SetOutput(&buf)
 

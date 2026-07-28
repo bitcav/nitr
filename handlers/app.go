@@ -44,7 +44,7 @@ func LoginSubmit(c *fiber.Ctx) error {
 	login := new(models.Login)
 
 	if err := c.BodyParser(login); err != nil {
-		log.Fatal(err)
+		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
 
 	nitrUser, err := db.GetUserByID("1")
@@ -85,10 +85,14 @@ func PanelContent(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
+	localIP, err := utils.GetLocalIP()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+	}
 	hostInfo := models.HostInfo{
 		Name:        host.Info().Name,
 		Description: host.Info().Platform + "/" + host.Info().Arch,
-		IP:          utils.GetLocalIP(),
+		IP:          localIP,
 		Port:        utils.GetLocalPort(),
 		Key:         apiKey,
 	}
@@ -106,10 +110,15 @@ func PanelContent(c *fiber.Ctx) error {
 func GenerateApiKey(c *fiber.Ctx) error {
 	newAPIKey := utils.RandString(10)
 
+	localIP, err := utils.GetLocalIP()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+	}
+
 	hostInfo := models.HostInfo{
 		Name:        host.Info().Name,
 		Description: host.Info().Platform + "/" + host.Info().Arch,
-		IP:          utils.GetLocalIP(),
+		IP:          localIP,
 		Port:        utils.GetLocalPort(),
 		Key:         newAPIKey,
 	}
@@ -152,7 +161,7 @@ func PasswordSubmit(c *fiber.Ctx) error {
 	password := new(models.Password)
 
 	if err := c.BodyParser(password); err != nil {
-		log.Fatal(err)
+		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
 
 	nitrUser, err := db.GetUserByID("1")

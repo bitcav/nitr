@@ -125,7 +125,7 @@ Go to admin panel at %v://localhost:%v
 
 // Logs wires request logging to nitr.log when save_logs is enabled. It
 // returns an error rather than terminating the process: Logs is reached
-// during startup (program.Start -> server), where a log.Fatalf would
+// during startup (program.Start -> server), where a fatal log would
 // os.Exit the whole program from outside main's error-reporting path.
 func Logs(app *fiber.App) error {
 	saveLogs := viper.GetBool("save_logs")
@@ -156,16 +156,20 @@ func LogError(e error) {
 	}
 }
 
-func GetLocalIP() string {
+// GetLocalIP returns the host's outbound IP. It returns an error rather than
+// terminating the process: the dial fails on any host with no default route
+// (air-gapped box, restricted container, egress-filtered network), and this
+// runs on the panel request path, where exiting would kill the server.
+func GetLocalIP() (string, error) {
 	conn, err := net.Dial("udp", "8.8.8.8:80")
 	if err != nil {
-		log.Fatal(err)
+		return "", fmt.Errorf("determining local IP: %w", err)
 	}
 	defer conn.Close()
 
 	localAddr := conn.LocalAddr().(*net.UDPAddr)
 
-	return fmt.Sprint(localAddr.IP)
+	return fmt.Sprint(localAddr.IP), nil
 }
 
 func GetLocalPort() string {
