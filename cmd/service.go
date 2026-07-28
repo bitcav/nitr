@@ -19,15 +19,16 @@ const ServiceName = "NitrService"
 
 // ServiceConfig is the single source of truth for the service registration.
 // main.initService builds the running service from it; the lifecycle
-// commands here build the controller from it. Arguments is left empty on
-// purpose: the installed unit must launch the nitr server (no args => main
-// runs the host service), not re-run whichever subcommand performed the
-// install.
+// commands here build the controller from it. Arguments is set to "server"
+// so the generated unit file's ExecStart is self-documenting (it reads
+// `nitr server`, the explicit spelling) rather than relying on the bare-
+// invocation default — though bare `nitr` starts the server too.
 func ServiceConfig() *service.Config {
 	return &service.Config{
 		Name:        ServiceName,
 		DisplayName: "Nitr",
 		Description: "A Remote Monitoring Tool for system information gathering, making it available through a JSON API.",
+		Arguments:   []string{"server"},
 	}
 }
 

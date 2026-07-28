@@ -147,6 +147,17 @@ func TestServiceSubcommandsRegistered(t *testing.T) {
 	}
 }
 
+// TestServiceConfigArguments pins the self-documenting install contract: the
+// generated unit file must invoke `nitr server` (the explicit spelling) so
+// the ExecStart line reads as intent rather than a bare binary path. Bare
+// `nitr` starts the server too, but the explicit form is what the unit
+// should carry now that it exists.
+func TestServiceConfigArguments(t *testing.T) {
+	cfg := ServiceConfig()
+	assert.Equal(t, []string{"server"}, cfg.Arguments,
+		"installed unit must invoke `nitr server` so the ExecStart line is self-documenting")
+}
+
 // TestDoServiceActionMessages covers the result/error mapping of the
 // lifecycle core against a fake service, independent of cobra and the OS.
 func TestDoServiceActionMessages(t *testing.T) {

@@ -219,8 +219,9 @@ func (p *program) Stop(s service.Service) error {
 
 func main() {
 	// Bare `nitr` falls through dispatch and runs the service below;
-	// flag-carrying invocations (`nitr --port 9000`) are routed by dispatch
-	// into cobra, whose root RunE calls this same path via cmd.RunServer.
+	// arg- or flag-carrying invocations (`nitr server`, `nitr --port 9000`)
+	// are routed by dispatch into cobra, which reaches this same path via
+	// cmd.RunServer (the server subcommand and the root RunE both call it).
 	cmd.RunServer = runService
 
 	if dispatch(os.Args) {

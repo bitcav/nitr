@@ -37,6 +37,25 @@ var rootCmd = &cobra.Command{
 	},
 }
 
+// serverCmd is the explicit spelling for starting the nitr host service. It
+// shares RunServer with rootCmd.RunE, so bare `nitr`, `nitr --port 9000`, and
+// `nitr server --port 9000` all reach the one server entry point. Bare `nitr`
+// keeps working unchanged because main dispatches zero-arg invocations
+// straight to runService (the Dockerfile CMD and the README double-click flow
+// both depend on this); serverCmd exists so `nitr server` is the documented,
+// help-listed spelling, and the form the installed unit file invokes.
+var serverCmd = &cobra.Command{
+	Use:   "server",
+	Short: "Run the nitr host service (the default when no subcommand is given)",
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, _ []string) error {
+		if RunServer == nil {
+			return cmd.Help()
+		}
+		return RunServer()
+	},
+}
+
 func init() {
 	flags := rootCmd.PersistentFlags()
 	flags.String("config", "", `path to the config file (default "config.ini" in the working directory; parsed as YAML despite the extension)`)
@@ -51,6 +70,7 @@ func init() {
 		}
 		return pflag.NormalizedName(name)
 	})
+	rootCmd.AddCommand(serverCmd)
 	rootCmd.AddCommand(VersionCmd)
 	rootCmd.AddCommand(ApiKey)
 	rootCmd.AddCommand(Passwd)
