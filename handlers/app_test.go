@@ -296,8 +296,14 @@ func TestSocketReaderRecoversFromPanic(t *testing.T) {
 	// recover.New does not cover, so without the explicit recover in
 	// SocketReader this panic escapes and kills the whole test process.
 	orig := handleSocketMessageFunc
+	handleSocketMessageMu.Lock()
 	handleSocketMessageFunc = func(_ []byte) { panic("boom from message handler") }
-	t.Cleanup(func() { handleSocketMessageFunc = orig })
+	handleSocketMessageMu.Unlock()
+	t.Cleanup(func() {
+		handleSocketMessageMu.Lock()
+		handleSocketMessageFunc = orig
+		handleSocketMessageMu.Unlock()
+	})
 
 	dialer := ws.Dialer{HandshakeTimeout: 2 * time.Second}
 	var c *ws.Conn

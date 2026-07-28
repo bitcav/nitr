@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/fs"
 	"log"
+	"sync"
 	"time"
 
 	"github.com/bitcav/nitr-core/disk"
@@ -208,7 +209,12 @@ func PasswordSubmit(c *fiber.Ctx) error {
 // handleSocketMessageFunc processes a single inbound websocket message. It is
 // a package-level seam so tests can substitute a handler that panics, which is
 // the only way to exercise SocketReader's recover path from outside the loop.
-var handleSocketMessageFunc = func(msg []byte) { log.Printf("%s", msg) }
+// Guarded by handleSocketMessageMu: test cleanup restores the original while
+// handler goroutines from earlier connections may still be reading it.
+var (
+	handleSocketMessageMu   sync.RWMutex
+	handleSocketMessageFunc = func(msg []byte) { log.Printf("%s", msg) }
+)
 
 // liveMetrics is the JSON shape pushed to the panel on each tick. It embeds
 // overview.Overview (host + CPU usage + RAM, already assembled by nitr-core)
@@ -237,6 +243,19 @@ func SocketReader(c *websocket.Conn) {
 	// writer goroutine; without it the writer would tick forever, one leaked
 	// goroutine per closed socket.
 	done := make(chan struct{})
+
+	// Signalling is not enough: SocketReader must not return until the writer
+	// goroutine has actually exited. gofiber's websocket middleware returns
+	// this *websocket.Conn to a sync.Pool (and zeroes it) the moment this
+	// handler returns; a writer still mid-WriteMessage past that point is a
+	// use-after-free that can write metrics into the NEXT client's reused
+	// conn. Defers run LIFO, so the Wait is registered BEFORE close(done):
+	// on unwind, done closes first (writer exits), then Wait blocks until it
+	// has — join, don't just signal, and never before the signal or the two
+	// goroutines deadlock.
+	var writerWG sync.WaitGroup
+	writerWG.Add(1)
+	defer writerWG.Wait()
 	defer close(done)
 
 	// Metrics writer: the only goroutine that writes to this conn (the read
@@ -246,6 +265,7 @@ func SocketReader(c *websocket.Conn) {
 	// goroutine that SocketReader's recover does not cover, so a panic in
 	// overview/disk collection here would otherwise crash the process.
 	go func() {
+		defer writerWG.Done()
 		defer func() {
 			if r := recover(); r != nil {
 				log.Printf("SocketReader writer recovered from panic: %v", r)
@@ -272,7 +292,10 @@ func SocketReader(c *websocket.Conn) {
 			log.Println(err)
 			break
 		}
-		handleSocketMessageFunc(msg)
+		handleSocketMessageMu.RLock()
+		h := handleSocketMessageFunc
+		handleSocketMessageMu.RUnlock()
+		h(msg)
 	}
 }
 
