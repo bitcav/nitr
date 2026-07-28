@@ -49,7 +49,11 @@ jobs:
       # Formatting guard: the repo has drifted out of gofmt-clean twice
       # already. rice-box.go is generated and excluded by name; the pattern is
       # a no-op once that file is deleted (see 1vjum1mojzvq).
+      # Linux-only: gofmt is OS-invariant for identical bytes, so running it
+      # on Windows buys nothing and adds a CRLF-checkout failure mode
+      # (.gitattributes normalises the bytes; this skips the triplicated work).
       - name: Check formatting
+        if: runner.os == 'Linux'
         run: test -z "$(gofmt -l . | grep -v 'rice-box\.go$')"
       - name: Vet
         run: go vet ./...

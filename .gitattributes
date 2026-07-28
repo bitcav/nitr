@@ -1,0 +1,6 @@
+# Normalise line endings: Windows runners default to core.autocrlf=true and
+# would check out CRLF, which breaks gofmt and other Go tooling there.
+* text=auto
+*.go text eol=lf
+*.mod text eol=lf
+*.sum text eol=lf

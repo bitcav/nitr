@@ -214,7 +214,7 @@ func TestApiKeyWrong(t *testing.T) {
 	var runErr error
 	withIO(t, "nope\n", func() { runErr = ApiKey.RunE(ApiKey, nil) })
 	require.Error(t, runErr)
-	assert.Contains(t, runErr.Error(), "Wrong password")
+	assert.Contains(t, runErr.Error(), "wrong password")
 }
 
 func TestPasswdCorrect(t *testing.T) {
@@ -239,7 +239,7 @@ func TestPasswdWrongCurrent(t *testing.T) {
 	var runErr error
 	withIO(t, "bad\n", func() { runErr = Passwd.RunE(Passwd, nil) })
 	require.Error(t, runErr)
-	assert.Contains(t, runErr.Error(), "Wrong password")
+	assert.Contains(t, runErr.Error(), "wrong password")
 }
 
 func TestPasswdMismatch(t *testing.T) {
@@ -267,7 +267,7 @@ func TestQrCodeCorrect(t *testing.T) {
 	})
 	// QR output uses block characters; the success path must not print the
 	// "wrong password" message and must emit a non-empty payload.
-	assert.NotContains(t, out, "Wrong password")
+	assert.NotContains(t, out, "wrong password")
 	assert.True(t, len(strings.TrimSpace(out)) > 0)
 }
 
@@ -279,7 +279,7 @@ func TestQrCodeWrong(t *testing.T) {
 	var runErr error
 	withIO(t, "bad\n", func() { runErr = QrCode.RunE(QrCode, nil) })
 	require.Error(t, runErr)
-	assert.Contains(t, runErr.Error(), "Wrong password")
+	assert.Contains(t, runErr.Error(), "wrong password")
 }
 
 // TestSubcommandsFailWithoutDB guards the regression at the heart of this

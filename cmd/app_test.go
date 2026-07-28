@@ -71,7 +71,7 @@ func TestPasswdExitCodePolicy(t *testing.T) {
 
 	out, code := runNitr(t, bin, dir, strings.NewReader("bad\n"), "passwd")
 	assert.NotEqual(t, 0, code, "wrong current password must exit non-zero")
-	assert.Contains(t, out, "Wrong password")
+	assert.Contains(t, out, "wrong password")
 	assert.NotContains(t, out, "Usage:")
 
 	out, code = runNitr(t, bin, dir, strings.NewReader("123456\naaa\nbbb\n"), "passwd")

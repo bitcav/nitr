@@ -42,7 +42,7 @@ var Passwd = &cobra.Command{
 		}
 
 		if utils.PasswordHash(currentPassword) != user.Password {
-			return errors.New("Wrong password.")
+			return errors.New("wrong password")
 		}
 
 		fmt.Print("Enter a new password: ")
@@ -59,7 +59,7 @@ var Passwd = &cobra.Command{
 		fmt.Println("\033[28m")
 
 		if newPassword != newPasswordRepeat {
-			return errors.New("Passwords don't match")
+			return errors.New("passwords don't match")
 		}
 
 		if err := database.SetUserData("1", models.User{Password: utils.PasswordHash(newPassword), Apikey: user.Apikey}); err != nil {
@@ -90,7 +90,7 @@ var ApiKey = &cobra.Command{
 		}
 
 		if utils.PasswordHash(password) != user.Password {
-			return errors.New("Wrong password.")
+			return errors.New("wrong password")
 		}
 		fmt.Println("Your api key is:", user.Apikey)
 		return nil
@@ -117,7 +117,7 @@ var QrCode = &cobra.Command{
 		}
 
 		if utils.PasswordHash(password) != user.Password {
-			return errors.New("Wrong password.")
+			return errors.New("wrong password")
 		}
 
 		apiKey, err := database.GetApiKey()
