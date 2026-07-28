@@ -50,79 +50,52 @@ var newServiceFunc = func() (service.Service, error) {
 	return service.New(lifecycleProgram{}, ServiceConfig())
 }
 
-var installCmd = &cobra.Command{
-	Use:   "install",
-	Short: "Install nitr as a system service",
-	Args:  cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, _ []string) error {
-		svc, err := newServiceFunc()
-		if err != nil {
-			return unsupported(cmd, err)
-		}
-		cmd.SilenceUsage = true
-		msg, err := doServiceAction("install", svc)
-		return finish(cmd, msg, err)
-	},
+// lifecycleCmds are the service lifecycle subcommands, built from the table
+// below. The action strings here are the ones doServiceAction switches on,
+// so the two can never drift apart the way five hand-copied cobra literals
+// could. Built in a var initializer, not init(), so it is populated before
+// root.go's init() registers them (init order across files is not ours to
+// rely on).
+var lifecycleCmds = buildLifecycleCmds()
+
+var lifecycleSpec = []struct {
+	use   string
+	short string
+}{
+	{"install", "Install nitr as a system service"},
+	{"uninstall", "Uninstall the nitr system service"},
+	{"start", "Start the nitr system service"},
+	{"stop", "Stop the nitr system service"},
+	{"status", "Report whether the nitr service is installed and running on this host"},
 }
 
-var uninstallCmd = &cobra.Command{
-	Use:   "uninstall",
-	Short: "Uninstall the nitr system service",
-	Args:  cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, _ []string) error {
-		svc, err := newServiceFunc()
-		if err != nil {
-			return unsupported(cmd, err)
-		}
-		cmd.SilenceUsage = true
-		msg, err := doServiceAction("uninstall", svc)
-		return finish(cmd, msg, err)
-	},
+func buildLifecycleCmds() []*cobra.Command {
+	cmds := make([]*cobra.Command, 0, len(lifecycleSpec))
+	for _, spec := range lifecycleSpec {
+		cmds = append(cmds, newLifecycleCmd(spec.use, spec.short))
+	}
+	return cmds
 }
 
-var startCmd = &cobra.Command{
-	Use:   "start",
-	Short: "Start the nitr system service",
-	Args:  cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, _ []string) error {
-		svc, err := newServiceFunc()
-		if err != nil {
-			return unsupported(cmd, err)
-		}
-		cmd.SilenceUsage = true
-		msg, err := doServiceAction("start", svc)
-		return finish(cmd, msg, err)
-	},
-}
-
-var stopCmd = &cobra.Command{
-	Use:   "stop",
-	Short: "Stop the nitr system service",
-	Args:  cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, _ []string) error {
-		svc, err := newServiceFunc()
-		if err != nil {
-			return unsupported(cmd, err)
-		}
-		cmd.SilenceUsage = true
-		msg, err := doServiceAction("stop", svc)
-		return finish(cmd, msg, err)
-	},
-}
-
-var statusCmd = &cobra.Command{
-	Use:   "status",
-	Short: "Report whether the nitr service is installed and running on this host",
-	Args:  cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, _ []string) error {
-		svc, err := newServiceFunc()
-		if err != nil {
-			return unsupported(cmd, err)
-		}
-		cmd.SilenceUsage = true
-		msg, err := doServiceAction("status", svc)
-		return finish(cmd, msg, err)
-	},
+// newLifecycleCmd builds one lifecycle subcommand whose RunE drives
+// doServiceAction(action, svc). SilenceUsage is set only after the service
+// handle is built (unsupported sets it on its own path), so a syntax error
+// still prints usage while a runtime failure does not.
+func newLifecycleCmd(action, short string) *cobra.Command {
+	return &cobra.Command{
+		Use:   action,
+		Short: short,
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			svc, err := newServiceFunc()
+			if err != nil {
+				return unsupported(cmd, err)
+			}
+			cmd.SilenceUsage = true
+			msg, err := doServiceAction(action, svc)
+			return finish(cmd, msg, err)
+		},
+	}
 }
 
 // doServiceAction drives a lifecycle action against svc and returns a
