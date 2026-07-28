@@ -240,6 +240,61 @@ func TestRootRunEWithoutServerHook(t *testing.T) {
 	assertNoProvisioningSideEffects(t)
 }
 
+// TestServerSubcommandRegistered asserts the explicit `server` subcommand is
+// wired into the root exactly once, so `nitr server` is a real (and
+// help-listed) spelling rather than an unknown command.
+func TestServerSubcommandRegistered(t *testing.T) {
+	n := 0
+	for _, c := range rootCmd.Commands() {
+		if c.Name() == "server" {
+			n++
+		}
+	}
+	assert.Equalf(t, 1, n, "server registered %d times, want 1", n)
+}
+
+// TestServerListedInRootHelp asserts `nitr --help` surfaces the server
+// subcommand by name, which is the user-facing acceptance criterion.
+func TestServerListedInRootHelp(t *testing.T) {
+	cdTemp(t)
+	viper.Reset()
+
+	out := withIO(t, "", func() { ExecuteArgs([]string{"--help"}) })
+	assert.Contains(t, out, "server")
+}
+
+// TestServerSubcommandCallsRunServer proves `nitr server` reaches the server
+// entry point: it sets RunServer to a sentinel, dispatches the subcommand
+// through the real cobra tree, and asserts the sentinel fired. The bare-`nitr`
+// equivalence is structural — both rootCmd.RunE and serverCmd.RunE call
+// RunServer — and main wires the same runService to it.
+func TestServerSubcommandCallsRunServer(t *testing.T) {
+	cdTemp(t)
+	viper.Reset()
+
+	called := false
+	orig := RunServer
+	RunServer = func() error { called = true; return nil }
+	t.Cleanup(func() { RunServer = orig })
+
+	_, err := runRoot(t, []string{"server"})
+	require.NoError(t, err)
+	assert.True(t, called, "nitr server must invoke RunServer")
+}
+
+// TestServerSubcommandWithoutHookPrintsHelp mirrors TestRootRunEWithoutServerHook
+// for the subcommand: with RunServer nil (the only state in this package's
+// tests) `nitr server` prints help and provisions nothing, instead of
+// panicking on a nil call.
+func TestServerSubcommandWithoutHookPrintsHelp(t *testing.T) {
+	cdTemp(t)
+	viper.Reset()
+
+	out := withIO(t, "", func() { ExecuteArgs([]string{"server"}) })
+	assert.Contains(t, out, "Usage:")
+	assertNoProvisioningSideEffects(t)
+}
+
 func TestExecuteNoDuplicateRegistration(t *testing.T) {
 	cdTemp(t)
 	viper.Reset()
