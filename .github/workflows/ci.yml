@@ -27,6 +27,14 @@ jobs:
           - os: windows-2025
             ext: '.exe'
     runs-on: ${{ matrix.os }}
+    # POSIX shell for every step on every OS: on Windows runners the default
+    # is PowerShell, where `test`, `$(...)` and pipes are not what executes.
+    # Plain `go` commands happened to work there by luck, not design — Git
+    # Bash ships on the windows runners and the smoke-test step already
+    # proves it works.
+    defaults:
+      run:
+        shell: bash
     # The two Windows bugs this project hit were hangs, not failures; without
     # a timeout a hang burns the 6-hour job default instead of failing fast.
     timeout-minutes: 15
@@ -45,8 +53,11 @@ jobs:
         run: test -z "$(gofmt -l . | grep -v 'rice-box\.go$')"
       - name: Vet
         run: go vet ./...
+      # -race is load-bearing, not optional: a metrics-writer goroutine once
+      # outlived its websocket handler and wrote into a pooled, reused conn
+      # (use-after-free). Only the race detector sees that class of bug.
       - name: Test
-        run: go test ./...
+        run: go test -race ./...
       # Artifact smoke test: building is not testing. This builds the real
       # binary and executes it on each OS, asserting exit 0 AND a sane version
       # string. It is the guard against the init()-panic class of bug, where
