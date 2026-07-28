@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/bitcav/nitr-core/disk"
-	"github.com/bitcav/nitr-core/host"
 	"github.com/bitcav/nitr-core/overview"
 	db "github.com/bitcav/nitr/database"
 	"github.com/bitcav/nitr/models"
@@ -106,18 +105,14 @@ func PanelContent(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
-	localIP, err := utils.GetLocalIP()
+	hostInfo, err := models.NewHostInfo(apiKey)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
-	hostInfo := models.HostInfo{
-		Name:        host.Info().Name,
-		Description: host.Info().Platform + "/" + host.Info().Arch,
-		IP:          localIP,
-		Port:        utils.GetLocalPort(),
-		Key:         apiKey,
-	}
 
+	// QrCode is the JSON encoding of this same struct minus QrCode itself
+	// (empty here, so omitempty drops it): the response carries the host
+	// facts both as fields and as the scannable QR payload string.
 	hostInfoJSON, err := json.Marshal(hostInfo)
 	if err != nil {
 		utils.LogError(err)
@@ -131,17 +126,9 @@ func PanelContent(c *fiber.Ctx) error {
 func GenerateApiKey(c *fiber.Ctx) error {
 	newAPIKey := utils.RandString(10)
 
-	localIP, err := utils.GetLocalIP()
+	hostInfo, err := models.NewHostInfo(newAPIKey)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
-	}
-
-	hostInfo := models.HostInfo{
-		Name:        host.Info().Name,
-		Description: host.Info().Platform + "/" + host.Info().Arch,
-		IP:          localIP,
-		Port:        utils.GetLocalPort(),
-		Key:         newAPIKey,
 	}
 
 	hostInfoJSON, err := json.Marshal(hostInfo)
