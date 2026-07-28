@@ -198,15 +198,23 @@ Example response:
 
 >JSON Object
 
-| Key       | Data Type      | Description              |
-|-----------|----------------|--------------------------|
-| vendor    | string         | Product vendor           |
-| family    | string         | Product family           |
-| assetTag  | string         | Asset Tag                |
-| serial    | string         | Product serial           |
-| uuid      | string         | Product UUID             |
-| sku       | string         | Product SKU              |
-| version   | string         | Product Version          |
+| Key       | Data Type      | Description                              |
+|-----------|----------------|------------------------------------------|
+| vendor    | string         | Product vendor                           |
+| family    | string         | Product family                           |
+| familiy   | string         | Product family (deprecated; misspelled) |
+| name      | string         | Product name                             |
+| serial    | string         | Product serial                           |
+| uuid      | string         | Product UUID                             |
+| sku       | string         | Product SKU                              |
+| version   | string         | Product version                          |
+
+> `familiy` is a misspelled duplicate of `family`, retained for one release as
+> a compatibility shim and **will be removed** in a later breaking change; read
+> `family` instead. This endpoint has **no `assetTag` key**: the value it
+> previously emitted under `assetTag` carried the product `name`, not an asset
+> tag. The machine's real asset tag is served at [`/baseboard`](#baseboard)
+> (the `assetTag` field), populated from `ghw.Baseboard().AssetTag`.
 
 > :lock: `serial` and `uuid` require root. `/sys/class/dmi/id/product_serial` and `product_uuid` are mode `0400`; the other Product fields (`sys_vendor`, `product_family`, `product_name`, `product_sku`, `product_version`) are `0444`.
 
