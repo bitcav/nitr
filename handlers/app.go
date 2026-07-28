@@ -2,10 +2,10 @@ package handlers
 
 import (
 	"encoding/json"
+	"io/fs"
 	"log"
 	"time"
 
-	rice "github.com/GeertJohan/go.rice"
 	"github.com/bitcav/nitr-core/disk"
 	"github.com/bitcav/nitr-core/host"
 	"github.com/bitcav/nitr-core/overview"
@@ -20,7 +20,15 @@ import (
 
 var sessions = session.New()
 
-var ViewsBox *rice.Box
+// ViewsFS holds the panel's view templates, rooted at the views directory
+// (assigned from main's go:embed FS; tests substitute os.DirFS).
+var ViewsFS fs.FS
+
+// view reads a template from ViewsFS.
+func view(name string) (string, error) {
+	b, err := fs.ReadFile(ViewsFS, name)
+	return string(b), err
+}
 
 func Login(c *fiber.Ctx) error {
 	store, err := sessions.Get(c)
@@ -30,11 +38,17 @@ func Login(c *fiber.Ctx) error {
 	if store.Get("UserID") == "1" {
 		return c.Redirect("/panel")
 	}
-	loginView, err := ViewsBox.String("login.mustache")
-	utils.LogError(err)
+	loginView, err := view("login.mustache")
+	if err != nil {
+		utils.LogError(err)
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+	}
 
-	layoutView, err := ViewsBox.String("layout/default.mustache")
-	utils.LogError(err)
+	layoutView, err := view("layout/default.mustache")
+	if err != nil {
+		utils.LogError(err)
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+	}
 
 	c.Type("html")
 	return c.SendString(mustache.RenderInLayout(loginView, layoutView))
@@ -66,11 +80,17 @@ func LoginSubmit(c *fiber.Ctx) error {
 }
 
 func Panel(c *fiber.Ctx) error {
-	panelView, err := ViewsBox.String("panel.html")
-	utils.LogError(err)
+	panelView, err := view("panel.html")
+	if err != nil {
+		utils.LogError(err)
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+	}
 
-	layoutView, err := ViewsBox.String("layout/default.mustache")
-	utils.LogError(err)
+	layoutView, err := view("layout/default.mustache")
+	if err != nil {
+		utils.LogError(err)
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+	}
 
 	c.Type("html")
 	err = c.SendString(mustache.RenderInLayout(panelView, layoutView))
@@ -147,11 +167,17 @@ func GenerateApiKey(c *fiber.Ctx) error {
 }
 
 func Password(c *fiber.Ctx) error {
-	passwordView, err := ViewsBox.String("password.html")
-	utils.LogError(err)
+	passwordView, err := view("password.html")
+	if err != nil {
+		utils.LogError(err)
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+	}
 
-	layoutView, err := ViewsBox.String("layout/default.mustache")
-	utils.LogError(err)
+	layoutView, err := view("layout/default.mustache")
+	if err != nil {
+		utils.LogError(err)
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+	}
 
 	c.Type("html")
 	return c.SendString(mustache.RenderInLayout(passwordView, layoutView))
