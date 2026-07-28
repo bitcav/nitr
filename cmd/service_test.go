@@ -30,16 +30,16 @@ type fakeService struct {
 	stopped     bool
 }
 
-func (f *fakeService) Run() error                  { return nil }
-func (f *fakeService) Start() error                { f.started = true; return f.startErr }
-func (f *fakeService) Stop() error                 { f.stopped = true; return f.stopErr }
-func (f *fakeService) Restart() error              { return nil }
-func (f *fakeService) Install() error              { f.installed = true; return f.installErr }
-func (f *fakeService) Uninstall() error            { f.uninstalled = true; return f.uninstallErr }
-func (f *fakeService) Logger(chan<- error) (service.Logger, error) { return nil, nil }
+func (f *fakeService) Run() error                                        { return nil }
+func (f *fakeService) Start() error                                      { f.started = true; return f.startErr }
+func (f *fakeService) Stop() error                                       { f.stopped = true; return f.stopErr }
+func (f *fakeService) Restart() error                                    { return nil }
+func (f *fakeService) Install() error                                    { f.installed = true; return f.installErr }
+func (f *fakeService) Uninstall() error                                  { f.uninstalled = true; return f.uninstallErr }
+func (f *fakeService) Logger(chan<- error) (service.Logger, error)       { return nil, nil }
 func (f *fakeService) SystemLogger(chan<- error) (service.Logger, error) { return nil, nil }
-func (f *fakeService) String() string              { return ServiceName }
-func (f *fakeService) Platform() string            { return "fake-test-platform" }
+func (f *fakeService) String() string                                    { return ServiceName }
+func (f *fakeService) Platform() string                                  { return "fake-test-platform" }
 func (f *fakeService) Status() (service.Status, error) {
 	return f.status, f.statusErr
 }
@@ -110,12 +110,12 @@ func TestSideEffectGuardIsNotVacuous(t *testing.T) {
 	cdTemp(t)
 
 	// Empty dir: nothing present.
-	present, name := provisioningSideEffectsPresent()
+	present, _ := provisioningSideEffectsPresent()
 	assert.False(t, present, "guard should report clean on an empty dir")
 
 	// config.ini created -> detected.
 	require.NoError(t, os.WriteFile("config.ini", []byte("x"), 0644))
-	present, name = provisioningSideEffectsPresent()
+	present, name := provisioningSideEffectsPresent()
 	assert.True(t, present, "guard must detect config.ini")
 	assert.Equal(t, "config.ini", name)
 

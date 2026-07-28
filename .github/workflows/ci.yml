@@ -38,6 +38,11 @@ jobs:
           cache: true
       - name: Download dependencies
         run: go mod download
+      # Formatting guard: the repo has drifted out of gofmt-clean twice
+      # already. rice-box.go is generated and excluded by name; the pattern is
+      # a no-op once that file is deleted (see 1vjum1mojzvq).
+      - name: Check formatting
+        run: test -z "$(gofmt -l . | grep -v 'rice-box\.go$')"
       - name: Vet
         run: go vet ./...
       - name: Test
@@ -97,9 +102,27 @@ jobs:
             nitr_windows_amd64.exe
             nitr_windows_386.exe
 
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.26.5'
+          cache: true
+      # Standardised on golangci-lint: staticcheck-standalone cannot analyse
+      # this module (built with go1.25, module requires go1.26), while
+      # golangci-lint runs today and bundles staticcheck's checks.
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.11.2
+
   release:
     name: Draft Release
-    needs: [test, build]
+    needs: [test, build, lint]
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     permissions:
