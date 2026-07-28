@@ -12,6 +12,19 @@ behavioral and API changes that would be considered breaking after 1.0; patch
 
 ### ⚠ Breaking changes
 
+- **`/api/v1/product` no longer emits `assetTag`; the product name moved to a
+  new `name` key.** The value serialized under `assetTag` was always the
+  product **name** (`ghw.Product().Name`), never an asset tag — ghw's
+  `ProductInfo` has no asset-tag field — so anyone building an asset inventory
+  off `/product` was filling the asset-tag column with product names. The key
+  is removed outright rather than left permanently empty: an always-`""`
+  `assetTag` reads as "this machine has no asset tag", which is worse than the
+  key being absent. The machine's real asset tag is already served, correctly,
+  at `GET /api/v1/baseboard` (`assetTag`, from `ghw.Baseboard().AssetTag`) —
+  read it there instead. The new `name` key carries the product name under its
+  own name. Root cause lives in the `github.com/bitcav/nitr-core` dependency
+  (v0.1.0, [51c5cc9](https://github.com/bitcav/nitr-core/commit/51c5cc98e13111e3be0bebaa1fad18fb09e63f5d)) and reaches `nitr` via the `go.mod` bump to
+  `v0.1.0`.
 - **`/api/v1/memory` no longer returns `200 OK` with a `null` body when the
   memory collector fails.** It previously printed the error to server stdout
   and returned `200` with an empty body, so a caller could not distinguish
@@ -44,6 +57,27 @@ behavioral and API changes that would be considered breaking after 1.0; patch
   `HEALTHCHECK` (`wget -q -O /dev/null http://localhost:8000/health`,
   30s interval / 5s timeout / 10s start period / 3 retries) makes `docker ps`
   report a health status for the container. ([0262123](https://github.com/bitcav/nitr/commit/0262123))
+
+### Changed
+
+- Bumped `github.com/bitcav/nitr-core` from the
+  `v0.0.0-20200823224936-5500912f5599` pseudo-version to the tagged **v0.1.0**
+  release. This is the dependency bump that delivers the `/product` fixes
+  above (correct `family`, deprecated `familiy`, `name`, dropped `assetTag`);
+  it is recorded separately because it is the mechanism, not just the symptom.
+  No local `replace` directive is involved — `go.mod` resolves the published
+  v0.1.0 directly.
+
+### Fixed
+
+- **`/api/v1/product` now emits `family` (the documented, correctly spelled
+  key).** `Product.Family` was serialized under the misspelled JSON tag
+  `familiy`, so clients written against the documented `family` key silently
+  read an absent field. The misspelled `familiy` key is retained for one
+  release as a deprecated duplicate carrying the same value, to avoid a silent
+  break, and **will be removed** in a later breaking release — switch to
+  `family`. Fixed in the `github.com/bitcav/nitr-core` dependency (v0.1.0,
+  [51c5cc9](https://github.com/bitcav/nitr-core/commit/51c5cc98e13111e3be0bebaa1fad18fb09e63f5d)).
 
 ## [0.9.0] - 2026-07-27
 
