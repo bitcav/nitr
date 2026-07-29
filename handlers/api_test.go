@@ -14,9 +14,9 @@ import (
 	"github.com/bitcav/nitr-core/bandwidth"
 	"github.com/bitcav/nitr-core/isp"
 	"github.com/gofiber/fiber/v2"
-	gopshost "github.com/shirou/gopsutil/host"
-	"github.com/shirou/gopsutil/load"
-	"github.com/shirou/gopsutil/mem"
+	"github.com/shirou/gopsutil/v4/load"
+	"github.com/shirou/gopsutil/v4/mem"
+	"github.com/shirou/gopsutil/v4/sensors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -568,7 +568,7 @@ func TestSensorsErrorHandling(t *testing.T) {
 	orig := sensorsInfoFunc
 	t.Cleanup(func() { sensorsInfoFunc = orig })
 
-	sensorsInfoFunc = func() ([]gopshost.TemperatureStat, error) { return nil, fmt.Errorf("could not read sensors") }
+	sensorsInfoFunc = func() ([]sensors.TemperatureStat, error) { return nil, fmt.Errorf("could not read sensors") }
 	app := newTestApp()
 	app.Get("/sensors", Sensors)
 	resp := get(t, app, "/sensors")
@@ -590,8 +590,8 @@ func TestSensorsPartialFailureStillReturnsData(t *testing.T) {
 	orig := sensorsInfoFunc
 	t.Cleanup(func() { sensorsInfoFunc = orig })
 
-	sensorsInfoFunc = func() ([]gopshost.TemperatureStat, error) {
-		return []gopshost.TemperatureStat{{SensorKey: "coretemp", Temperature: 42}},
+	sensorsInfoFunc = func() ([]sensors.TemperatureStat, error) {
+		return []sensors.TemperatureStat{{SensorKey: "coretemp", Temperature: 42}},
 			fmt.Errorf("Number of warnings: 1")
 	}
 	app := newTestApp()
@@ -610,7 +610,7 @@ func TestSensorsEmptyIsNotAnError(t *testing.T) {
 	orig := sensorsInfoFunc
 	t.Cleanup(func() { sensorsInfoFunc = orig })
 
-	sensorsInfoFunc = func() ([]gopshost.TemperatureStat, error) { return nil, nil }
+	sensorsInfoFunc = func() ([]sensors.TemperatureStat, error) { return nil, nil }
 	app := newTestApp()
 	app.Get("/sensors", Sensors)
 	resp := get(t, app, "/sensors")
@@ -623,8 +623,8 @@ func TestSensorsSuccess(t *testing.T) {
 	orig := sensorsInfoFunc
 	t.Cleanup(func() { sensorsInfoFunc = orig })
 
-	sensorsInfoFunc = func() ([]gopshost.TemperatureStat, error) {
-		return []gopshost.TemperatureStat{{SensorKey: "cpu_thermal", Temperature: 45.6}}, nil
+	sensorsInfoFunc = func() ([]sensors.TemperatureStat, error) {
+		return []sensors.TemperatureStat{{SensorKey: "cpu_thermal", Temperature: 45.6}}, nil
 	}
 	app := newTestApp()
 	app.Get("/sensors", Sensors)
