@@ -195,9 +195,8 @@ func server() (*fiber.App, error) {
 
 type program struct {
 	// app holds the server started by Start so Stop can shut it down. It is
-	// the minimal seam for deterministic listener teardown in tests; a full
-	// graceful-shutdown design (bbolt handle lifecycle, signal handling,
-	// shutdown timeouts) belongs to a separate ticket.
+	// the minimal seam for deterministic listener teardown in tests; signal
+	// handling and shutdown timeouts belong to a separate ticket.
 	app *fiber.App
 }
 
@@ -218,11 +217,16 @@ func (p *program) Start(s service.Service) error {
 	return nil
 }
 
+// Stop shuts the listener down first so no in-flight request can touch the
+// database handle after it closes -- fiber's Shutdown blocks until active
+// connections drain, so by the time it returns nothing is using db anymore.
 func (p *program) Stop(s service.Service) error {
 	if p.app != nil {
-		return p.app.Shutdown()
+		if err := p.app.Shutdown(); err != nil {
+			return err
+		}
 	}
-	return nil
+	return db.Close()
 }
 
 func main() {

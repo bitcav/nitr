@@ -113,7 +113,15 @@ func Execute() {
 func ExecuteArgs(args []string) {
 	rootCmd.SetArgs(args)
 
-	if err := rootCmd.Execute(); err != nil {
+	err := rootCmd.Execute()
+	// Release nitr.db's flock before exiting rather than leaving it to
+	// process teardown: os.Exit below skips deferred cleanup, and a
+	// short-lived CLI invocation holding the lock any longer than it needs
+	// to is exactly the contention database.Open's Timeout exists to catch
+	// in a *different* nitr process racing this one.
+	_ = database.Close()
+
+	if err != nil {
 		os.Exit(1)
 	}
 }

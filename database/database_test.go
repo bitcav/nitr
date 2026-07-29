@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/bitcav/nitr/models"
 	"github.com/bitcav/nitr/utils"
@@ -193,4 +194,105 @@ func TestDataDirPutsDBThere(t *testing.T) {
 	assert.Equal(t, dbFile, DBPath())
 	viper.Set("data_dir", "")
 	assert.Equal(t, "nitr.db", DBPath())
+}
+
+// TestOpenReusesHandleAcrossCalls is the core of this ticket: two calls that
+// resolve to the same nitr.db must share one *bolt.DB instead of each
+// opening (and closing) their own. Against the old per-call
+// bolt.Open/defer db.Close() code, SetupDB and GetUserByID would return
+// different *bolt.DB pointers here.
+func TestOpenReusesHandleAcrossCalls(t *testing.T) {
+	cdTemp(t)
+	t.Cleanup(func() { _ = Close() })
+
+	require.NoError(t, SetupDB())
+	first := dbHandle
+	require.NotNil(t, first)
+
+	require.NoError(t, SetUserData("1", models.User{Password: "p", Apikey: "k"}))
+	_, err := GetUserByID("1")
+	require.NoError(t, err)
+
+	assert.Same(t, first, dbHandle, "GetUserByID/SetUserData must reuse SetupDB's handle, not open their own")
+}
+
+// TestOpenSwitchesHandleOnPathChange proves a data_dir change mid-process
+// (the CLI and server both resolve DBPath from viper, which can change at
+// runtime) closes the stale handle and opens the new path, rather than
+// silently continuing to serve the old file.
+func TestOpenSwitchesHandleOnPathChange(t *testing.T) {
+	cdTemp(t)
+	viper.Reset()
+	t.Cleanup(func() {
+		viper.Reset()
+		_ = Close()
+	})
+
+	require.NoError(t, SetupDB())
+	firstPath := dbHandlePath
+
+	viper.Set("data_dir", "elsewhere")
+	require.NoError(t, SetupDB())
+
+	assert.NotEqual(t, firstPath, dbHandlePath)
+	assert.Contains(t, dbHandlePath, "elsewhere")
+	assert.FileExists(t, filepath.Join("elsewhere", "nitr.db"))
+}
+
+// TestOpenTimesOutWhenLocked proves the fix for bolt.Open's old nil-options
+// call (Timeout 0 => wait forever): with another handle already holding
+// nitr.db's exclusive flock, open() must fail within openTimeout with a
+// message identifying the conflict, not hang indefinitely. Against the old
+// code (bolt.Open(DBPath(), fileMode, nil) with no Options), this test would
+// never return.
+func TestOpenTimesOutWhenLocked(t *testing.T) {
+	cdTemp(t)
+	origTimeout := openTimeout
+	openTimeout = 200 * time.Millisecond
+	t.Cleanup(func() { openTimeout = origTimeout })
+
+	holder, err := bolt.Open("nitr.db", 0600, nil)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = holder.Close() })
+
+	start := time.Now()
+	err = SetupDB()
+	elapsed := time.Since(start)
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "locked by another nitr process")
+	assert.Less(t, elapsed, 2*time.Second, "open() must not block past openTimeout")
+}
+
+// TestCloseReleasesLockForAnotherOpener proves Close() actually releases
+// nitr.db's flock rather than just forgetting the in-memory pointer: a
+// bolt.Open that would otherwise contend with our handle must succeed
+// immediately once Close() has run.
+func TestCloseReleasesLockForAnotherOpener(t *testing.T) {
+	cdTemp(t)
+
+	require.NoError(t, SetupDB())
+	require.NoError(t, Close())
+
+	other, err := bolt.Open("nitr.db", 0600, &bolt.Options{Timeout: time.Second})
+	require.NoError(t, err, "Close() must release the flock so another opener does not contend")
+	require.NoError(t, other.Close())
+}
+
+// TestCloseThenReopenSucceeds proves the package can reopen after Close():
+// the shutdown path (main.program.Stop) closes the handle, but the server
+// process itself keeps running its own tests/CLI commands afterward and
+// must not be left permanently unable to reach the database.
+func TestCloseThenReopenSucceeds(t *testing.T) {
+	cdTemp(t)
+	t.Cleanup(func() { _ = Close() })
+
+	require.NoError(t, SetupDB())
+	require.NoError(t, Close())
+	assert.Nil(t, dbHandle)
+
+	require.NoError(t, SetupDB())
+	assert.NotNil(t, dbHandle)
+	_, err := GetUserByID("1")
+	assert.Error(t, err) // no user provisioned, but proves the reopened handle works
 }

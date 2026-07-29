@@ -34,6 +34,13 @@ func cdTemp(t *testing.T) string {
 }
 
 // provisionDefaultUser sets up the database with the default password "123456".
+//
+// Closes the handle before returning: several callers (the app_test.go
+// binary-exec tests) exec the real nitr binary against the same nitr.db
+// right after this runs, and database's shared handle now stays open across
+// calls instead of closing after each one -- leaving it open here would
+// hold the file's flock past this function's return and make the child
+// process's own open block on database.openTimeout.
 func provisionDefaultUser(t *testing.T) {
 	t.Helper()
 	require.NoError(t, database.SetupDB())
@@ -41,6 +48,7 @@ func provisionDefaultUser(t *testing.T) {
 		Password: utils.PasswordHash("123456"),
 		Apikey:   "theapikey",
 	}))
+	require.NoError(t, database.Close())
 }
 
 // withIO replaces os.Stdin with the given input, runs fn, and returns whatever
