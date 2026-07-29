@@ -127,3 +127,22 @@ html[data-theme="dark"] #qrcode {
 .disk-row { display: flex; align-items: baseline; font-size: 0.875rem; font-weight: normal; }
 .disk-mount { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .disk-nums { margin-left: auto; padding-left: 0.5em; white-space: nowrap; }
+
+/* Theme toggle icon: show the theme you would switch TO, so the affordance
+   reads as an action rather than a status — moon while light, sun while dark.
+   Swapped in CSS off the same data-theme attribute the boot script sets before
+   first paint, so the correct icon is painted immediately and there is no
+   flash and no JS needed to initialise it. */
+.theme-icon { vertical-align: -2px; }
+html[data-theme="dark"] .theme-icon-moon,
+html:not([data-theme="dark"]) .theme-icon-sun { display: none; }
+
+/* Login has no navbar to hang the toggle on, so it floats in the corner.
+   Fixed, above the centred card, and inside the safe area on notched phones. */
+.theme-toggle-floating {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  right: max(1rem, env(safe-area-inset-right));
+  z-index: 1000;
+}

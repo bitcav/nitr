@@ -10,6 +10,24 @@ behavioral and API changes that would be considered breaking after 1.0; patch
 
 ## [Unreleased]
 
+### Added
+
+- **A dark/light theme toggle on every page, including the login screen.** The
+  toggle introduced in v0.10.0 lived only in the panel's navbar, which is
+  behind authentication — so the login screen could only follow the operating
+  system's `prefers-color-scheme` and offered no way to override it. There is
+  now a toggle on `/` (login), `/panel`, `/docs` and `/password`, so the theme
+  can be changed before signing in and does not disappear when navigating away
+  from the panel. The choice is stored in `localStorage` under `nitr-theme` and
+  is applied by the existing pre-paint boot script, so it persists across
+  reloads and sign-in without a flash of the wrong theme.
+- The toggle now shows a **moon while in light mode and a sun while in dark
+  mode** — the theme it will switch *to*, so it reads as an action rather than
+  a status. Both are inline SVGs using `currentColor` and are swapped in CSS
+  off the same `data-theme` attribute the boot script sets, so the correct icon
+  is painted immediately with no JavaScript needed to initialise it. This
+  replaces the half-filled-circle glyph v0.10.0 shipped.
+
 ## [0.10.0] - 2026-07-29
 
 ### ⚠ Breaking changes
