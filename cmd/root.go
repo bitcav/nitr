@@ -62,6 +62,9 @@ func init() {
 	flags.String("port", "", `port to listen on (env NITR_PORT, config key "port", default 8000)`)
 	flags.String("host", "", `address to bind (env NITR_BIND_ADDRESS, config key "bind_address", default "0.0.0.0" = all interfaces; "127.0.0.1" for localhost only)`)
 	flags.String("data-dir", "", `directory holding nitr.db (env NITR_DATA_DIR, config key "data_dir", default working directory)`)
+	flags.Bool("history-enabled", false, `retain CPU/RAM/disk/bandwidth history in nitr.db and serve time-range queries (env NITR_HISTORY_ENABLED, config key "history_enabled", default false; writes to disk every history-interval seconds)`)
+	flags.Int("history-interval", 0, `seconds between retained history samples (env NITR_HISTORY_INTERVAL, config key "history_interval", default 10)`)
+	flags.Int("history-retention-hours", 0, `hours of metric history to keep before pruning (env NITR_HISTORY_RETENTION_HOURS, config key "history_retention_hours", default 24)`)
 	// --bind is accepted as an alias of --host by normalizing the name
 	// during parsing, so both share the one flag (and one viper binding).
 	rootCmd.SetGlobalNormalizationFunc(func(_ *pflag.FlagSet, name string) pflag.NormalizedName {
@@ -84,10 +87,13 @@ func init() {
 // fact), so the error is safe to discard.
 func bindConfigFlags(flags *pflag.FlagSet) {
 	for key, name := range map[string]string{
-		"config":       "config",
-		"port":         "port",
-		"bind_address": "host",
-		"data_dir":     "data-dir",
+		"config":                  "config",
+		"port":                    "port",
+		"bind_address":            "host",
+		"data_dir":                "data-dir",
+		"history_enabled":         "history-enabled",
+		"history_interval":        "history-interval",
+		"history_retention_hours": "history-retention-hours",
 	} {
 		_ = viper.BindPFlag(key, flags.Lookup(name))
 	}

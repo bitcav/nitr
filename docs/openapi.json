@@ -28,10 +28,29 @@
       "get": {
         "operationId": "getCPU",
         "summary": "CPU",
+        "description": "With no query parameters this returns the instantaneous CPU payload. With any of from/to/resolution present it returns a time-range series of retained samples instead (requires history retention, off by default: history_enabled).",
+        "parameters": [
+          { "$ref": "#/components/parameters/HistoryFrom" },
+          { "$ref": "#/components/parameters/HistoryTo" },
+          { "$ref": "#/components/parameters/HistoryResolution" }
+        ],
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CPU" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    { "$ref": "#/components/schemas/CPU" },
+                    { "type": "array", "items": { "$ref": "#/components/schemas/CPUSample" } }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Range query requested but history retention is disabled, or a parameter could not be parsed",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } } }
           }
         }
       }
@@ -52,15 +71,29 @@
       "get": {
         "operationId": "getBandwidth",
         "summary": "Network bandwidth usage",
-        "description": "Served from a cache refreshed by a background sampler every 5s; never blocks the request on a live sample.",
+        "description": "Served from a cache refreshed by a background sampler every 5s; never blocks the request on a live sample. With any of from/to/resolution present it returns a time-range series of retained samples instead (requires history retention, off by default: history_enabled).",
+        "parameters": [
+          { "$ref": "#/components/parameters/HistoryFrom" },
+          { "$ref": "#/components/parameters/HistoryTo" },
+          { "$ref": "#/components/parameters/HistoryResolution" }
+        ],
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/NetworkDeviceBandwidth" } }
+                "schema": {
+                  "oneOf": [
+                    { "type": "array", "items": { "$ref": "#/components/schemas/NetworkDeviceBandwidth" } },
+                    { "type": "array", "items": { "$ref": "#/components/schemas/BandwidthSample" } }
+                  ]
+                }
               }
             }
+          },
+          "400": {
+            "description": "Range query requested but history retention is disabled, or a parameter could not be parsed",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } } }
           }
         }
       }
@@ -82,10 +115,29 @@
       "get": {
         "operationId": "getDisks",
         "summary": "Disk usage",
+        "description": "With no query parameters this returns the instantaneous disk payload. With any of from/to/resolution present it returns a time-range series of retained samples instead (requires history retention, off by default: history_enabled).",
+        "parameters": [
+          { "$ref": "#/components/parameters/HistoryFrom" },
+          { "$ref": "#/components/parameters/HistoryTo" },
+          { "$ref": "#/components/parameters/HistoryResolution" }
+        ],
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Disk" } } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    { "type": "array", "items": { "$ref": "#/components/schemas/Disk" } },
+                    { "type": "array", "items": { "$ref": "#/components/schemas/DiskSample" } }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Range query requested but history retention is disabled, or a parameter could not be parsed",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } } }
           }
         }
       }
@@ -210,10 +262,29 @@
       "get": {
         "operationId": "getRAM",
         "summary": "RAM",
+        "description": "With no query parameters this returns the instantaneous RAM payload. With any of from/to/resolution present it returns a time-range series of retained samples instead (requires history retention, off by default: history_enabled).",
+        "parameters": [
+          { "$ref": "#/components/parameters/HistoryFrom" },
+          { "$ref": "#/components/parameters/HistoryTo" },
+          { "$ref": "#/components/parameters/HistoryResolution" }
+        ],
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RAM" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    { "$ref": "#/components/schemas/RAM" },
+                    { "type": "array", "items": { "$ref": "#/components/schemas/RAMSample" } }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Range query requested but history retention is disabled, or a parameter could not be parsed",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } } }
           }
         }
       }
@@ -316,6 +387,26 @@
         "in": "header",
         "name": "x-api-key",
         "description": "The key shown in the panel / `nitr key`. Every /api/v1/* route requires it."
+      }
+    },
+    "parameters": {
+      "HistoryFrom": {
+        "name": "from",
+        "in": "query",
+        "description": "Start of the time range: RFC3339 (2026-07-29T03:00:00Z) or Unix seconds. Defaults to the oldest retained sample. Present switches the endpoint from its instantaneous form to a series of retained samples; requires history_enabled.",
+        "schema": { "type": "string" }
+      },
+      "HistoryTo": {
+        "name": "to",
+        "in": "query",
+        "description": "End of the time range: RFC3339 or Unix seconds. Defaults to now.",
+        "schema": { "type": "string" }
+      },
+      "HistoryResolution": {
+        "name": "resolution",
+        "in": "query",
+        "description": "Thin the series to at most one sample per this many seconds (the first sample in each window is kept; data payloads are never averaged or altered). 0, the default, returns every stored sample.",
+        "schema": { "type": "integer", "minimum": 0 }
       }
     },
     "schemas": {
@@ -558,6 +649,42 @@
           "sensorTemperature": { "type": "number", "description": "Degrees Celsius." }
         },
         "required": ["sensorKey", "sensorTemperature"]
+      },
+      "CPUSample": {
+        "type": "object",
+        "description": "One retained sample in a /cpu time-range series. data is the same payload the instantaneous /cpu response returns.",
+        "properties": {
+          "timestamp": { "type": "string", "format": "date-time" },
+          "data": { "$ref": "#/components/schemas/CPU" }
+        },
+        "required": ["timestamp", "data"]
+      },
+      "RAMSample": {
+        "type": "object",
+        "description": "One retained sample in a /ram time-range series. data is the same payload the instantaneous /ram response returns.",
+        "properties": {
+          "timestamp": { "type": "string", "format": "date-time" },
+          "data": { "$ref": "#/components/schemas/RAM" }
+        },
+        "required": ["timestamp", "data"]
+      },
+      "DiskSample": {
+        "type": "object",
+        "description": "One retained sample in a /disks time-range series. data is the same payload the instantaneous /disks response returns.",
+        "properties": {
+          "timestamp": { "type": "string", "format": "date-time" },
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/Disk" } }
+        },
+        "required": ["timestamp", "data"]
+      },
+      "BandwidthSample": {
+        "type": "object",
+        "description": "One retained sample in a /bandwidth time-range series. data is the same payload the instantaneous /bandwidth response returns.",
+        "properties": {
+          "timestamp": { "type": "string", "format": "date-time" },
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/NetworkDeviceBandwidth" } }
+        },
+        "required": ["timestamp", "data"]
       }
     }
   }
