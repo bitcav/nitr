@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -327,6 +328,39 @@ func TestServerCORSDefaultDenies(t *testing.T) {
 		assert.NotContains(t, strings.ToLower(name), "access-control",
 			"unexpected CORS header %q on default config", name)
 	}
+}
+
+// TestOpenAPISpecCoversAllRegisteredRoutes is the drift guard the OpenAPI
+// spec ticket exists for: it fails the moment a GET /api/v1/* route is
+// registered here without a matching entry in docs/openapi.json, instead of
+// letting docs quietly fall behind the code the way the old hand-written
+// README/docs/API.md tables did (missing /host, /devices, and the root
+// overview endpoint, all for real before this ticket landed).
+func TestOpenAPISpecCoversAllRegisteredRoutes(t *testing.T) {
+	cdTempMain(t)
+	app, err := server()
+	require.NoError(t, err)
+
+	var spec struct {
+		Paths map[string]json.RawMessage `json:"paths"`
+	}
+	require.NoError(t, json.Unmarshal(openapiSpecJSON, &spec))
+	require.NotEmpty(t, spec.Paths, "docs/openapi.json has no paths -- embed likely broken")
+
+	checked := 0
+	for _, route := range app.GetRoutes(true) {
+		if route.Method != http.MethodGet || !strings.HasPrefix(route.Path, "/api/v1") {
+			continue
+		}
+		specPath := strings.TrimPrefix(route.Path, "/api/v1")
+		if specPath == "" {
+			specPath = "/"
+		}
+		_, ok := spec.Paths[specPath]
+		assert.True(t, ok, "route %s %s has no matching entry in docs/openapi.json", route.Method, route.Path)
+		checked++
+	}
+	assert.NotZero(t, checked, "no /api/v1 GET routes were found to check -- test is not exercising anything")
 }
 
 // TestBuiltBinaryRuns guards against the class of bug exemplified by the

@@ -114,7 +114,7 @@ nitr.exe
 the server will start listening on port 8000 by default
 
 It writes `nitr.db` and `config.ini` to the current working directory — always start it from the same directory you own.
-A few endpoints require root on Linux: `/memory` outright, the `serial` field on `/chassis` and `/baseboard`, and the `serial`/`uuid` fields on `/product`. Without it they return `unknown` fields (`403` for `/memory`). Full per-endpoint privilege notes are in [docs/API.md](docs/API.md#available-endpoints).
+A few endpoints require root on Linux: `/memory` outright, the `serial` field on `/chassis` and `/baseboard`, and the `serial`/`uuid` fields on `/product`. Without it they return `unknown` fields (`403` for `/memory`). Full per-endpoint privilege notes are in [`docs/openapi.json`](docs/openapi.json) (or rendered at `/docs` in the panel) — see [JSON data references](#json-data-references).
 
 Both spellings — bare `nitr` and the explicit `nitr server` — start the server. Bare `nitr` is **not** deprecated: the Dockerfile's `CMD` and the Windows double-click flow above rely on it, and it stays the zero-argument default. `nitr server` is the self-documenting form (it is what `nitr --help` lists, what the installed system service's `ExecStart` invokes, and what reads clearly in a process list) and accepts the same persistent flags as the root command, e.g. `nitr server --port 9000`.
 
@@ -326,7 +326,7 @@ curl http://localhost:8000/ready
 {"status":"ready"}
 ```
 
-It does an `os.Stat(database.DBPath())` — the resolved `nitr.db` path, honouring `--data-dir` — and nothing more. That is a narrow, honest check: it confirms the database file exists — which only happens once the server's setup has run — but it does **not** confirm bolt can be opened right now, nor that the DB is uncorrupted. `database/database.go` opens bolt with nil options, so its exclusive `flock` has no timeout and blocks forever under contention; a readiness probe that opened the DB itself could pile up blocked goroutines when polled every few seconds. If you need a true open-and-read probe, wait for that to land — do not treat `/ready` as a database-connectivity check, because it is not one.
+It does an `os.Stat(database.DBPath())` — the resolved `nitr.db` path, honouring `--data-dir` — and nothing more. That is a narrow, honest check: it confirms the database file exists — which only happens once the server's setup has run — but it does **not** confirm bolt can be opened right now, nor that the DB is uncorrupted. If you need a true open-and-read probe, wait for that to land — do not treat `/ready` as a database-connectivity check, because it is not one.
 
 ## API v1
 
@@ -340,29 +340,33 @@ http://localhost:8000/api/v1
 
 These endpoints return system and hardware information about your **host**. Check the [example](#example) for a better understanding.
 
-| Verb | Endpoint   | JSON Data                 |
-|------|------------|---------------------------|
-| GET  | /          | [Overview](docs/API.md#overview) |
-| GET  | /cpu       | [CPU](docs/API.md#cpu)             |
-| GET  | /bios      | [Bios](docs/API.md#bios)           |
-| GET  | /bandwidth | [Bandwidth](docs/API.md#bandwidth) |
-| GET  | /chassis   | [Chassis](docs/API.md#chassis)     |
-| GET  | /disks     | [Disks](docs/API.md#disks)         |
-| GET  | /drives    | [Drives](docs/API.md#drives)       |
-| GET  | /devices   | [Devices](docs/API.md#devices)     |
-| GET  | /gpu       | [GPU](docs/API.md#gpu)             |
-| GET  | /host      | [Host](docs/API.md#host)           |
-| GET  | /isp       | [ISP](docs/API.md#isp)             |
-| GET  | /network   | [Network](docs/API.md#network)     |
-| GET  | /processes | [Processes](docs/API.md#processes) |
-| GET  | /ram       | [RAM](docs/API.md#ram)             |
-| GET  | /baseboard | [Baseboard](docs/API.md#baseboard) |
-| GET  | /product   | [Product](docs/API.md#product)     |
-| GET  | /memory    | [Memory](docs/API.md#memory)       |
+| Verb | Endpoint   |
+|------|------------|
+| GET  | /          |
+| GET  | /cpu       |
+| GET  | /bios      |
+| GET  | /bandwidth |
+| GET  | /chassis   |
+| GET  | /disks     |
+| GET  | /drives    |
+| GET  | /devices   |
+| GET  | /gpu       |
+| GET  | /host      |
+| GET  | /isp       |
+| GET  | /network   |
+| GET  | /processes |
+| GET  | /ram       |
+| GET  | /baseboard |
+| GET  | /product   |
+| GET  | /memory    |
 
 ### JSON data references
 
-The per-endpoint field tables and `:lock:` privilege notes live in [docs/API.md](docs/API.md).
+The field-by-field shape of every endpoint above — types, descriptions, privilege notes, query parameters — is **generated, not hand-written**, so it cannot drift from the code the way a transcribed table can:
+
+- [`docs/openapi.json`](docs/openapi.json) is the OpenAPI 3.1 spec checked into this repo and the source of truth everything else below is built from. A CI check (`TestOpenAPISpecCoversAllRegisteredRoutes`) fails the build if a route registered in `main.go` has no matching entry here.
+- `GET /openapi.json` serves that same file live from the running instance — point any OpenAPI-aware client generator at it for a free SDK in your language of choice.
+- The panel renders it at `/docs` (client-side, from `/openapi.json`, so the page itself can never go stale independent of the spec).
 
 ## Settings
 

@@ -32,6 +32,9 @@ var assetsFS embed.FS
 //go:embed app/views
 var viewsFS embed.FS
 
+//go:embed docs/openapi.json
+var openapiSpecJSON []byte
+
 // subFS strips the embed-retained directory prefix (e.g. "app/assets") so the
 // FS is rooted where go.rice's box used to root it. The sub directory exists
 // by construction (it is embedded at build time), so err is always nil.
@@ -155,6 +158,14 @@ func server() (*fiber.App, error) {
 	app.Get("/health", handlers.Health)
 	app.Get("/ready", handlers.Ready)
 
+	//OpenAPI spec, public like health/ready above: a client needs it to
+	//discover what the x-api-key even protects, so gating it behind that
+	//same key would be circular. docs/openapi.json is the source of truth
+	//generated docs are built from; TestOpenAPISpecCoversAllRegisteredRoutes
+	//fails CI if a v1 route above is missing from it.
+	handlers.OpenAPISpecJSON = openapiSpecJSON
+	app.Get("/openapi.json", handlers.OpenAPISpec)
+
 	//Login View
 	handlers.ViewsFS = subFS(viewsFS, "app/views")
 	app.Get("/", handlers.Login)
@@ -187,6 +198,10 @@ func server() (*fiber.App, error) {
 
 	//New Password Submit
 	app.Post("/password", handlers.PasswordSubmit)
+
+	//API reference: renders /openapi.json client-side, so it can never
+	//itself go stale independent of the spec.
+	app.Get("/docs", handlers.Docs)
 
 	app.Get("/status", websocket.New(handlers.SocketReader))
 

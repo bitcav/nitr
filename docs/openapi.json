@@ -1,0 +1,488 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Nitr API",
+    "version": "1",
+    "description": "Nitr is a remote monitoring tool for system information gathering. This document is the source of truth for the JSON API served under /api/v1 -- it is checked into the repo, served live at GET /openapi.json, and rendered at /docs in the panel. A test (main_test.go's TestOpenAPISpecCoversAllRegisteredRoutes) fails CI if a route registered in main.go is missing here, so this spec cannot silently drift the way the old hand-written README tables did.",
+    "license": { "name": "MIT" }
+  },
+  "servers": [
+    { "url": "/api/v1", "description": "The running nitr instance" }
+  ],
+  "security": [ { "ApiKeyAuth": [] } ],
+  "paths": {
+    "/": {
+      "get": {
+        "operationId": "getOverview",
+        "summary": "Overview",
+        "description": "A lightweight summary combining host, CPU usage and RAM into one response.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Overview" } } }
+          }
+        }
+      }
+    },
+    "/cpu": {
+      "get": {
+        "operationId": "getCPU",
+        "summary": "CPU",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CPU" } } }
+          }
+        }
+      }
+    },
+    "/bios": {
+      "get": {
+        "operationId": "getBios",
+        "summary": "BIOS",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Bios" } } }
+          }
+        }
+      }
+    },
+    "/bandwidth": {
+      "get": {
+        "operationId": "getBandwidth",
+        "summary": "Network bandwidth usage",
+        "description": "Served from a cache refreshed by a background sampler every 5s; never blocks the request on a live sample.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/NetworkDeviceBandwidth" } }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chassis": {
+      "get": {
+        "operationId": "getChassis",
+        "summary": "Chassis",
+        "description": "`serial` requires root: /sys/class/dmi/id/chassis_serial is mode 0400 on Linux, while chassis_type and chassis_vendor are 0444 (world-readable). Without root, serial comes back as \"unknown\".",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Chassis" } } }
+          }
+        }
+      }
+    },
+    "/disks": {
+      "get": {
+        "operationId": "getDisks",
+        "summary": "Disk usage",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Disk" } } } }
+          }
+        }
+      }
+    },
+    "/drives": {
+      "get": {
+        "operationId": "getDrives",
+        "summary": "Physical drives",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Drive" } } } }
+          }
+        }
+      }
+    },
+    "/devices": {
+      "get": {
+        "operationId": "getDevices",
+        "summary": "PCI devices",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Device" } } } }
+          }
+        }
+      }
+    },
+    "/gpu": {
+      "get": {
+        "operationId": "getGPU",
+        "summary": "GPUs",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/GPU" } } } }
+          }
+        }
+      }
+    },
+    "/host": {
+      "get": {
+        "operationId": "getHost",
+        "summary": "Host",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Host" } } }
+          }
+        }
+      }
+    },
+    "/isp": {
+      "get": {
+        "operationId": "getISP",
+        "summary": "ISP / public IP",
+        "description": "Served from a cache refreshed at most once per hour; a request that misses the cache races the lookup against a 5s timeout and falls back to the last known value (or empty, on a cold cache) rather than hanging.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ISP" } } }
+          }
+        }
+      }
+    },
+    "/network": {
+      "get": {
+        "operationId": "getNetwork",
+        "summary": "Network interfaces",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/NetworkDevice" } } } }
+          }
+        }
+      }
+    },
+    "/processes": {
+      "get": {
+        "operationId": "getProcesses",
+        "summary": "Running processes",
+        "description": "Returning every process with a full command line is a meaningful information disclosure -- this endpoint sits behind the API key like every other /api/v1 route.",
+        "parameters": [
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Field to sort by. Defaults to pid.",
+            "schema": { "type": "string", "enum": ["cpu", "mem", "name", "pid"], "default": "pid" }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "description": "Sort direction. Defaults to ascending.",
+            "schema": { "type": "string", "enum": ["asc", "desc"], "default": "asc" }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of entries to return, applied after sort/filter.",
+            "schema": { "type": "integer", "minimum": 0 }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Case-insensitive substring match against name and cmdline.",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/ProcessInfo" } } } }
+          },
+          "500": {
+            "description": "The process list could not be retrieved",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } } }
+          }
+        }
+      }
+    },
+    "/ram": {
+      "get": {
+        "operationId": "getRAM",
+        "summary": "RAM",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RAM" } } }
+          }
+        }
+      }
+    },
+    "/baseboard": {
+      "get": {
+        "operationId": "getBaseboard",
+        "summary": "Baseboard",
+        "description": "`serial` requires root: /sys/class/dmi/id/board_serial is mode 0400 on Linux; the other fields (board_vendor, board_asset_tag, board_version) are 0444.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/BaseBoard" } } }
+          }
+        }
+      }
+    },
+    "/product": {
+      "get": {
+        "operationId": "getProduct",
+        "summary": "Product",
+        "description": "`serial` and `uuid` require root: /sys/class/dmi/id/product_serial and product_uuid are mode 0400 on Linux; the other fields (sys_vendor, product_family, product_name, product_sku, product_version) are 0444.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Product" } } }
+          }
+        }
+      }
+    },
+    "/memory": {
+      "get": {
+        "operationId": "getMemory",
+        "summary": "Memory devices (DIMMs)",
+        "description": "Requires root/Administrator: go-memdev reads the raw SMBIOS table directly, which is unreadable without elevated privileges on every platform (unlike chassis/baseboard/product, which degrade per field). Returns 403 when the underlying error is a permission error, 500 otherwise -- the body is the standard error envelope either way, so callers can distinguish \"needs root\" from \"broken\".",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/MemoryDevice" } } } }
+          },
+          "403": {
+            "description": "Permission denied reading the SMBIOS table",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } } }
+          },
+          "500": {
+            "description": "Could not read memory device information",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } } }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-api-key",
+        "description": "The key shown in the panel / `nitr key`. Every /api/v1/* route requires it."
+      }
+    },
+    "schemas": {
+      "ErrorEnvelope": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" },
+          "status": { "type": "integer" }
+        },
+        "required": ["message", "status"]
+      },
+      "Overview": {
+        "type": "object",
+        "description": "A lightweight summary combining the Host and RAM endpoints with instantaneous CPU usage.",
+        "properties": {
+          "host": { "$ref": "#/components/schemas/Host" },
+          "cpuUsage": { "type": "number", "description": "CPU usage percentage, 0-100." },
+          "ram": { "$ref": "#/components/schemas/RAM" }
+        },
+        "required": ["host", "cpuUsage", "ram"]
+      },
+      "CPU": {
+        "type": "object",
+        "properties": {
+          "vendor": { "type": "string" },
+          "model": { "type": "string" },
+          "cores": { "type": "integer" },
+          "threads": { "type": "integer" },
+          "clockSpeed": { "type": "number", "description": "Clock speed in MHz." },
+          "usage": { "type": "number", "description": "Overall CPU usage percentage, 0-100." },
+          "usageEach": { "type": "array", "items": { "type": "number" }, "description": "Usage percentage per logical CPU." }
+        },
+        "required": ["vendor", "model", "cores", "threads", "clockSpeed", "usage", "usageEach"]
+      },
+      "Bios": {
+        "type": "object",
+        "properties": {
+          "vendor": { "type": "string" },
+          "version": { "type": "string" },
+          "date": { "type": "string" }
+        },
+        "required": ["vendor", "version", "date"]
+      },
+      "NetworkDeviceBandwidth": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "description": "Network interface name." },
+          "rxBytes": { "type": "integer" },
+          "txBytes": { "type": "integer" },
+          "rxPackets": { "type": "integer" },
+          "txPackets": { "type": "integer" }
+        },
+        "required": ["name", "rxBytes", "txBytes", "rxPackets", "txPackets"]
+      },
+      "Chassis": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string" },
+          "vendor": { "type": "string" },
+          "serial": { "type": "string", "description": "\"unknown\" without root -- see the endpoint description." }
+        },
+        "required": ["type", "vendor", "serial"]
+      },
+      "Disk": {
+        "type": "object",
+        "properties": {
+          "mountPoint": { "type": "string", "description": "Drive letter or mount point." },
+          "free": { "type": "integer", "description": "Available disk space in bytes." },
+          "size": { "type": "integer", "description": "Total disk space in bytes." },
+          "used": { "type": "integer", "description": "Used disk space in bytes." },
+          "percent": { "type": "number", "description": "Usage percentage, 0-100." }
+        },
+        "required": ["mountPoint", "free", "size", "used", "percent"]
+      },
+      "Drive": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "type": { "type": "string", "description": "Drive type, e.g. \"SSD\", \"HDD\", \"unknown\"." },
+          "model": { "type": "string" },
+          "serial": { "type": "string" }
+        },
+        "required": ["name", "type", "model", "serial"]
+      },
+      "Device": {
+        "type": "object",
+        "properties": {
+          "product": { "type": "string" },
+          "vendor": { "type": "string" },
+          "address": { "type": "string", "description": "PCI address." }
+        },
+        "required": ["product", "vendor", "address"]
+      },
+      "GPU": {
+        "type": "object",
+        "properties": {
+          "brand": { "type": "string" },
+          "model": { "type": "string" }
+        },
+        "required": ["brand", "model"]
+      },
+      "Host": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "description": "Hostname." },
+          "os": { "type": "string" },
+          "platform": { "type": "string", "description": "Platform and version, e.g. \"fedora 44\"." },
+          "arch": { "type": "string" },
+          "uptime": { "type": "integer", "description": "Uptime in seconds." }
+        },
+        "required": ["name", "os", "platform", "arch", "uptime"]
+      },
+      "ISP": {
+        "type": "object",
+        "properties": {
+          "isp": { "type": "string" },
+          "ip": { "type": "string" },
+          "lat": { "type": "string" },
+          "lon": { "type": "string" }
+        },
+        "required": ["isp", "ip", "lat", "lon"]
+      },
+      "Address": {
+        "type": "object",
+        "properties": {
+          "ip": { "type": "string" }
+        },
+        "required": ["ip"]
+      },
+      "NetworkDevice": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "addresses": { "type": "array", "items": { "$ref": "#/components/schemas/Address" } },
+          "mac": { "type": "string" },
+          "active": { "type": "boolean" }
+        },
+        "required": ["name", "addresses", "mac", "active"]
+      },
+      "ProcessInfo": {
+        "type": "object",
+        "properties": {
+          "pid": { "type": "integer" },
+          "ppid": { "type": "integer" },
+          "name": { "type": "string" },
+          "user": { "type": "string" },
+          "cmdline": { "type": "string" },
+          "status": { "type": "string" },
+          "cpu_percent": { "type": "number", "description": "Averaged over the process's lifetime, not an instantaneous sample." },
+          "mem_percent": { "type": "number" },
+          "rss": { "type": "integer", "description": "Resident set size in bytes." },
+          "start_time": { "type": "integer", "description": "Process start time, milliseconds since the epoch." }
+        },
+        "required": ["pid", "ppid", "name", "cpu_percent", "mem_percent", "rss", "start_time"]
+      },
+      "RAM": {
+        "type": "object",
+        "properties": {
+          "total": { "type": "integer", "description": "Total RAM in bytes." },
+          "free": { "type": "integer", "description": "Free RAM in bytes." },
+          "usage": { "type": "integer", "description": "Used RAM in bytes." }
+        },
+        "required": ["total", "free", "usage"]
+      },
+      "BaseBoard": {
+        "type": "object",
+        "properties": {
+          "vendor": { "type": "string" },
+          "assetTag": { "type": "string" },
+          "serial": { "type": "string", "description": "Requires root -- see the endpoint description." },
+          "version": { "type": "string" }
+        },
+        "required": ["vendor", "assetTag", "serial", "version"]
+      },
+      "Product": {
+        "type": "object",
+        "properties": {
+          "vendor": { "type": "string" },
+          "family": { "type": "string" },
+          "familiy": {
+            "type": "string",
+            "deprecated": true,
+            "description": "Misspelled duplicate of family, retained for one release as a compatibility shim. Read family instead."
+          },
+          "name": { "type": "string" },
+          "serial": { "type": "string", "description": "Requires root -- see the endpoint description." },
+          "uuid": { "type": "string", "description": "Requires root -- see the endpoint description." },
+          "sku": { "type": "string" },
+          "version": { "type": "string" }
+        },
+        "required": ["vendor", "family", "familiy", "name", "serial", "uuid", "sku", "version"]
+      },
+      "MemoryDevice": {
+        "type": "object",
+        "properties": {
+          "bank": { "type": "string", "description": "Bank identifier." },
+          "size": { "type": "integer" },
+          "unit": { "type": "string", "description": "Unit size is measured in, e.g. \"MB\"." },
+          "type": { "type": "string" },
+          "formFactor": { "type": "string" },
+          "manufacturer": { "type": "string" },
+          "serial": { "type": "string" },
+          "assetTag": { "type": "string" },
+          "partNumber": { "type": "string" },
+          "speed": { "type": "integer", "description": "Speed in MT/s." },
+          "dataWidth": { "type": "integer", "description": "Data width in bits." },
+          "totalWidth": { "type": "integer", "description": "Total data width in bits." }
+        },
+        "required": ["bank", "size", "unit", "type", "formFactor", "manufacturer", "serial", "assetTag", "partNumber", "speed", "dataWidth", "totalWidth"]
+      }
+    }
+  }
+}

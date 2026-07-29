@@ -1,0 +1,146 @@
+<nav class="uk-navbar-container uk-navbar-transparent" uk-navbar>
+  <div class="uk-navbar-left">
+    <a class="uk-navbar-item uk-logo" id="logo" href="/"></a>
+  </div>
+  <div class="uk-navbar-right">
+    <a href="/panel" class="uk-button uk-button-secondary uk-margin-right">Panel</a>
+    <form action="/logout" method="POST" style="margin-block-end: 0;">
+      <button class="uk-button uk-button-danger uk-margin-right">Logout</button>
+    </form>
+  </div>
+</nav>
+
+<div class="uk-container uk-container-small">
+  <div>
+    <img alt="nitr logo" src="/assets/images/logo.png" width="160" class="uk-margin-small-bottom">
+  </div>
+  <hr>
+
+  <h3>API reference</h3>
+  <p class="uk-text-muted">
+    Generated from <a href="/openapi.json" target="_blank" rel="noopener">/openapi.json</a>, the OpenAPI 3.1 document
+    that is this API's source of truth -- this page can never drift from it because it renders the same file a
+    client-generated SDK would. Every endpoint below is under <code id="server-base">/api/v1</code> and requires the
+    <code>x-api-key</code> header shown in the panel.
+  </p>
+
+  <div id="docs-error" class="uk-alert-danger" uk-alert hidden>
+    <p>Could not load /openapi.json.</p>
+  </div>
+
+  <ul id="docs-endpoints" uk-accordion></ul>
+</div>
+
+<template id="docs-endpoint-template">
+  <li>
+    <a class="uk-accordion-title" href="#"></a>
+    <div class="uk-accordion-content">
+      <p class="docs-description uk-text-muted"></p>
+      <div class="docs-params"></div>
+      <table class="uk-table uk-table-small uk-table-divider docs-fields">
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Type</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </li>
+</template>
+
+<script>
+  (function () {
+    var list = document.getElementById("docs-endpoints");
+    var tmpl = document.getElementById("docs-endpoint-template");
+    var errorBox = document.getElementById("docs-error");
+
+    function schemaAt(spec, ref) {
+      // ref looks like "#/components/schemas/CPU"
+      var name = ref.split("/").pop();
+      return spec.components.schemas[name];
+    }
+
+    function fieldRows(spec, schema, prefix) {
+      if (!schema) return [];
+      if (schema.$ref) schema = schemaAt(spec, schema.$ref);
+      if (schema.type === "array") return fieldRows(spec, schema.items, prefix);
+      if (schema.type !== "object" || !schema.properties) return [];
+
+      var rows = [];
+      Object.keys(schema.properties).forEach(function (key) {
+        var prop = schema.properties[key];
+        var type = prop.type || (prop.$ref ? prop.$ref.split("/").pop() : "object");
+        var desc = prop.description || "";
+        if (prop.deprecated) desc = "(deprecated) " + desc;
+        rows.push({ name: prefix + key, type: type, description: desc });
+        if (prop.$ref || (prop.type === "array" && prop.items && prop.items.$ref)) {
+          rows = rows.concat(fieldRows(spec, prop, prefix + key + "."));
+        }
+      });
+      return rows;
+    }
+
+    fetch("/openapi.json")
+      .then(function (r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      })
+      .then(function (spec) {
+        var base = (spec.servers && spec.servers[0] && spec.servers[0].url) || "/api/v1";
+        document.getElementById("server-base").textContent = base;
+
+        Object.keys(spec.paths).forEach(function (path) {
+          var op = spec.paths[path].get;
+          if (!op) return;
+
+          var node = tmpl.content.cloneNode(true);
+          var title = node.querySelector(".uk-accordion-title");
+          title.textContent = "GET " + base + (path === "/" ? "" : path) + "  —  " + (op.summary || "");
+
+          var desc = node.querySelector(".docs-description");
+          desc.textContent = op.description || "";
+          if (!op.description) desc.style.display = "none";
+
+          if (op.parameters && op.parameters.length) {
+            var p = document.createElement("p");
+            p.innerHTML = "<strong>Query parameters:</strong> " + op.parameters.map(function (param) {
+              return "<code>" + param.name + "</code>" + (param.description ? " (" + param.description + ")" : "");
+            }).join(", ");
+            node.querySelector(".docs-params").appendChild(p);
+          }
+
+          var okResponse = op.responses && op.responses["200"];
+          var schema = okResponse && okResponse.content && okResponse.content["application/json"] && okResponse.content["application/json"].schema;
+          var rows = fieldRows(spec, schema, "");
+          var tbody = node.querySelector(".docs-fields tbody");
+          if (rows.length === 0) {
+            node.querySelector(".docs-fields").style.display = "none";
+          }
+          rows.forEach(function (row) {
+            var tr = document.createElement("tr");
+            var tdName = document.createElement("td");
+            tdName.innerHTML = "<code>" + row.name + "</code>";
+            var tdType = document.createElement("td");
+            tdType.textContent = row.type;
+            var tdDesc = document.createElement("td");
+            tdDesc.textContent = row.description;
+            tr.appendChild(tdName);
+            tr.appendChild(tdType);
+            tr.appendChild(tdDesc);
+            tbody.appendChild(tr);
+          });
+
+          list.appendChild(node);
+        });
+
+        if (window.UIkit) { UIkit.update(); }
+      })
+      .catch(function (err) {
+        errorBox.hidden = false;
+        errorBox.querySelector("p").textContent = "Could not load /openapi.json: " + err.message;
+      });
+  })();
+</script>
