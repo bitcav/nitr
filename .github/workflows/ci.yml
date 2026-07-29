@@ -93,6 +93,19 @@ jobs:
           GOOS: linux
           GOARCH: '386'
         run: go build -o nitr_linux_386
+      # linux/arm64 is UNDER EVALUATION as a shipped target (Raspberry Pi /
+      # ARM SBC / ARM VPS audience): the arm64-probe job below executes this
+      # exact binary on a real ARM64 runner and smoke-gates it. It is built
+      # and uploaded but deliberately absent from the Draft Release `files:`
+      # list until the probe leg is green on real hardware. SMBIOS-dependent
+      # endpoints (/bios, /chassis, /baseboard, /product, /memory) are
+      # expected to be thin on SBCs, which have no SMBIOS — documented in
+      # the README, not a ship blocker.
+      - name: Build Linux arm64
+        env:
+          GOOS: linux
+          GOARCH: arm64
+        run: go build -o nitr_linux_arm64
       - name: Install goversioninfo
         run: go install github.com/josephspurrier/goversioninfo/cmd/goversioninfo@latest
       - name: Generate Windows resource (icon)
@@ -114,8 +127,42 @@ jobs:
           path: |
             nitr_linux_amd64
             nitr_linux_386
+            nitr_linux_arm64
             nitr_windows_amd64.exe
             nitr_windows_386.exe
+
+  # Evidence-gathering job for the linux/arm64 target under evaluation, NOT a
+  # release gate (deliberately absent from the release job's `needs`): runs
+  # the arm64
+  # binary on a real ARM64 runner and records per-endpoint behaviour. A red
+  # cell in its report table is a finding, not a CI failure — the job fails
+  # only if the binary won't run, the server won't start, or the API key
+  # can't be obtained. Runner label verified 2026-07-29 against
+  # actions/runner-images: ubuntu-24.04-arm is GA (not preview) and free for
+  # public repos. NOTE: it is a cloud VM, not an SBC — it may expose DMI
+  # where a Raspberry Pi does not, so its table does not generalise 1:1 to
+  # all ARM Linux hardware.
+  arm64-probe:
+    name: Linux arm64 endpoint probe (evidence-only)
+    needs: [build]
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - name: Download build artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: nitr-binaries
+      - name: Probe all API endpoints on Linux arm64
+        shell: bash
+        run: ./scripts/linux_arm64_endpoint_probe.sh ./nitr_linux_arm64 linux-arm64-endpoint-report.md
+      - name: Upload probe report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: nitr-linux-arm64-endpoint-report
+          path: linux-arm64-endpoint-report.md
+          if-no-files-found: warn
 
   lint:
     name: Lint
@@ -168,6 +215,14 @@ jobs:
         with:
           draft: true
           name: nitr ${{ github.ref_name }}
+          # nitr_linux_arm64 is built and uploaded (the arm64-probe job
+          # downloads it) but intentionally NOT released yet: it joins the
+          # list below only after the probe leg's first green run on real
+          # ARM64 hardware shows /cpu populated — under qemu-on-x86 /cpu
+          # 500s, and that must be ruled out on the real thing before we
+          # publish. (This comment must live OUTSIDE the `files: |` block:
+          # that is a literal scalar and `#` lines inside it are handed to
+          # action-gh-release as glob patterns, not comments.)
           files: |
             nitr_linux_amd64
             nitr_linux_386
