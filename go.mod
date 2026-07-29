@@ -6,7 +6,7 @@ toolchain go1.26.5
 
 require (
 	github.com/bitcav/go-memdev v0.2.0
-	github.com/bitcav/nitr-core v0.1.0
+	github.com/bitcav/nitr-core v0.1.1
 	github.com/fasthttp/websocket v1.5.3
 	github.com/gofiber/adaptor/v2 v2.2.1
 	github.com/gofiber/fiber/v2 v2.52.14
