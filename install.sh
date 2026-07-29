@@ -56,8 +56,9 @@ set -euo pipefail
   case "$machine" in
     x86_64 | amd64) arch_tag=amd64 ;;
     i386 | i686) arch_tag=386 ;;
+    aarch64 | arm64) arch_tag=arm64 ;;
     *)
-      die "unsupported architecture '$machine' -- nitr ships linux_amd64 and linux_386 only."
+      die "unsupported architecture '$machine' -- nitr ships linux_amd64, linux_386 and linux_arm64."
       ;;
   esac
   log "kernel=$kernel machine=$machine -> ${os_tag}_${arch_tag}"

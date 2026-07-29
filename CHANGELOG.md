@@ -432,8 +432,20 @@ behavioral and API changes that would be considered breaking after 1.0; patch
   `sudo mv … /usr/local/bin/nitr` command to make it the system `nitr`,
   and warns explicitly — naming the resolved path and its version — when
   `command -v nitr` resolves to a different binary that will keep
-  shadowing the download. No behaviour change: it still downloads to the
-  current directory and never writes to system paths.
+    shadowing the download. No behaviour change: it still downloads to the
+    current directory and never writes to system paths.
+- **`install.sh` no longer refuses arm64 hosts.** The `uname -m` mapping
+  handled only `x86_64`/`amd64` and `i386`/`i686` and died on anything
+  else with a message claiming nitr ships `linux_amd64` and `linux_386`
+  only — false since `nitr_linux_arm64` joined the release artifacts (see
+  Added above), and contradicting the README's platform table two screens
+  down. A Raspberry Pi user running the documented curl-pipe one-liner was
+  told their platform was unsupported while the matching binary sat in the
+  same release. `aarch64`/`arm64` now map to the `nitr_linux_arm64` asset
+  and the error message names the architectures actually shipped. arm64
+  remains **Linux-only** — there is no `nitr_windows_arm64` asset — which
+  needs no handling here because the script already dies on non-Linux
+  kernels before reaching the architecture mapping.
 - **The embedded OpenAPI spec now matches the migrated wire format.**
   `Drive.type` documents the lowercase `unknown`/`hdd`/`fdd`/`odd`/`ssd`/`virtual`
   enum ghw v0.25 actually serializes (previously it omitted `virtual` and showed

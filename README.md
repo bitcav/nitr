@@ -71,7 +71,7 @@ See [Usage](#usage) for how to call the API with that key.
 
 ### Quick install
 
-**Linux (amd64/386)** — get the binary via the [`install.sh`](install.sh) one-liner from the top of this README, or fetch it directly:
+**Linux (amd64/386/arm64)** — get the binary via the [`install.sh`](install.sh) one-liner from the top of this README, or fetch it directly:
 ```
 curl -L https://github.com/bitcav/nitr/releases/latest/download/nitr_linux_amd64 -o nitr
 chmod +x nitr
