@@ -265,6 +265,15 @@ behavioral and API changes that would be considered breaking after 1.0; patch
   the core endpoints working on real ARM64 hardware — so **linux/arm64
   is not a published or supported target yet**; the README's "under
   evaluation" framing stands. ([31fe814](https://github.com/bitcav/nitr/commit/31fe814), [25ffecf](https://github.com/bitcav/nitr/commit/25ffecf))
+- **`linux/arm64` release binaries are now published.** With the arm64
+  `/cpu` and `/gpu` panics fixed (see Fixed below) and the `arm64-probe`
+  CI job green on real ARM64 hardware (`ubuntu-24.04-arm` runner, 19 of
+  20 endpoints healthy — the one failure is the pre-existing privileged
+  `/memory` issue that behaves identically on amd64), `nitr_linux_arm64`
+  joins the Draft Release artifact list alongside the amd64 and 386
+  builds. The `arm64-probe` job added earlier stays in CI, continuing to
+  execute the exact shipped binary on real ARM64 hardware and probe every
+  `/api/v1/*` endpoint.
 
 ### Changed
 
@@ -379,6 +388,16 @@ behavioral and API changes that would be considered breaking after 1.0; patch
   match`). Verified against the built binary: `nitr passwd < /dev/null`
   prints `Error: failed to read password: EOF` and exits 1; `nitr key` with
   a wrong password prints `Error: wrong password` and exits 1. ([9517dbc](https://github.com/bitcav/nitr/commit/9517dbc), [a4fdc70](https://github.com/bitcav/nitr/commit/a4fdc70), [5e28eb9](https://github.com/bitcav/nitr/commit/5e28eb9))
+- **`/api/v1/cpu` and `/api/v1/gpu` panicked (HTTP 500) on linux/arm64.**
+  `/cpu` returned `500 index out of range [0] with length 0` and `/gpu`
+  `500 nil pointer dereference` on real ARM64 hardware. Fixed in the
+  `github.com/bitcav/nitr-core` dependency (**v0.1.1**) and consumed via
+  the `go.mod` bump ([c4042c2](https://github.com/bitcav/nitr/commit/c4042c2)).
+  ARM hosts now get real CPU data — vendor, model, and core count parsed
+  from `/proc/cpuinfo` — with `clockSpeed` reported as `0` because ARM
+  exposes BogoMIPS rather than MHz. Verified by the `arm64-probe` CI job
+  on a real `ubuntu-24.04-arm` runner: `/cpu` now returns `200` populated
+  and `/gpu` returns `200` populated.
 
 ## [0.9.0] - 2026-07-27
 

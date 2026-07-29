@@ -512,18 +512,18 @@ At the defaults the database reaches a steady state of **8640 samples per metric
 
 ## Platform support
 
-Nitr publishes release binaries for **Linux** and **Windows**, on **amd64** and **386** (32-bit) architectures:
+Nitr publishes release binaries for **Linux** and **Windows**, on **amd64**, **386** (32-bit), and — Linux only — **arm64**:
 
 | OS      | amd64 | 386 | arm64 |
 |---------|-------|-----|-------|
-| Linux   | yes   | yes | under evaluation |
+| Linux   | yes   | yes | yes   |
 | Windows | yes   | yes | no    |
 
 Download them from the [latest release](https://github.com/bitcav/nitr/releases/latest).
 
 Every push runs the full test suite on two CI runners — `ubuntu-latest` and `windows-2025` — and on each leg additionally builds the real binary and runs `nitr version`, asserting it exits 0 and prints a sane version string. The 386 builds in the table above are cross-compiled by CI but are not executed there.
 
-**linux/arm64** (Raspberry Pi, Odroid, ARM VPS instances) is being evaluated as a release target: CI cross-compiles it and a probe job executes the binary on a real ARM64 runner (`ubuntu-24.04-arm`), recording per-endpoint behaviour. It is **not yet published** — it joins the release artifacts once that leg demonstrates the core endpoints working on real ARM64 hardware. One caveat is already known: endpoints that read SMBIOS/DMI — `/api/v1/bios`, `/chassis`, `/baseboard`, `/product` and `/memory` — depend on data most ARM single-board computers simply do not provide (a Raspberry Pi has no SMBIOS at all), so expect them to be empty or unavailable there. That is a platform property, not a bug. The endpoints that matter most for monitoring — CPU, RAM, disk, network, host, processes — go through `/proc` and are expected to work.
+**linux/arm64** (Raspberry Pi, Odroid, ARM VPS instances) is a supported, published target: CI cross-compiles it, a probe job executes the binary on a real ARM64 runner (`ubuntu-24.04-arm`) and verifies the endpoints, and `nitr_linux_arm64` ships with the release artifacts. One caveat: endpoints that read SMBIOS/DMI — `/api/v1/bios`, `/chassis`, `/baseboard`, `/product` and `/memory` — depend on data most ARM single-board computers simply do not provide (a Raspberry Pi has no SMBIOS at all), so expect them to be empty or unavailable there. The CI probe runner is a cloud VM that *does* expose DMI, so its populated SMBIOS endpoints do not generalise to SBC hardware. That is a platform property, not a bug. The endpoints that matter most for monitoring — CPU, RAM, disk, network, host, processes — go through `/proc` and work.
 
 ## Powered by
 
