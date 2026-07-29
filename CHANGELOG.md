@@ -10,6 +10,8 @@ behavioral and API changes that would be considered breaking after 1.0; patch
 
 ## [Unreleased]
 
+## [0.10.1] - 2026-07-29
+
 ### Added
 
 - **A dark/light theme toggle on every page, including the login screen.** The
@@ -724,7 +726,8 @@ visible breaking change to the HTTP API.
   in `fiber v1.11.1` (EOL, no upstream fix); resolving them requires a
   `fiber v1 → v2` migration, tracked separately. ([f90cc72](https://github.com/bitcav/nitr/commit/f90cc72))
 
-[Unreleased]: https://github.com/bitcav/nitr/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/bitcav/nitr/compare/v0.10.1...HEAD
+[0.10.1]: https://github.com/bitcav/nitr/releases/tag/v0.10.1
 [0.10.0]: https://github.com/bitcav/nitr/releases/tag/v0.10.0
 [0.9.0]: https://github.com/bitcav/nitr/releases/tag/v0.9.0
 [0.8.1]: https://github.com/bitcav/nitr/releases/tag/v0.8.1
