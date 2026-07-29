@@ -87,6 +87,15 @@ func writeDefaultConfig(path string) {
 		"# comma-separated browser origins allowed cross-origin API access;",
 		"# empty (the default) denies all cross-origin access",
 		"# cors_origins: https://grafana.example.com, https://dash.example.com",
+		"# retain CPU/RAM/disk/bandwidth history in nitr.db so the metric",
+		"# endpoints can answer time-range queries (?from=&to=&resolution=).",
+		"# Off by default: the sampler writes to disk every history_interval",
+		"# seconds, and sustained small writes wear flash/SD storage (Raspberry",
+		"# Pi). Reaches a steady state: the defaults keep 8640 samples per",
+		"# metric (24h at 10s).",
+		"# history_enabled: false",
+		"# history_interval: 10",
+		"# history_retention_hours: 24",
 	}
 
 	defaultConfig := strings.Join(defaultConfigOpts, "\n")
@@ -296,6 +305,40 @@ func MetricsPushInterval() time.Duration {
 		seconds = 3
 	}
 	return time.Duration(seconds) * time.Second
+}
+
+// HistoryEnabled reports whether retained metric history is on: the
+// history_enabled key (--history-enabled flag, NITR_HISTORY_ENABLED env,
+// history_enabled in the config file). It defaults to false — with
+// retention on, the sampler writes to nitr.db every HistorySampleInterval,
+// and sustained small writes are exactly what wears out SD cards on the
+// Raspberry Pi hosts this tool targets, so history is strictly opt-in.
+func HistoryEnabled() bool {
+	return viper.GetBool("history_enabled")
+}
+
+// HistorySampleInterval returns how often the history sampler writes one
+// CPU/RAM/disk/bandwidth sample (history_interval, seconds), defaulting to
+// 10s and clamping to a 1s floor so a bogus value cannot busy-write the
+// database.
+func HistorySampleInterval() time.Duration {
+	seconds := viper.GetInt("history_interval")
+	if seconds < 1 {
+		seconds = 10
+	}
+	return time.Duration(seconds) * time.Second
+}
+
+// HistoryRetention returns how long samples are kept before being pruned
+// (history_retention_hours), defaulting to 24h with a 1h floor. Combined
+// with HistorySampleInterval this bounds the history bucket: at the defaults
+// it plateaus at 8640 samples per metric (24h * 3600s / 10s).
+func HistoryRetention() time.Duration {
+	hours := viper.GetInt("history_retention_hours")
+	if hours < 1 {
+		hours = 24
+	}
+	return time.Duration(hours) * time.Hour
 }
 
 func StartServer(app *fiber.App) {

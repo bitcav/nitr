@@ -104,7 +104,14 @@ func sampleBandwidth() {
 // from the cache StartBandwidthSampler keeps warm. Before the first sample
 // completes (briefly, at startup) this returns an empty result rather than
 // blocking the request on bandwidth.Info()'s 1s delta sample.
+//
+// With any of ?from=&to=&resolution= present it instead returns a series of
+// retained samples (see history.go); without them the response is unchanged
+// from before retention existed.
 func Bandwidth(c *fiber.Ctx) error {
+	if historyRequested(c) {
+		return serveHistory(c, db.MetricBandwidth)
+	}
 	bandwidthCacheMu.RLock()
 	defer bandwidthCacheMu.RUnlock()
 	return c.JSON(bandwidthCache)
@@ -125,8 +132,14 @@ func Chassis(c *fiber.Ctx) error {
 	return c.JSON(chassis.Info())
 }
 
-// CPU returns a JSON response of the CPUs information
+// CPU returns a JSON response of the CPUs information. With any of
+// ?from=&to=&resolution= present it instead returns a series of retained
+// samples (see history.go); without them the response is unchanged from
+// before retention existed.
 func CPU(c *fiber.Ctx) error {
+	if historyRequested(c) {
+		return serveHistory(c, db.MetricCPU)
+	}
 	return c.JSON(cpu.Info())
 }
 
@@ -135,8 +148,14 @@ func Devices(c *fiber.Ctx) error {
 	return c.JSON(devices.Info())
 }
 
-// Disk returns a JSON response of the Disks information
+// Disk returns a JSON response of the Disks information. With any of
+// ?from=&to=&resolution= present it instead returns a series of retained
+// samples (see history.go); without them the response is unchanged from
+// before retention existed.
 func Disk(c *fiber.Ctx) error {
+	if historyRequested(c) {
+		return serveHistory(c, db.MetricDisks)
+	}
 	return c.JSON(disk.Info())
 }
 
@@ -371,8 +390,14 @@ func Product(c *fiber.Ctx) error {
 	return c.JSON(product.Info())
 }
 
-// RAM returns a JSON response of the RAM information
+// RAM returns a JSON response of the RAM information. With any of
+// ?from=&to=&resolution= present it instead returns a series of retained
+// samples (see history.go); without them the response is unchanged from
+// before retention existed.
 func RAM(c *fiber.Ctx) error {
+	if historyRequested(c) {
+		return serveHistory(c, db.MetricRAM)
+	}
 	return c.JSON(ram.Info())
 }
 

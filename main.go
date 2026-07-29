@@ -123,6 +123,14 @@ func server() (*fiber.App, error) {
 	//with a request.
 	handlers.StartBandwidthSampler()
 
+	//Retained metric history is opt-in (history_enabled, default off): the
+	//sampler writes to nitr.db every history_interval seconds, a real
+	//behavior change on flash/SD-backed hosts (Raspberry Pi is a target
+	//deployment), so it only starts when explicitly enabled.
+	if utils.HistoryEnabled() {
+		handlers.StartHistorySampler()
+	}
+
 	//nitr API Endpoints
 	v1.Get("/", handlers.Overview)
 	v1.Get("/cpu", handlers.CPU)
