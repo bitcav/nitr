@@ -115,6 +115,11 @@ func server() (*fiber.App, error) {
 	//API Key auth middleware
 	v1.Use(handlers.AuthAPI)
 
+	//Keeps /bandwidth's cache warm off the request path -- bandwidth.Info()
+	//blocks ~1s to compute its rx/tx delta, which must never happen inline
+	//with a request.
+	handlers.StartBandwidthSampler()
+
 	//nitr API Endpoints
 	v1.Get("/", handlers.Overview)
 	v1.Get("/cpu", handlers.CPU)

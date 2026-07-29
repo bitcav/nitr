@@ -1,8 +1,11 @@
 package handlers
 
 import (
+	"context"
 	"errors"
 	"io/fs"
+	"sync"
+	"time"
 
 	"github.com/bitcav/go-memdev"
 	"github.com/bitcav/nitr-core/bandwidth"
@@ -44,9 +47,61 @@ func AuthAPI(c *fiber.Ctx) error {
 // paying its hardcoded 1s sleep. It points at bandwidth.Info in production.
 var bandwidthInfoFunc = bandwidth.Info
 
-// Bandwidth returns a JSON response of the Bandwidth information
+// bandwidthSampleInterval controls how often the background sampler started
+// by StartBandwidthSampler refreshes bandwidthCache. A var, not a const, so
+// tests can shrink it instead of waiting on the production cadence.
+var bandwidthSampleInterval = 5 * time.Second
+
+var (
+	bandwidthCacheMu sync.RWMutex
+	bandwidthCache   []bandwidth.NetworkDeviceBandwidth
+)
+
+// bandwidthSamplerDone is closed by tests to stop a sampler goroutine
+// started via StartBandwidthSampler, so a test's stubbed bandwidthInfoFunc
+// and shortened bandwidthSampleInterval don't keep ticking into later tests
+// once the test that started it returns. Production never stops the
+// sampler; it runs for the life of the process.
+var bandwidthSamplerDone chan struct{}
+
+// StartBandwidthSampler launches a goroutine that keeps bandwidthCache fresh
+// by calling bandwidthInfoFunc on bandwidthSampleInterval. bandwidth.Info()
+// blocks for ~1s to compute its rx/tx delta; running it here, off the
+// request path, is what lets Bandwidth answer immediately from cache
+// instead of stalling every request a full second. Call once at startup.
+func StartBandwidthSampler() {
+	done := make(chan struct{})
+	bandwidthSamplerDone = done
+	go func() {
+		ticker := time.NewTicker(bandwidthSampleInterval)
+		defer ticker.Stop()
+		sampleBandwidth()
+		for {
+			select {
+			case <-done:
+				return
+			case <-ticker.C:
+				sampleBandwidth()
+			}
+		}
+	}()
+}
+
+func sampleBandwidth() {
+	result := bandwidthInfoFunc()
+	bandwidthCacheMu.Lock()
+	bandwidthCache = result
+	bandwidthCacheMu.Unlock()
+}
+
+// Bandwidth returns a JSON response of the Bandwidth information, served
+// from the cache StartBandwidthSampler keeps warm. Before the first sample
+// completes (briefly, at startup) this returns an empty result rather than
+// blocking the request on bandwidth.Info()'s 1s delta sample.
 func Bandwidth(c *fiber.Ctx) error {
-	return c.JSON(bandwidthInfoFunc())
+	bandwidthCacheMu.RLock()
+	defer bandwidthCacheMu.RUnlock()
+	return c.JSON(bandwidthCache)
 }
 
 // Baseboard returns a JSON response of the Baseboard information
@@ -99,9 +154,60 @@ func Host(c *fiber.Ctx) error {
 // isp.Info in production.
 var ispInfoFunc = isp.Info
 
-// ISP returns a JSON response of the ISP information
+// ispCacheTTL is how long a successful ISP lookup is served from cache
+// before ISP looks it up again. ISP/public IP changes rarely -- hours, not
+// seconds -- so caching keeps isp.Info()'s outbound HTTP call off the
+// common request path. A var, not a const, so tests can shrink it.
+var ispCacheTTL = time.Hour
+
+// ispTimeout bounds how long a single request will wait on isp.Info()
+// before falling back to the cached (or empty) value instead of hanging.
+// isp.Info() makes an outbound HTTP call with no timeout of its own and no
+// context parameter to give it one, so the call runs on its own goroutine
+// here and is raced against this deadline; a request never waits past it,
+// though the goroutine underneath may still be blocked on the outbound call
+// after ISP returns. A var, not a const, so tests can shrink it.
+var ispTimeout = 5 * time.Second
+
+var (
+	ispCacheMu sync.Mutex
+	ispCache   isp.Setting
+	ispCacheAt time.Time
+)
+
+// ISP returns a JSON response of the ISP information, serving a cached
+// result when it is fresh and degrading to the last good value (or empty,
+// on a cold cache) when isp.Info() does not return within ispTimeout.
 func ISP(c *fiber.Ctx) error {
-	return c.JSON(ispInfoFunc())
+	ispCacheMu.Lock()
+	cached := ispCache
+	fresh := !ispCacheAt.IsZero() && time.Since(ispCacheAt) < ispCacheTTL
+	ispCacheMu.Unlock()
+	if fresh {
+		return c.JSON(cached)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), ispTimeout)
+	defer cancel()
+
+	// Read the seam synchronously: capturing it before the goroutine keeps
+	// the read on this request's goroutine rather than one that may still
+	// be running (blocked in the outbound call) after ISP has already
+	// returned via the timeout branch below.
+	fn := ispInfoFunc
+	result := make(chan isp.Setting, 1)
+	go func() { result <- fn() }()
+
+	select {
+	case setting := <-result:
+		ispCacheMu.Lock()
+		ispCache = setting
+		ispCacheAt = time.Now()
+		ispCacheMu.Unlock()
+		return c.JSON(setting)
+	case <-ctx.Done():
+		return c.JSON(cached)
+	}
 }
 
 // Network returns a JSON response of the Network information

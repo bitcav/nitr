@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http/httptest"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/bitcav/go-memdev"
 	"github.com/bitcav/nitr-core/bandwidth"
@@ -118,6 +120,133 @@ func TestAPIEndpoints(t *testing.T) {
 // Against the old code (fmt.Println(err); return c.JSON(memInfo)) every
 // error case below would return 200 null instead of the asserted status,
 // so these guards fail loudly if the swallow regression returns.
+// TestBandwidthServesFromCache proves Bandwidth never calls bandwidthInfoFunc
+// itself -- it only reads bandwidthCache -- so a request can never pay
+// bandwidth.Info()'s 1s delta-sample cost. bandwidthInfoFunc is stubbed to
+// panic if invoked: against the old code (which called it directly) this
+// test would panic.
+func TestBandwidthServesFromCache(t *testing.T) {
+	origCache := bandwidthCache
+	origFunc := bandwidthInfoFunc
+	bandwidthInfoFunc = func() []bandwidth.NetworkDeviceBandwidth {
+		t.Fatal("Bandwidth handler must not call bandwidthInfoFunc directly")
+		return nil
+	}
+	bandwidthCache = []bandwidth.NetworkDeviceBandwidth{{Name: "eth0", RxBytes: 42}}
+	t.Cleanup(func() {
+		bandwidthCache = origCache
+		bandwidthInfoFunc = origFunc
+	})
+
+	app := newTestApp()
+	app.Get("/bandwidth", Bandwidth)
+
+	resp := get(t, app, "/bandwidth")
+	assert.Equal(t, 200, resp.StatusCode)
+	assert.Contains(t, body(t, resp), `"rxBytes":42`)
+}
+
+// TestStartBandwidthSamplerPopulatesCache verifies the background sampler
+// actually calls bandwidthInfoFunc and writes the result into bandwidthCache,
+// off the goroutine that started it. The sampler is stopped via
+// bandwidthSamplerDone before the test returns so its shortened interval and
+// stubbed bandwidthInfoFunc don't keep ticking into later tests.
+func TestStartBandwidthSamplerPopulatesCache(t *testing.T) {
+	origCache := bandwidthCache
+	origFunc := bandwidthInfoFunc
+	origInterval := bandwidthSampleInterval
+	var calls int32
+	want := []bandwidth.NetworkDeviceBandwidth{{Name: "eth0", RxBytes: 7}}
+	bandwidthInfoFunc = func() []bandwidth.NetworkDeviceBandwidth {
+		atomic.AddInt32(&calls, 1)
+		return want
+	}
+	bandwidthCache = nil
+	bandwidthSampleInterval = time.Hour // only the immediate seed sample should fire
+	t.Cleanup(func() {
+		close(bandwidthSamplerDone)
+		bandwidthCache = origCache
+		bandwidthInfoFunc = origFunc
+		bandwidthSampleInterval = origInterval
+	})
+
+	StartBandwidthSampler()
+
+	require.Eventually(t, func() bool {
+		return atomic.LoadInt32(&calls) >= 1
+	}, time.Second, time.Millisecond, "sampler did not call bandwidthInfoFunc")
+
+	bandwidthCacheMu.RLock()
+	got := bandwidthCache
+	bandwidthCacheMu.RUnlock()
+	assert.Equal(t, want, got)
+}
+
+// TestISPCachesResult proves a second request within ispCacheTTL is served
+// from cache instead of calling ispInfoFunc again -- the mechanism that
+// keeps isp.Info()'s outbound HTTP call off the common request path.
+func TestISPCachesResult(t *testing.T) {
+	origCache, origAt, origFunc := ispCache, ispCacheAt, ispInfoFunc
+	var calls int32
+	want := isp.Setting{Isp: "Test ISP", IP: "1.2.3.4"}
+	ispInfoFunc = func() isp.Setting {
+		atomic.AddInt32(&calls, 1)
+		return want
+	}
+	ispCache, ispCacheAt = isp.Setting{}, time.Time{}
+	t.Cleanup(func() {
+		ispCache, ispCacheAt, ispInfoFunc = origCache, origAt, origFunc
+	})
+
+	app := newTestApp()
+	app.Get("/isp", ISP)
+
+	resp := get(t, app, "/isp")
+	assert.Equal(t, 200, resp.StatusCode)
+	assert.Contains(t, body(t, resp), "Test ISP")
+
+	resp = get(t, app, "/isp")
+	assert.Equal(t, 200, resp.StatusCode)
+	assert.Contains(t, body(t, resp), "Test ISP")
+
+	assert.EqualValues(t, 1, atomic.LoadInt32(&calls), "second request within ispCacheTTL must be served from cache")
+}
+
+// TestISPTimeoutFallsBackToCache proves a hung ispInfoFunc cannot hang the
+// request: against the old code (return c.JSON(ispInfoFunc())) this test
+// would time out entirely rather than complete quickly with the stale value.
+func TestISPTimeoutFallsBackToCache(t *testing.T) {
+	origCache, origAt, origFunc := ispCache, ispCacheAt, ispInfoFunc
+	origTimeout, origTTL := ispTimeout, ispCacheTTL
+	block := make(chan struct{}) // never closed: simulates a hung isp.Info()
+	ispInfoFunc = func() isp.Setting {
+		<-block
+		return isp.Setting{}
+	}
+	// A stale-but-present cached value: old enough that ispCacheTTL no
+	// longer considers it fresh, so ISP attempts (and then must time out on)
+	// a fresh lookup rather than short-circuiting to the cache.
+	ispCache = isp.Setting{Isp: "Stale ISP"}
+	ispCacheAt = time.Now().Add(-time.Hour)
+	ispCacheTTL = time.Millisecond
+	ispTimeout = 20 * time.Millisecond
+	t.Cleanup(func() {
+		ispCache, ispCacheAt, ispInfoFunc = origCache, origAt, origFunc
+		ispTimeout, ispCacheTTL = origTimeout, origTTL
+	})
+
+	app := newTestApp()
+	app.Get("/isp", ISP)
+
+	start := time.Now()
+	resp := get(t, app, "/isp")
+	elapsed := time.Since(start)
+
+	assert.Equal(t, 200, resp.StatusCode)
+	assert.Contains(t, body(t, resp), "Stale ISP")
+	assert.Less(t, elapsed, 500*time.Millisecond, "ISP must not block past ispTimeout")
+}
+
 func TestMemoryErrorHandling(t *testing.T) {
 	setupEnv(t)
 
