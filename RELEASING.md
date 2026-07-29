@@ -62,10 +62,11 @@ pushes do **not** draft a release.
 
 Once CI is green, open the draft release at
 <https://github.com/bitcav/nitr/releases>. It is named `nitr vX.Y.Z` and has
-the four binaries attached:
+the five binaries attached:
 
 - `nitr_linux_amd64`
 - `nitr_linux_386`
+- `nitr_linux_arm64`
 - `nitr_windows_amd64.exe`
 - `nitr_windows_386.exe`
 

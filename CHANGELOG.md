@@ -52,6 +52,23 @@ behavioral and API changes that would be considered breaking after 1.0; patch
   breaking on their own — but the rename is: **consumers reading
   `sensorTemperature` must switch to `temperature`.** `sensorKey` is
   unchanged. Verified by struct-tag diff of v2.20.7 against v4.26.6.
+- **`/api/v1/gpu` no longer fabricates a graphics card on hosts whose
+  display device is not on a PCI bus — it now returns `[]` there.** ghw
+  v0.6.1 took the third-from-last component of the `/sys/class/drm/cardN`
+  symlink target as the card's PCI address with no validation, so on an
+  ARM cloud VM (observed on the linux/arm64 CI runner: `/gpu` went from
+  one populated entry to `[]` across the migration) it emitted a
+  `GraphicsCard` whose `address` was a junk path fragment and whose
+  vendor/model could not resolve. ghw v0.25 scans the path for a
+  component matching its PCI-address regex and skips the card when none
+  is found — the same defect class as the `assetTag`-carrying-the-product-name
+  and `ram*`-labelled-`ssd` bugs already fixed in this release: wrong
+  data retired in favour of no data. Filed under breaking changes rather
+  than fixes because `/gpu` is user-visible on a published platform and a
+  consumer branching on a non-empty list (e.g. alerting on "GPU
+  present") sees a changed answer. **x86 hosts with a real PCI GPU are
+  unaffected** — they resolve a valid PCI address and are reported
+  exactly as before.
 - **`/api/v1/product` no longer emits `assetTag`; the product name moved to a
   new `name` key.** The value serialized under `assetTag` was always the
   product **name** (`ghw.Product().Name`), never an asset tag — ghw's
