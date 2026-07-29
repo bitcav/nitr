@@ -107,11 +107,41 @@ wait_ready() { # seconds
 trap stop_server EXIT
 
 # --- 1. Smoke test gate ------------------------------------------------------
+# The gate must distinguish HARNESS failure from PLATFORM failure. First run
+# of this probe on ubuntu-24.04-arm (2026-07-29) reported "binary does not
+# run on linux/arm64 (init()-panic class)" when the truth was that the
+# downloaded artifact had no exec bit — a false negative about the platform.
+# Each case below gets its own verdict so the report never claims a platform
+# conclusion the evidence does not support.
+if [[ ! -f "$BIN" ]]; then
+  echo "HARNESS FAILURE: $BIN does not exist (artifact download problem?)"
+  write_report "HARNESS FAILURE — $BIN not found. Says nothing about the platform."
+  exit 1
+fi
+if [[ ! -x "$BIN" ]]; then
+  echo "HARNESS FAILURE: $BIN is not executable."
+  echo "actions/upload-artifact does not preserve POSIX file modes — chmod +x it after download."
+  write_report "HARNESS FAILURE — $BIN not executable (artifact transport drops file modes; chmod +x after download). NOT a platform finding."
+  exit 1
+fi
 VERSION_OUT="$("$BIN" version 2>&1)"
 if [[ "$VERSION_OUT" != *"Nitr v"* ]]; then
   echo "SMOKE TEST FAILED: binary does not print a version string. Output was:"
   echo "$VERSION_OUT"
-  write_report "FAIL — binary does not run on linux/arm64 (init()-panic class). Endpoint table moot."
+  case "$VERSION_OUT" in
+    *"Permission denied"*)
+      # Should be unreachable given the -x check above; kept as a second net.
+      VERDICT="HARNESS FAILURE — $BIN not executable (artifact transport drops file modes). NOT a platform finding." ;;
+    *"exec format error"*|*"Exec format error"*)
+      # The kernel rejected the ELF: wrong-architecture binary. This one IS
+      # a real finding — the build job produced something arm64 can't exec.
+      VERDICT="FAIL — exec format error: the artifact is not a runnable linux/arm64 binary (cross-compile misconfiguration). Genuine platform finding." ;;
+    *"cannot execute binary file"*)
+      VERDICT="FAIL — shell cannot execute the artifact (likely wrong architecture). Genuine platform finding." ;;
+    *)
+      VERDICT="FAIL — binary runs but prints no version string (init()-panic class). Endpoint table moot." ;;
+  esac
+  write_report "$VERDICT"
   exit 1
 fi
 echo "Smoke test OK: $VERSION_OUT"
