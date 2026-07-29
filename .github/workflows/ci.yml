@@ -153,6 +153,13 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           name: nitr-binaries
+      # NOT redundant: actions/upload-artifact zips files for transport and
+      # drops POSIX modes, so the downloaded binary arrives as 0644 and
+      # executing it fails with Permission denied (first arm64 probe run,
+      # 2026-07-29). Windows never hit this — .exe has no exec bit.
+      - name: Restore executable bit
+        shell: bash
+        run: chmod +x ./nitr_linux_arm64
       - name: Probe all API endpoints on Linux arm64
         shell: bash
         run: ./scripts/linux_arm64_endpoint_probe.sh ./nitr_linux_arm64 linux-arm64-endpoint-report.md
