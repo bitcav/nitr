@@ -159,6 +159,59 @@ behavioral and API changes that would be considered breaking after 1.0; patch
   Verified by logging into the running panel: the Overview/Metrics tabs,
   the theme toggle (with `nitr-theme` in `localStorage`), and the
   `cpuChart`/`ramChart` containers all render. ([ab5c032](https://github.com/bitcav/nitr/commit/ab5c032))
+- **CLI info commands that read the collectors directly — no server, no
+  API key, no network** — one subcommand per API path segment: `nitr
+  cpu`, `ram`, `memory`, `disks`, `drives`, `bios`, `chassis`,
+  `baseboard`, `product`, `gpu`, `network`, `bandwidth`, `isp`,
+  `processes`, `devices`, `host`, and `overview`. Each prints an aligned
+  key/value table by default; `--json` prints the raw JSON payload
+  byte-identical to the matching API response (the same
+  `encoding/json.Marshal` path fiber's `c.JSON` uses), and `--watch` /
+  `-w` re-fetches and re-renders on an interval (`--watch=5s`; a bare
+  `--watch` defaults to 2s). Until now the only way to read a metric was
+  to start the server, authenticate, and make an HTTP request, even
+  though every collector is a plain Go function returning a struct; this
+  makes nitr usable standalone, in the neofetch/inxi/hwinfo niche.
+  Verified against the built binary: `nitr cpu`, `nitr ram`, and `nitr
+  disks` print their tables with no server running, `nitr cpu --json`
+  emits the `{"vendor":...,"cores":12,...}` payload, and `nitr cpu
+  --watch=1s` re-renders the table each second. ([a54b802](https://github.com/bitcav/nitr/commit/a54b802))
+- **An OpenAPI 3.1 spec is now the API reference source of truth**,
+  checked in at `docs/openapi.json` and served two ways: raw at `GET
+  /openapi.json` (no credentials required) and rendered at `GET /docs`
+  (behind the panel session auth), which fetches `/openapi.json`
+  client-side so the rendered docs can never drift from the spec. It
+  covers all 17 `GET /api/v1/*` endpoints with schemas taken from the
+  actual Go structs, the `x-api-key` security scheme, and the privilege
+  and deprecation notes that used to live in `docs/API.md`'s prose —
+  which is removed; its hand-maintained schema tables had already
+  drifted from the real `/processes` shape. A test
+  (`TestOpenAPISpecCoversAllRegisteredRoutes`) fails the build if a
+  registered route is missing from the spec. Verified against the
+  running server: `/openapi.json` returns `200 application/json` with
+  `"openapi": "3.1.0"` and a path entry for every v1 route including
+  `/loadavg`, `/swap`, and `/sensors`, and `/docs` redirects
+  unauthenticated clients to the login page. ([9ae8e37](https://github.com/bitcav/nitr/commit/9ae8e37))
+- Three new collectors behind the same `x-api-key` auth:
+  **`GET /api/v1/loadavg`** returns the 1/5/15-minute load average
+  (`{"load1":0.19,"load5":0.15,"load15":0.23}`); it is not implemented
+  on Windows (gopsutil has no equivalent concept there) and surfaces
+  that as `501 Not Implemented` rather than a silently empty `200`.
+  **`GET /api/v1/swap`** returns swap total/used/free/used-percent plus
+  page-in/out counters — `/ram` only reports physical memory, so a host
+  swapping heavily previously looked healthy. **`GET /api/v1/sensors`**
+  returns temperature/fan sensor readings; a host with no exposed
+  sensors is not an error and returns `null`, matching the other list
+  endpoints' behaviour on an empty result. Verified against the running
+  server on Linux: `/loadavg` and `/swap` return the shapes above;
+  `/sensors` returns `null` on the machine tested (a WSL guest with no
+  hwmon sensors exposed). ([71b8382](https://github.com/bitcav/nitr/commit/71b8382))
+- **`install.sh` curl-pipe quick start** in the README:
+  `curl -fsSL https://raw.githubusercontent.com/bitcav/nitr/master/install.sh | bash`
+  downloads the right release binary for the host OS/arch into the
+  current directory, sets the exec bit, and runs `nitr version` to
+  confirm it works — modeled on direnv's installer, with no root or sudo
+  step anywhere (the README's previous `sudo install` step is gone). ([4935256](https://github.com/bitcav/nitr/commit/4935256))
 
 ### Changed
 
@@ -181,6 +234,44 @@ behavioral and API changes that would be considered breaking after 1.0; patch
   class is gone rather than patched. Nothing consumer-facing changes — the
   panel and `/assets` are served exactly as before, and `go build` remains
   the only build step. ([207bc2a](https://github.com/bitcav/nitr/commit/207bc2a))
+- **`GET /api/v1/processes` returns a much richer — and purely additive —
+  response shape, and gains query parameters.** Each entry was
+  `{pid, name}` and is now `{pid, ppid, name, user, cmdline, status,
+  cpu_percent, mem_percent, rss, start_time}`; no keys were removed, so
+  clients reading the old two keys are unaffected. New query parameters:
+  `?sort=cpu|mem|name|pid` (default `pid`), `?order=asc|desc` (default
+  `asc`), `?limit=<n>`, and `?search=<substring>` matched
+  case-insensitively against name and cmdline. A process that exits
+  mid-scan is skipped rather than failing the whole call. Verified
+  against the running server: `?sort=cpu&limit=3` returns three objects
+  carrying all ten fields, and `?search=nitr` filters the list to
+  matching processes. ([44d4710](https://github.com/bitcav/nitr/commit/44d4710))
+- **`/api/v1/bandwidth` and `/api/v1/isp` no longer block the request.**
+  `/bandwidth` previously stalled every caller for ~1s while
+  `bandwidth.Info()` computed its rx/tx delta inline; a background
+  sampler now refreshes a cache every 5s and the handler serves the
+  cache immediately — until the first sample lands it returns `null`.
+  `/isp` previously made an outbound speedtest.net call with no timeout,
+  hanging indefinitely on a slow or air-gapped host; it now caches a
+  successful lookup for an hour and races a fresh lookup against a 5s
+  timeout, falling back to the last good (or empty) cached value.
+  Verified against the running server: the first `/bandwidth` call
+  returns `null` in ~6ms (previously ~1s), and `/isp` answers in
+  ~270ms with `{"isp":...,"ip":...,"lat":...,"lon":...}`. ([d7fe474](https://github.com/bitcav/nitr/commit/d7fe474))
+- The README screenshots are now reproducible: `scripts/regen-images.sh`
+  re-captures them via `scripts/web-screenshots.mjs` and two committed
+  vhs tapes, replacing manual screenshotting. Contributor tooling; no
+  shipped behaviour changes. ([2eb84fb](https://github.com/bitcav/nitr/commit/2eb84fb))
+- Internal: the database layer now reuses a single bbolt handle instead
+  of opening and closing the file on every call (`AuthAPI` alone opened
+  it twice per authenticated request), and a second nitr process against
+  the same `nitr.db` now fails startup after a 5s lock wait with
+  `database is locked by another nitr process` instead of blocking
+  forever — observed in practice during verification. `SetAPIData`
+  propagates setup failures instead of logging and swallowing them, so a
+  broken database fails startup loudly. Plus an idiom sweep (`%w` error
+  wrapping, unified `fiber.Status*` constants) and lint/gofmt fixes
+  keeping CI green. ([7c118c9](https://github.com/bitcav/nitr/commit/7c118c9), [1a35322](https://github.com/bitcav/nitr/commit/1a35322), [4a71ecb](https://github.com/bitcav/nitr/commit/4a71ecb), [385a73e](https://github.com/bitcav/nitr/commit/385a73e), [ec41333](https://github.com/bitcav/nitr/commit/ec41333))
 
 ### Fixed
 
