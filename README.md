@@ -59,6 +59,7 @@ See [Usage](#usage) for how to call the API with that key.
 - [Health and readiness probes](#health-and-readiness-probes)
 - [API v1](#api-v1)
   - [Available endpoints](#available-endpoints)
+  - [Time-range queries](#time-range-queries)
   - [JSON data references](#json-data-references)
 - [Settings](#settings)
 - [Platform support](#platform-support)
@@ -192,7 +193,7 @@ Access with default **password**: **123456**
 
 The panel is organised into two tabs — **Overview** (host info, API key, QR code) and **Metrics** — and supports a **dark/light theme** that follows the OS `prefers-color-scheme` by default with a manual toggle in the header; the choice is stored in the browser's `localStorage` and overrides the OS setting in both directions.
 
-The **Metrics** tab shows live CPU and RAM usage as both numeric widgets and scrolling line charts (driven by the existing `/status` WebSocket stream). The charts hold **session-only history in the browser — roughly the last six minutes (120 samples at the default 3s push), with nothing persisted server-side**, so they start empty on every page load. Historical retention is a separate, unbuilt feature.
+The **Metrics** tab shows live CPU and RAM usage as both numeric widgets and scrolling line charts (driven by the existing `/status` WebSocket stream). The charts hold **session-only history in the browser — roughly the last six minutes (120 samples at the default 3s push), with nothing persisted server-side**, so they start empty on every page load. Server-side retention is now available as an opt-in feature — see [Metric History Retention](#metric-history-retention) — but the panel charts do not consume it.
 
 The layout reflows to a single column on small screens, and pinch-zoom works on mobile clients. The chart library (uPlot) is vendored into the binary — no CDN is used and no build step is required, so the panel keeps working on an air-gapped host.
 
@@ -369,6 +370,22 @@ These endpoints return system and hardware information about your **host**. Chec
 | GET  | /loadavg   |
 | GET  | /sensors   |
 
+### Time-range queries
+
+The four usage-metric endpoints — `/cpu`, `/ram`, `/disks`, `/bandwidth` — accept `?from=`, `?to=`, and `?resolution=` query parameters when [history retention](#metric-history-retention) is enabled. With **any** of them present, the response switches from the instantaneous payload to a series of retained samples, oldest first:
+
+```json
+[{"timestamp":"2026-07-29T15:44:28.502661692Z","data":{"vendor":"AuthenticAMD","model":"AMD Ryzen 9 9900X 12-Core Processor","cores":12,"threads":24,"clockSpeed":4391.661,"usage":2.83,"usageEach":["..."]}}]
+```
+
+Each `data` carries the exact payload the endpoint's instantaneous form returns (for `/disks` and `/bandwidth` that payload is an array). `from` and `to` accept RFC3339 (`2026-07-29T03:00:00Z`) or bare Unix seconds, and default to the oldest retained sample and now; `resolution` (seconds, default `0` = every stored sample) thins the series to at most one sample per window, keeping the first sample in each — payloads are never averaged or altered.
+
+**With none of the parameters present, the response is byte-identical to before range queries existed** — existing integrations are unaffected. With retention disabled (the default), passing any range parameter returns `400` with a message naming the key to set:
+
+```json
+{"message":"metric history retention is disabled; set history_enabled (off by default) to use from/to/resolution","status":400}
+```
+
 ### JSON data references
 
 The field-by-field shape of every endpoint above — types, descriptions, privilege notes, query parameters — is **generated, not hand-written**, so it cannot drift from the code the way a transcribed table can:
@@ -389,6 +406,9 @@ Nitr reads its settings from `config.ini` in the working directory by default. E
 | `--port` | `NITR_PORT` | `port` | `8000` |
 | `--host` / `--bind` | `NITR_BIND_ADDRESS` | `bind_address` | `0.0.0.0` (all interfaces) |
 | `--data-dir` | `NITR_DATA_DIR` | `data_dir` | working directory |
+| `--history-enabled` | `NITR_HISTORY_ENABLED` | `history_enabled` | `false` |
+| `--history-interval` | `NITR_HISTORY_INTERVAL` | `history_interval` | `10` (seconds) |
+| `--history-retention-hours` | `NITR_HISTORY_RETENTION_HOURS` | `history_retention_hours` | `24` (hours) |
 
 `--bind` is accepted as an alias of `--host`. Keys without a dedicated flag — `save_logs`, `cors_origins`, `metrics_push_interval`, and the rest below — are still settable via their `NITR_` env var.
 
@@ -475,6 +495,20 @@ Seconds between live CPU/RAM/disk pushes from the server to the web panel over t
 ```
 metrics_push_interval: 3
 ```
+
+### Metric History Retention
+
+**Off by default.** When enabled, nitr retains CPU, RAM, disk, and bandwidth samples in `nitr.db`, so the four usage-metric endpoints can answer [time-range queries](#time-range-queries):
+
+```
+history_enabled: true
+history_interval: 10            # seconds between retained samples
+history_retention_hours: 24     # samples older than this are pruned
+```
+
+**Why it defaults to off** — this is a deliberate product decision, not an oversight: the sampler writes to `nitr.db` every `history_interval` seconds, and sustained small writes wear flash/SD storage. Raspberry Pi is an explicitly targeted deployment, so retention is strictly opt-in — understand that tradeoff before enabling it on an SBC.
+
+At the defaults the database reaches a steady state of **8640 samples per metric** (24h at 10s): all four metrics are written in a single transaction (one fsync per tick), pruning rides in the same transaction, and the file plateaus at that high-water size rather than growing without bound. With retention disabled, no history is ever written and `nitr.db` contains no history bucket.
 
 ## Platform support
 
