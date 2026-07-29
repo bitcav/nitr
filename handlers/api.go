@@ -290,6 +290,22 @@ func defaultProcesses() ([]ProcessInfo, error) {
 	return infos, nil
 }
 
+// Processes returns the process list in the same order GET /api/v1/processes
+// returns with no query params: sorted by PID ascending (the switch's
+// default case in Process below). Exported so the CLI info commands
+// (`nitr processes`) can share this package's process-listing logic --
+// including its gopsutil backend and panic-free error handling -- instead
+// of duplicating it, and so `nitr processes --json` matches the bare API
+// endpoint exactly rather than an independently-sorted copy.
+func Processes() ([]ProcessInfo, error) {
+	infos, err := processesFunc()
+	if err != nil {
+		return nil, err
+	}
+	sort.Slice(infos, func(i, j int) bool { return infos[i].Pid < infos[j].Pid })
+	return infos, nil
+}
+
 // Process returns a JSON response of the Processes information. Supports
 // ?sort=cpu|mem|name|pid (default pid), ?order=asc|desc (default asc),
 // ?limit=<n> and ?search=<substring>, matched case-insensitively against

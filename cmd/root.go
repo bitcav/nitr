@@ -76,6 +76,7 @@ func init() {
 	rootCmd.AddCommand(Passwd)
 	rootCmd.AddCommand(QrCode)
 	rootCmd.AddCommand(lifecycleCmds...)
+	rootCmd.AddCommand(buildInfoCmds()...)
 }
 
 // bindConfigFlags wires the persistent flags into viper under their config

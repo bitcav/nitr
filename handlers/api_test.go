@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"net/http/httptest"
@@ -307,6 +308,44 @@ func TestMemoryErrorHandling(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestProcessesMatchesDefaultHandlerResponseExactly is the proof behind the
+// CLI info-commands ticket's acceptance criterion ("`nitr processes --json`
+// matches `GET /api/v1/processes` exactly"): the CLI calls Processes()
+// directly (no HTTP, no fiber) while the API goes through the Process fiber
+// handler, so this pins that both paths apply the identical default sort
+// (PID ascending) to the identical snapshot and therefore json.Marshal to
+// the identical bytes, not just "look similar".
+func TestProcessesMatchesDefaultHandlerResponseExactly(t *testing.T) {
+	setupEnv(t)
+
+	orig := processesFunc
+	processesFunc = func() ([]ProcessInfo, error) {
+		// Deliberately out of PID order, so a test that forgot to sort
+		// would still fail.
+		return []ProcessInfo{{Pid: 30}, {Pid: 10}, {Pid: 20}}, nil
+	}
+	t.Cleanup(func() { processesFunc = orig })
+
+	app := newTestApp()
+	app.Get("/processes", AuthAPI, Process)
+	req := httptest.NewRequest("GET", "/processes", nil)
+	req.Header.Set("x-api-key", "testapikey")
+	resp, err := app.Test(req, 30000)
+	require.NoError(t, err)
+	require.Equal(t, 200, resp.StatusCode)
+	apiBody := body(t, resp)
+
+	infos, err := Processes()
+	require.NoError(t, err)
+	cliRaw, err := json.Marshal(infos)
+	require.NoError(t, err)
+
+	assert.Equal(t, apiBody, string(cliRaw))
+	assert.Equal(t, `[{"pid":10,"ppid":0,"name":"","cpu_percent":0,"mem_percent":0,"rss":0,"start_time":0},`+
+		`{"pid":20,"ppid":0,"name":"","cpu_percent":0,"mem_percent":0,"rss":0,"start_time":0},`+
+		`{"pid":30,"ppid":0,"name":"","cpu_percent":0,"mem_percent":0,"rss":0,"start_time":0}]`, apiBody)
 }
 
 // TestProcessErrorHandling covers the panic-to-error conversion in

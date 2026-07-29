@@ -13,6 +13,7 @@ require (
 	github.com/gofiber/websocket/v2 v2.2.1
 	github.com/hoisie/mustache v0.0.0-20160804235033-6375acf62c69
 	github.com/kardianos/service v1.2.0
+	github.com/mattn/go-isatty v0.0.20
 	github.com/mdp/qrterminal v1.0.1
 	github.com/prometheus/client_golang v1.20.4
 	github.com/prometheus/common v0.66.1
@@ -42,7 +43,6 @@ require (
 	github.com/klauspost/compress v1.19.1 // indirect
 	github.com/magiconair/properties v1.8.1 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.1.2 // indirect
