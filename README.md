@@ -20,14 +20,14 @@ A **cross-platform remote monitoring tool** written in Go that exposes **system 
 
 > curl + jq demo
 
-**Try it in 30 seconds:**
-
-> Nitr does **not** need root to run. It writes `nitr.db` and `config.ini` to its **current working directory**, so run it from a directory you own — running it once as root (or from two different directories) will leave a `nitr.db` owned by root or split your state across two databases.
+**Quick start:**
 
 ```bash
-# Linux (amd64) — see Installation for Windows / 32-bit
-curl -L https://github.com/bitcav/nitr/releases/latest/download/nitr_linux_amd64 -o nitr
-chmod +x nitr
+# Linux — detects your arch, downloads, chmods, verifies the binary runs
+curl -fsSL https://raw.githubusercontent.com/bitcav/nitr/master/install.sh | bash
+```
+
+```bash
 ./nitr          # starts the server in the foreground (default port 8000)
                 # and creates nitr.db + config.ini in this directory
 ```
@@ -39,17 +39,7 @@ chmod +x nitr
 ./nitr key      # print your API key (prompts for the password)
 ```
 
-Optional, system-wide install (puts `nitr` on `PATH`; needs `sudo`):
-
-```bash
-sudo install -m 755 nitr /usr/local/bin/
-```
-
-```bash
-curl -X GET http://localhost:8000/api/v1/cpu -H 'x-api-key: yourapikeyhere'
-```
-
-See [Usage](#usage) for the full endpoint list and response shapes.
+See [Usage](#usage) for how to call the API with that key.
 
 ## Table of contents
 
@@ -78,10 +68,10 @@ See [Usage](#usage) for the full endpoint list and response shapes.
 
 ### Quick install
 
-**Linux (amd64)** — system-wide install (optional, needs `sudo`; the quick start above runs the binary without it):
+**Linux (amd64/386)** — get the binary via the [`install.sh`](install.sh) one-liner from the top of this README, or fetch it directly:
 ```
 curl -L https://github.com/bitcav/nitr/releases/latest/download/nitr_linux_amd64 -o nitr
-sudo install -m 755 nitr /usr/local/bin/
+chmod +x nitr
 ```
 
 **Windows (amd64) — PowerShell**
@@ -122,6 +112,9 @@ You can double click the .exe file or type in cmd
 nitr.exe
 ```
 the server will start listening on port 8000 by default
+
+It writes `nitr.db` and `config.ini` to the current working directory — always start it from the same directory you own.
+A few endpoints require root on Linux: `/memory` outright, the `serial` field on `/chassis` and `/baseboard`, and the `serial`/`uuid` fields on `/product`. Without it they return `unknown` fields (`403` for `/memory`). Full per-endpoint privilege notes are in [docs/API.md](docs/API.md#available-endpoints).
 
 Both spellings — bare `nitr` and the explicit `nitr server` — start the server. Bare `nitr` is **not** deprecated: the Dockerfile's `CMD` and the Windows double-click flow above rely on it, and it stays the zero-argument default. `nitr server` is the self-documenting form (it is what `nitr --help` lists, what the installed system service's `ExecStart` invokes, and what reads clearly in a process list) and accepts the same persistent flags as the root command, e.g. `nitr server --port 9000`.
 
