@@ -264,6 +264,49 @@
           }
         }
       }
+    },
+    "/swap": {
+      "get": {
+        "operationId": "getSwap",
+        "summary": "Swap memory",
+        "description": "/ram only reports physical memory, so a host swapping itself to death looks fine there -- this is the number that catches it.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Swap" } } }
+          }
+        }
+      }
+    },
+    "/loadavg": {
+      "get": {
+        "operationId": "getLoadAvg",
+        "summary": "Load average (1/5/15 minute)",
+        "description": "The standard Unix health number. Not implemented on Windows, which has no equivalent concept -- that returns 501, not an empty 200.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LoadAvg" } } }
+          },
+          "501": {
+            "description": "Not implemented on this platform (Windows)",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } } }
+          }
+        }
+      }
+    },
+    "/sensors": {
+      "get": {
+        "operationId": "getSensors",
+        "summary": "Temperature / fan sensors",
+        "description": "The top request for any hardware monitor, especially on Raspberry Pi / home-server hosts. A host with no exposed sensors returns an empty result, not an error.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/TemperatureStat" } } } }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -482,6 +525,39 @@
           "totalWidth": { "type": "integer", "description": "Total data width in bits." }
         },
         "required": ["bank", "size", "unit", "type", "formFactor", "manufacturer", "serial", "assetTag", "partNumber", "speed", "dataWidth", "totalWidth"]
+      },
+      "Swap": {
+        "type": "object",
+        "properties": {
+          "total": { "type": "integer", "description": "Total swap in bytes." },
+          "used": { "type": "integer", "description": "Used swap in bytes." },
+          "free": { "type": "integer", "description": "Free swap in bytes." },
+          "usedPercent": { "type": "number", "description": "Usage percentage, 0-100." },
+          "sin": { "type": "integer", "description": "Bytes swapped in since boot." },
+          "sout": { "type": "integer", "description": "Bytes swapped out since boot." },
+          "pgin": { "type": "integer", "description": "Swap pages read in." },
+          "pgout": { "type": "integer", "description": "Swap pages written out." },
+          "pgfault": { "type": "integer" },
+          "pgmajfault": { "type": "integer", "description": "Linux only; 0 elsewhere." }
+        },
+        "required": ["total", "used", "free", "usedPercent", "sin", "sout", "pgin", "pgout", "pgfault", "pgmajfault"]
+      },
+      "LoadAvg": {
+        "type": "object",
+        "properties": {
+          "load1": { "type": "number", "description": "1-minute load average." },
+          "load5": { "type": "number", "description": "5-minute load average." },
+          "load15": { "type": "number", "description": "15-minute load average." }
+        },
+        "required": ["load1", "load5", "load15"]
+      },
+      "TemperatureStat": {
+        "type": "object",
+        "properties": {
+          "sensorKey": { "type": "string", "description": "Sensor identifier, platform-dependent (e.g. a hwmon label)." },
+          "sensorTemperature": { "type": "number", "description": "Degrees Celsius." }
+        },
+        "required": ["sensorKey", "sensorTemperature"]
       }
     }
   }

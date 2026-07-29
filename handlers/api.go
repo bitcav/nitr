@@ -28,6 +28,9 @@ import (
 	"github.com/bitcav/nitr-core/ram"
 	db "github.com/bitcav/nitr/database"
 	"github.com/gofiber/fiber/v2"
+	gopshost "github.com/shirou/gopsutil/host"
+	"github.com/shirou/gopsutil/load"
+	"github.com/shirou/gopsutil/mem"
 	gopsprocess "github.com/shirou/gopsutil/process"
 )
 
@@ -371,6 +374,75 @@ func Product(c *fiber.Ctx) error {
 // RAM returns a JSON response of the RAM information
 func RAM(c *fiber.Ctx) error {
 	return c.JSON(ram.Info())
+}
+
+// swapInfoFunc is a seam so tests can stub mem.SwapMemory() without
+// depending on the host's actual swap configuration.
+var swapInfoFunc = mem.SwapMemory
+
+// Swap returns a JSON response of the swap memory information. /ram only
+// reports physical memory, so a host swapping itself to death looks fine
+// there -- this is the number that catches it.
+func Swap(c *fiber.Ctx) error {
+	swap, err := swapInfoFunc()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": err.Error(),
+			"status":  fiber.StatusInternalServerError,
+		})
+	}
+	return c.JSON(swap)
+}
+
+// loadAvgFunc is a seam so tests can stub load.Avg() deterministically.
+var loadAvgFunc = load.Avg
+
+// LoadAvg returns a JSON response of the 1/5/15 minute load average -- the
+// standard Unix health number. Not implemented on Windows (gopsutil has no
+// equivalent concept there); that surfaces as 501 rather than a silently
+// empty 200, so a caller can distinguish "unsupported platform" from
+// "broken".
+func LoadAvg(c *fiber.Ctx) error {
+	avg, err := loadAvgFunc()
+	if err != nil {
+		code := fiber.StatusInternalServerError
+		if strings.Contains(err.Error(), "not implemented") {
+			code = fiber.StatusNotImplemented
+		}
+		return c.Status(code).JSON(fiber.Map{
+			"message": err.Error(),
+			"status":  code,
+		})
+	}
+	return c.JSON(avg)
+}
+
+// sensorsInfoFunc is a seam so tests can stub host.SensorsTemperatures()
+// without depending on the host's actual hardware sensors.
+var sensorsInfoFunc = gopshost.SensorsTemperatures
+
+// Sensors returns a JSON response of the available temperature/fan sensor
+// readings. The top request for any hardware monitor, especially on the
+// Raspberry Pi / home-server hosts this tool suits. A host with no exposed
+// sensors is not an error -- it returns whatever sensorsInfoFunc gives
+// back (nil serialises to null), the same as every other list endpoint's
+// behaviour on an empty result (gpu, devices, drives, network).
+//
+// gopsutil reads one sysfs file per sensor and aggregates any per-file
+// failure into a non-nil "warnings" error while still returning every
+// sensor that DID read successfully -- one unreadable hwmon entry (seen in
+// practice: an ACPI power-supply hwmon node with no temp*_input file) must
+// not blank out every other sensor on the host. Only an error with no data
+// at all is a real failure.
+func Sensors(c *fiber.Ctx) error {
+	temps, err := sensorsInfoFunc()
+	if err != nil && len(temps) == 0 {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": err.Error(),
+			"status":  fiber.StatusInternalServerError,
+		})
+	}
+	return c.JSON(temps)
 }
 
 // memdevInfoFunc is a seam so tests can stub memdev.Info() without needing

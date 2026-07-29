@@ -14,6 +14,9 @@ import (
 	"github.com/bitcav/nitr-core/bandwidth"
 	"github.com/bitcav/nitr-core/isp"
 	"github.com/gofiber/fiber/v2"
+	gopshost "github.com/shirou/gopsutil/host"
+	"github.com/shirou/gopsutil/load"
+	"github.com/shirou/gopsutil/mem"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -93,6 +96,9 @@ func TestAPIEndpoints(t *testing.T) {
 		{"/bandwidth", Bandwidth},
 		{"/isp", ISP},
 		{"/memory", Memory},
+		{"/swap", Swap},
+		{"/loadavg", LoadAvg},
+		{"/sensors", Sensors},
 	}
 
 	for _, c := range cases {
@@ -106,9 +112,11 @@ func TestAPIEndpoints(t *testing.T) {
 			resp, err := app.Test(req, 30000)
 			require.NoError(t, err, "app.Test timed out or failed; resp would be nil")
 			// the handler must have executed (status not mutated -> 200,
-			// 500 if a system call panicked and was recovered, or 403 if
-			// /memory hit a permission error on a root-less host).
-			assert.Contains(t, []int{200, 403, 500}, resp.StatusCode)
+			// 500 if a system call panicked and was recovered, 403 if
+			// /memory hit a permission error on a root-less host, or 501
+			// if /loadavg ran on a platform gopsutil/load has no
+			// implementation for, e.g. Windows).
+			assert.Contains(t, []int{200, 403, 500, 501}, resp.StatusCode)
 			// drain body so the connection can be released
 			_ = body(t, resp)
 		})
@@ -462,4 +470,166 @@ func TestProcessSortOrderLimitSearch(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestSwapErrorHandling covers the error path for Swap: a stubbed
+// mem.SwapMemory() failure must map to 500 with the error surfaced in the
+// body, not a swallowed 200.
+func TestSwapErrorHandling(t *testing.T) {
+	setupEnv(t)
+
+	orig := swapInfoFunc
+	t.Cleanup(func() { swapInfoFunc = orig })
+
+	swapInfoFunc = func() (*mem.SwapMemoryStat, error) { return nil, fmt.Errorf("could not read swap") }
+	app := newTestApp()
+	app.Get("/swap", Swap)
+	resp := get(t, app, "/swap")
+	assert.Equal(t, 500, resp.StatusCode)
+	bd := body(t, resp)
+	assert.Contains(t, bd, `"status":500`)
+	assert.Contains(t, bd, "could not read swap")
+}
+
+func TestSwapSuccess(t *testing.T) {
+	setupEnv(t)
+
+	orig := swapInfoFunc
+	t.Cleanup(func() { swapInfoFunc = orig })
+
+	swapInfoFunc = func() (*mem.SwapMemoryStat, error) {
+		return &mem.SwapMemoryStat{Total: 2048, Used: 512, Free: 1536, UsedPercent: 25}, nil
+	}
+	app := newTestApp()
+	app.Get("/swap", Swap)
+	resp := get(t, app, "/swap")
+	assert.Equal(t, 200, resp.StatusCode)
+	bd := body(t, resp)
+	assert.Contains(t, bd, `"total":2048`)
+	assert.Contains(t, bd, `"usedPercent":25`)
+}
+
+// TestLoadAvgErrorHandling covers both error branches: a "not implemented"
+// failure (the real shape load.Avg() returns on Windows) maps to 501, while
+// any other error maps to 500 -- a caller must be able to tell "this
+// platform doesn't support it" from "something broke".
+func TestLoadAvgErrorHandling(t *testing.T) {
+	setupEnv(t)
+
+	orig := loadAvgFunc
+	t.Cleanup(func() { loadAvgFunc = orig })
+
+	type tc struct {
+		name       string
+		infoReturn func() (*load.AvgStat, error)
+		wantStatus int
+	}
+	cases := []tc{
+		{
+			name:       "not implemented maps to 501",
+			infoReturn: func() (*load.AvgStat, error) { return &load.AvgStat{}, fmt.Errorf("not implemented yet") },
+			wantStatus: 501,
+		},
+		{
+			name:       "other error maps to 500",
+			infoReturn: func() (*load.AvgStat, error) { return nil, fmt.Errorf("could not read /proc/loadavg") },
+			wantStatus: 500,
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			loadAvgFunc = c.infoReturn
+			app := newTestApp()
+			app.Get("/loadavg", LoadAvg)
+			resp := get(t, app, "/loadavg")
+			assert.Equal(t, c.wantStatus, resp.StatusCode)
+		})
+	}
+}
+
+func TestLoadAvgSuccess(t *testing.T) {
+	setupEnv(t)
+
+	orig := loadAvgFunc
+	t.Cleanup(func() { loadAvgFunc = orig })
+
+	loadAvgFunc = func() (*load.AvgStat, error) {
+		return &load.AvgStat{Load1: 0.5, Load5: 1.25, Load15: 2}, nil
+	}
+	app := newTestApp()
+	app.Get("/loadavg", LoadAvg)
+	resp := get(t, app, "/loadavg")
+	assert.Equal(t, 200, resp.StatusCode)
+	assert.Contains(t, body(t, resp), `"load5":1.25`)
+}
+
+func TestSensorsErrorHandling(t *testing.T) {
+	setupEnv(t)
+
+	orig := sensorsInfoFunc
+	t.Cleanup(func() { sensorsInfoFunc = orig })
+
+	sensorsInfoFunc = func() ([]gopshost.TemperatureStat, error) { return nil, fmt.Errorf("could not read sensors") }
+	app := newTestApp()
+	app.Get("/sensors", Sensors)
+	resp := get(t, app, "/sensors")
+	assert.Equal(t, 500, resp.StatusCode)
+	assert.Contains(t, body(t, resp), "could not read sensors")
+}
+
+// TestSensorsPartialFailureStillReturnsData is the real shape gopsutil
+// returns on this project's own dev host: one hwmon entry with no readable
+// temp*_input file (observed: an ACPI power-supply hwmon node) makes
+// SensorsTemperatures return a non-nil "warnings" error ALONGSIDE every
+// sensor that did read successfully. Against a naive `if err != nil`
+// check this 500s and throws away good data for every sensor on the
+// host because one was unreadable; the fix must serve the partial data
+// with 200 instead.
+func TestSensorsPartialFailureStillReturnsData(t *testing.T) {
+	setupEnv(t)
+
+	orig := sensorsInfoFunc
+	t.Cleanup(func() { sensorsInfoFunc = orig })
+
+	sensorsInfoFunc = func() ([]gopshost.TemperatureStat, error) {
+		return []gopshost.TemperatureStat{{SensorKey: "coretemp", Temperature: 42}},
+			fmt.Errorf("Number of warnings: 1")
+	}
+	app := newTestApp()
+	app.Get("/sensors", Sensors)
+	resp := get(t, app, "/sensors")
+	assert.Equal(t, 200, resp.StatusCode)
+	assert.Contains(t, body(t, resp), `"sensorKey":"coretemp"`)
+}
+
+// TestSensorsEmptyIsNotAnError proves a host with no exposed sensors
+// (nil, nil from sensorsInfoFunc) is a normal 200, not an error -- matching
+// every other list endpoint's behaviour on an empty result.
+func TestSensorsEmptyIsNotAnError(t *testing.T) {
+	setupEnv(t)
+
+	orig := sensorsInfoFunc
+	t.Cleanup(func() { sensorsInfoFunc = orig })
+
+	sensorsInfoFunc = func() ([]gopshost.TemperatureStat, error) { return nil, nil }
+	app := newTestApp()
+	app.Get("/sensors", Sensors)
+	resp := get(t, app, "/sensors")
+	assert.Equal(t, 200, resp.StatusCode)
+}
+
+func TestSensorsSuccess(t *testing.T) {
+	setupEnv(t)
+
+	orig := sensorsInfoFunc
+	t.Cleanup(func() { sensorsInfoFunc = orig })
+
+	sensorsInfoFunc = func() ([]gopshost.TemperatureStat, error) {
+		return []gopshost.TemperatureStat{{SensorKey: "cpu_thermal", Temperature: 45.6}}, nil
+	}
+	app := newTestApp()
+	app.Get("/sensors", Sensors)
+	resp := get(t, app, "/sensors")
+	assert.Equal(t, 200, resp.StatusCode)
+	assert.Contains(t, body(t, resp), `"sensorKey":"cpu_thermal"`)
 }

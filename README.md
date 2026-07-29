@@ -359,6 +359,9 @@ These endpoints return system and hardware information about your **host**. Chec
 | GET  | /baseboard |
 | GET  | /product   |
 | GET  | /memory    |
+| GET  | /swap      |
+| GET  | /loadavg   |
+| GET  | /sensors   |
 
 ### JSON data references
 

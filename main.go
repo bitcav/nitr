@@ -141,6 +141,9 @@ func server() (*fiber.App, error) {
 	v1.Get("/baseboard", handlers.Baseboard)
 	v1.Get("/product", handlers.Product)
 	v1.Get("/memory", handlers.Memory)
+	v1.Get("/swap", handlers.Swap)
+	v1.Get("/loadavg", handlers.LoadAvg)
+	v1.Get("/sensors", handlers.Sensors)
 
 	//Prometheus /metrics endpoint, behind the same x-api-key auth as /api/v1/*
 	//and the same rate limit, since it is equally brute-forceable.
