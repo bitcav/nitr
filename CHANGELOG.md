@@ -421,6 +421,19 @@ behavioral and API changes that would be considered breaking after 1.0; patch
 
 ### Fixed
 
+- **`install.sh` no longer claims it "installed" anything, and warns when
+  another `nitr` shadows the download.** The script downloads into the
+  current directory and never touches PATH, but its old output —
+  `[installer] installed nitr` followed by a bare version line — read as a
+  system install, so a user with an older `nitr` already on PATH ran
+  `nitr version` one command later and saw the *old* version. It now
+  states the absolute path written and that it is not on PATH, labels the
+  version line as belonging to the downloaded binary, prints the one
+  `sudo mv … /usr/local/bin/nitr` command to make it the system `nitr`,
+  and warns explicitly — naming the resolved path and its version — when
+  `command -v nitr` resolves to a different binary that will keep
+  shadowing the download. No behaviour change: it still downloads to the
+  current directory and never writes to system paths.
 - **The embedded OpenAPI spec now matches the migrated wire format.**
   `Drive.type` documents the lowercase `unknown`/`hdd`/`fdd`/`odd`/`ssd`/`virtual`
   enum ghw v0.25 actually serializes (previously it omitted `virtual` and showed

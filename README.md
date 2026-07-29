@@ -27,6 +27,8 @@ A **cross-platform remote monitoring tool** written in Go that exposes **system 
 curl -fsSL https://raw.githubusercontent.com/bitcav/nitr/master/install.sh | bash
 ```
 
+The installer downloads into the **current directory** — nothing is placed on your PATH. Run it as `./nitr` from here, or make it available globally with `sudo mv nitr /usr/local/bin/nitr`.
+
 ```bash
 ./nitr          # starts the server in the foreground (default port 8000)
                 # and creates nitr.db + config.ini in this directory

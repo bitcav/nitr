@@ -75,6 +75,24 @@ set -euo pipefail
     *) run_path="./$dest" ;;
   esac
 
-  log "installed $dest"
+  dest_abs="$(cd -- "$(dirname -- "$dest")" && pwd)/$(basename -- "$dest")"
+
+  log "downloaded $dest_abs"
+  log "nothing was installed system-wide -- $dest_abs is NOT on your PATH." \
+      "Run it as '$run_path' from here, or make it the system nitr with:" \
+      "    sudo mv $dest_abs /usr/local/bin/nitr"
+
+  # Shadowing check: an older nitr already on PATH keeps winning over the
+  # file just downloaded, so name it explicitly rather than letting the user
+  # discover the mismatch one command later.
+  existing=$(command -v nitr || true)
+  if [[ -n "$existing" && "$existing" != "$dest_abs" ]]; then
+    existing_version=$("$existing" version 2>/dev/null || echo "version unknown")
+    log "WARNING: 'nitr' on your PATH resolves to $existing ($existing_version) --" \
+        "running 'nitr' will keep using THAT binary, not the one just downloaded." \
+        "To switch: sudo mv $dest_abs /usr/local/bin/nitr"
+  fi
+
+  log "version of the downloaded binary ($dest_abs):"
   "$run_path" version
 }
