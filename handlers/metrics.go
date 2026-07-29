@@ -9,7 +9,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	pscpu "github.com/shirou/gopsutil/cpu"
+	pscpu "github.com/shirou/gopsutil/v4/cpu"
 )
 
 // Metrics renders Nitr's system data in Prometheus exposition format at

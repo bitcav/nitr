@@ -12,6 +12,30 @@ behavioral and API changes that would be considered breaking after 1.0; patch
 
 ### ⚠ Breaking changes
 
+- **`/api/v1/drives` reclassifies drive types and enumerates `loop*`
+  devices.** The `ghw` bump (v0.6.1 → v0.25.0, reaching nitr via
+  nitr-core v0.2.0) changes what `type` reports: `ram*` devices are
+  reclassified `ssd` → `unknown` (v0.6.1 was mislabelling RAM disks as
+  SSDs), and `loop*` devices are now enumerated at all, typed `virtual`
+  — 22 → 24 entries on the test host. `ssd` does **not** disappear
+  universally: ghw v0.25 still emits it for `nvme*`/`mmc*` and
+  non-rotational `sd*` drives, so real SSDs keep their type. The new
+  values are passed through deliberately rather than mapped back onto
+  the old enum — calling a loop device an SSD would be re-asserting
+  data now known to be wrong. **Consumers branching on `type == "ssd"`
+  must be updated.** Loop devices are deliberately not filtered
+  server-side; `type: "virtual"` is the documented way to filter them
+  client-side. Root cause lives in the `github.com/bitcav/nitr-core`
+  dependency (v0.2.0, [bb3fb9b](https://github.com/bitcav/nitr-core/commit/bb3fb9bfb578e9b35e9035b9b41ac1cb37992648)).
+- **`/api/v1/disks` no longer lists bind mounts.** gopsutil v4's
+  `disk.Partitions(false)` now skips bind mounts outright, so mounts
+  that duplicate an already-listed device — e.g. `/snap` or WSL's
+  `docker-desktop-user-distro` bind — no longer appear (5 → 3 entries
+  on the test host). This is more correct — the duplicated filesystem's
+  space was being double-counted — but it is an output change:
+  consumers matching on `mountPoint` should expect fewer entries.
+  Root cause lives in the `github.com/bitcav/nitr-core` dependency
+  (v0.2.0, [bb3fb9b](https://github.com/bitcav/nitr-core/commit/bb3fb9bfb578e9b35e9035b9b41ac1cb37992648)).
 - **`/api/v1/product` no longer emits `assetTag`; the product name moved to a
   new `name` key.** The value serialized under `assetTag` was always the
   product **name** (`ghw.Product().Name`), never an asset tag — ghw's
@@ -277,6 +301,27 @@ behavioral and API changes that would be considered breaking after 1.0; patch
 
 ### Changed
 
+- **Hardware-introspection stack modernized: gopsutil v2 → v4
+  (`github.com/shirou/gopsutil/v4` v4.26.6), ghw v0.6.1 → v0.25.0,
+  nitr-core v0.1.1 → v0.2.0.** gopsutil v2.20.7 was `+incompatible` and
+  is now completely gone from `go.mod`/`go.sum` — if both modules
+  remained, both would compile, and v2 is what breaks windows/arm64.
+  ghw arrives transitively through nitr-core. No local `replace`
+  directive is involved — `go.mod` resolves the published modules
+  directly. The call-site delta in nitr itself was small: import paths
+  everywhere, `process.Status()` now returns a slice (collapsed to its
+  first element — byte-identical to v2's string on every supported
+  platform), and `SensorsTemperatures` moved from the `host` package to
+  the new `sensors` package. The endpoint-visible consequences are the
+  two breaking entries above; everything else is byte-identical modulo
+  live-sampled values (measured with an identical before/after harness
+  across all 14 nitr-core collectors).
+- **`windows/arm64` now builds.** `GOOS=windows GOARCH=arm64 go build .`
+  succeeds for the first time — it previously failed inside gopsutil
+  v2 / go-ole. The full matrix — windows/{arm64,amd64,386},
+  linux/{amd64,386,arm64} — builds. windows/arm64 is **build-only** in
+  this release: it is deliberately not added to the release artifacts,
+  which need an evidence run on real windows-11-arm hardware first.
 - Bumped `github.com/bitcav/nitr-core` from the
   `v0.0.0-20200823224936-5500912f5599` pseudo-version to the tagged **v0.1.0**
   release. This is the dependency bump that delivers the `/product` fixes
@@ -337,6 +382,17 @@ behavioral and API changes that would be considered breaking after 1.0; patch
 
 ### Fixed
 
+- **Six endpoints no longer panic when their hardware probe fails.**
+  `/api/v1/baseboard`, `/api/v1/bios`, `/api/v1/chassis`,
+  `/api/v1/product`, `/api/v1/drives` and `/api/v1/devices` logged a
+  ghw error and then dereferenced the nil result anyway — a guaranteed
+  crash on exactly the hosts where probes fail: ARM boards without DMI
+  tables and VMs without a PCI bus (the same defect class that v0.1.1
+  fixed in `/cpu` and `/gpu`). Each collector now guards on both error
+  and nil and degrades to the zero struct / empty array, with
+  regression tests that were verified to fail without the guards.
+  Fixed in the `github.com/bitcav/nitr-core` dependency (v0.2.0,
+  [7ba07df](https://github.com/bitcav/nitr-core/commit/7ba07dfec1b5e64f5a50188b4acb25a76e1eb79a)).
 - **`/api/v1/product` now emits `family` (the documented, correctly spelled
   key).** `Product.Family` was serialized under the misspelled JSON tag
   `familiy`, so clients written against the documented `family` key silently

@@ -28,10 +28,10 @@ import (
 	"github.com/bitcav/nitr-core/ram"
 	db "github.com/bitcav/nitr/database"
 	"github.com/gofiber/fiber/v2"
-	gopshost "github.com/shirou/gopsutil/host"
-	"github.com/shirou/gopsutil/load"
-	"github.com/shirou/gopsutil/mem"
-	gopsprocess "github.com/shirou/gopsutil/process"
+	"github.com/shirou/gopsutil/v4/load"
+	"github.com/shirou/gopsutil/v4/mem"
+	gopsprocess "github.com/shirou/gopsutil/v4/process"
+	"github.com/shirou/gopsutil/v4/sensors"
 )
 
 func AuthAPI(c *fiber.Ctx) error {
@@ -287,7 +287,12 @@ func defaultProcesses() ([]ProcessInfo, error) {
 		ppid, _ := p.Ppid()
 		user, _ := p.Username()
 		cmdline, _ := p.Cmdline()
-		status, _ := p.Status()
+		// gopsutil v4 returns the status as a slice; every supported
+		// platform wraps the single v2-era string in one element.
+		status := ""
+		if st, _ := p.Status(); len(st) > 0 {
+			status = st[0]
+		}
 		startTime, _ := p.CreateTime()
 		cpuPercent, _ := p.CPUPercent()
 		memPercent, _ := p.MemoryPercent()
@@ -444,7 +449,7 @@ func LoadAvg(c *fiber.Ctx) error {
 
 // sensorsInfoFunc is a seam so tests can stub host.SensorsTemperatures()
 // without depending on the host's actual hardware sensors.
-var sensorsInfoFunc = gopshost.SensorsTemperatures
+var sensorsInfoFunc = sensors.SensorsTemperatures
 
 // Sensors returns a JSON response of the available temperature/fan sensor
 // readings. The top request for any hardware monitor, especially on the
