@@ -107,6 +107,17 @@ jobs:
           GOOS: windows
           GOARCH: '386'
         run: go build -o nitr_windows_386.exe
+      # BUILD-ONLY FOR INVESTIGATION. windows/arm64 is NOT a shipped target:
+      # whether hardware introspection (SMBIOS/gopsutil/ghw) works there is
+      # unverified, and the arm64-probe job exists to answer exactly that.
+      # DO NOT add nitr_windows_arm64.exe to the Draft Release `files:` list.
+      # If you are copy-pasting this block, that constraint applies to your
+      # paste too.
+      - name: Build Windows arm64 (build-only — DO NOT RELEASE)
+        env:
+          GOOS: windows
+          GOARCH: arm64
+        run: go build -o nitr_windows_arm64.exe
       - name: Upload build artifacts
         uses: actions/upload-artifact@v7
         with:
@@ -116,6 +127,40 @@ jobs:
             nitr_linux_386
             nitr_windows_amd64.exe
             nitr_windows_386.exe
+            # arm64 binary is here only so the arm64-probe job can fetch it.
+            # Safe because Draft Release selects files by an explicit list,
+            # not a glob — it will not pick this up. Build-only, see above.
+            nitr_windows_arm64.exe
+
+  # Evidence-gathering job, NOT a release gate (deliberately absent from the
+  # release job's `needs`): does the arm64 binary's hardware introspection
+  # actually work on Windows on Arm? A red cell in its report table is a
+  # finding, not a CI failure — the job only fails if the binary won't run,
+  # the server won't start, or the API key can't be obtained.
+  arm64-probe:
+    name: Windows arm64 endpoint probe (evidence-only)
+    needs: [build]
+    runs-on: windows-11-arm
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - name: Download build artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: nitr-binaries
+      # Explicit pwsh: the Windows default shell for `run:` IS pwsh's cousin
+      # and this repo has been broken twice by relying on defaults. The probe
+      # is PowerShell-native so no tool installation is needed on the runner.
+      - name: Probe all API endpoints on Windows arm64
+        shell: pwsh
+        run: ./scripts/arm64_endpoint_probe.ps1 -Exe ./nitr_windows_arm64.exe -ReportPath arm64-endpoint-report.md
+      - name: Upload probe report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: nitr-windows-arm64-endpoint-report
+          path: arm64-endpoint-report.md
+          if-no-files-found: warn
 
   lint:
     name: Lint
