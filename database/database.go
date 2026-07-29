@@ -123,12 +123,17 @@ func GetApiKey() (string, error) {
 	return nitrUser.Apikey, nil
 }
 
-func SetAPIData() {
+// SetAPIData ensures nitr.db exists and holds a default user, provisioning
+// both on first run. It returns an error rather than logging and continuing:
+// the caller must refuse to start the server against a store it knows is
+// broken, rather than serving traffic that will fail on every request.
+func SetAPIData() error {
 	// DB Setup: CreateBucketIfNotExists is safe to re-run, so a bucket-less
 	// nitr.db (touched/restored empty) self-heals instead of panicking.
 	_, statErr := os.Stat(DBPath())
-	err := SetupDB()
-	utils.LogError(err)
+	if err := SetupDB(); err != nil {
+		return fmt.Errorf("setting up database: %w", err)
+	}
 
 	if statErr != nil {
 		log.Println("Database created")
@@ -137,7 +142,9 @@ func SetAPIData() {
 		APIKey := utils.RandString(10)
 
 		user := models.User{Password: utils.PasswordHash("123456"), Apikey: APIKey}
-		err = SetUserData("1", user)
-		utils.LogError(err)
+		if err := SetUserData("1", user); err != nil {
+			return fmt.Errorf("provisioning default user: %w", err)
+		}
 	}
+	return nil
 }

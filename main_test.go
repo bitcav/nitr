@@ -206,6 +206,29 @@ func TestStartPropagatesLogsError(t *testing.T) {
 	assert.Contains(t, err.Error(), "nitr.log")
 }
 
+// TestStartPropagatesSetAPIDataError proves the server refuses to start
+// rather than serving traffic against a broken store: a nitr.db that is
+// actually a directory makes bolt.Open fail inside SetAPIData, and Start
+// must surface that as an error instead of logging it and continuing.
+func TestStartPropagatesSetAPIDataError(t *testing.T) {
+	cdTempMain(t)
+	ln, port := freeListener(t)
+	ln.Close()
+
+	require.NoError(t, os.Mkdir("nitr.db", 0755))
+
+	cfg := fmt.Sprintf(
+		"port: %s\nopen_browser_on_startup: false\nsave_logs: false\nssl_enabled: false\n",
+		port,
+	)
+	require.NoError(t, ioutil.WriteFile("config.ini", []byte(cfg), 0666))
+
+	p := &program{}
+	err := p.Start(nil)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "API data")
+}
+
 // TestServerMiddleware verifies the wired middlewares actually act on
 // requests rather than merely compiling in: the login limiter returns 429
 // after rate_limit_login_max attempts, CORS echoes only the configured

@@ -115,10 +115,21 @@ func TestSetAPIDataHealsBucketlessDB(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, db.Close())
 
-	SetAPIData()
+	require.NoError(t, SetAPIData())
 	require.NoError(t, SetUserData("1", models.User{Password: "p", Apikey: "k"}))
 	_, err = GetUserByID("1")
 	assert.NoError(t, err)
+}
+
+func TestSetAPIDataReturnsErrorWhenSetupFails(t *testing.T) {
+	cdTemp(t)
+	viper.Reset()
+	// nitr.db is a directory -> bolt.Open fails -> SetupDB errors -> SetAPIData
+	// must propagate rather than swallow it.
+	require.NoError(t, os.Mkdir("nitr.db", 0755))
+
+	err := SetAPIData()
+	assert.Error(t, err)
 }
 
 func TestGetUserByIDOpenError(t *testing.T) {
@@ -133,7 +144,7 @@ func TestSetAPIDataFirstRun(t *testing.T) {
 	cdTemp(t)
 	viper.Reset()
 	// no nitr.db -> provisions default user (password 123456, random 10-char key)
-	SetAPIData()
+	require.NoError(t, SetAPIData())
 	assert.FileExists(t, "nitr.db")
 
 	user, err := GetUserByID("1")
@@ -145,12 +156,12 @@ func TestSetAPIDataFirstRun(t *testing.T) {
 func TestSetAPIDataSubsequentRunNoop(t *testing.T) {
 	cdTemp(t)
 	viper.Reset()
-	SetAPIData()
+	require.NoError(t, SetAPIData())
 	first, err := GetApiKey()
 	require.NoError(t, err)
 
 	// second call must NOT re-provision (db already present)
-	SetAPIData()
+	require.NoError(t, SetAPIData())
 	key, err := GetApiKey()
 	require.NoError(t, err)
 	assert.Equal(t, first, key)
@@ -169,7 +180,7 @@ func TestDataDirPutsDBThere(t *testing.T) {
 	dir := filepath.Join("nested", "data")
 	viper.Set("data_dir", dir)
 
-	SetAPIData()
+	require.NoError(t, SetAPIData())
 	dbFile := filepath.Join(dir, "nitr.db")
 	assert.FileExists(t, dbFile)
 	assert.NoFileExists(t, "nitr.db", "with data_dir set, nothing may be written to the cwd")

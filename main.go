@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"fmt"
 	"io/fs"
 	"log"
 	"net/http"
@@ -53,7 +54,9 @@ func server() (*fiber.App, error) {
 	utils.ConfigFileSetup()
 
 	//Set API Server default Data
-	db.SetAPIData()
+	if err := db.SetAPIData(); err != nil {
+		return nil, fmt.Errorf("setting up API data: %w", err)
+	}
 
 	//App Config
 	app := fiber.New(fiber.Config{
