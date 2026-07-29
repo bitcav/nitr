@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 	"io/fs"
+	"sort"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -21,11 +24,11 @@ import (
 	"github.com/bitcav/nitr-core/isp"
 	"github.com/bitcav/nitr-core/network"
 	"github.com/bitcav/nitr-core/overview"
-	"github.com/bitcav/nitr-core/process"
 	"github.com/bitcav/nitr-core/product"
 	"github.com/bitcav/nitr-core/ram"
 	db "github.com/bitcav/nitr/database"
 	"github.com/gofiber/fiber/v2"
+	gopsprocess "github.com/shirou/gopsutil/process"
 )
 
 func AuthAPI(c *fiber.Ctx) error {
@@ -220,9 +223,128 @@ func Overview(c *fiber.Ctx) error {
 	return c.JSON(overview.Info())
 }
 
-// Process returns a JSON response of the Processes information
+// ProcessInfo describes a single running process. CPUPercent is averaged
+// over the process's lifetime (gopsutil's zero-interval mode), not a live
+// instantaneous sample -- computing an instantaneous per-process rate would
+// require sleeping once per process, which is the same class of blocking
+// bug fixed in bandwidth.Info().
+type ProcessInfo struct {
+	Pid        int32   `json:"pid"`
+	Ppid       int32   `json:"ppid"`
+	Name       string  `json:"name"`
+	User       string  `json:"user,omitempty"`
+	Cmdline    string  `json:"cmdline,omitempty"`
+	Status     string  `json:"status,omitempty"`
+	CPUPercent float64 `json:"cpu_percent"`
+	MemPercent float32 `json:"mem_percent"`
+	RSS        uint64  `json:"rss"`
+	StartTime  int64   `json:"start_time"`
+}
+
+// processesFunc is a seam so tests can stub the process list without
+// depending on the host's actual running processes.
+var processesFunc = defaultProcesses
+
+// defaultProcesses lists every running process with as much detail as
+// gopsutil can provide. A process that exits mid-scan (NewProcess/field
+// lookups returning an error) is skipped rather than failing the whole
+// call -- process listings are inherently racy against process exit, and
+// one vanished PID should not blank out every other one.
+func defaultProcesses() ([]ProcessInfo, error) {
+	procs, err := gopsprocess.Processes()
+	if err != nil {
+		return nil, err
+	}
+
+	infos := make([]ProcessInfo, 0, len(procs))
+	for _, p := range procs {
+		name, err := p.Name()
+		if err != nil {
+			continue
+		}
+		ppid, _ := p.Ppid()
+		user, _ := p.Username()
+		cmdline, _ := p.Cmdline()
+		status, _ := p.Status()
+		startTime, _ := p.CreateTime()
+		cpuPercent, _ := p.CPUPercent()
+		memPercent, _ := p.MemoryPercent()
+		var rss uint64
+		if mem, err := p.MemoryInfo(); err == nil && mem != nil {
+			rss = mem.RSS
+		}
+
+		infos = append(infos, ProcessInfo{
+			Pid:        p.Pid,
+			Ppid:       ppid,
+			Name:       name,
+			User:       user,
+			Cmdline:    cmdline,
+			Status:     status,
+			CPUPercent: cpuPercent,
+			MemPercent: memPercent,
+			RSS:        rss,
+			StartTime:  startTime,
+		})
+	}
+	return infos, nil
+}
+
+// Process returns a JSON response of the Processes information. Supports
+// ?sort=cpu|mem|name|pid (default pid), ?order=asc|desc (default asc),
+// ?limit=<n> and ?search=<substring>, matched case-insensitively against
+// name and cmdline.
 func Process(c *fiber.Ctx) error {
-	return c.JSON(process.Info())
+	infos, err := processesFunc()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": err.Error(),
+			"status":  fiber.StatusInternalServerError,
+		})
+	}
+
+	if search := strings.ToLower(strings.TrimSpace(c.Query("search"))); search != "" {
+		filtered := infos[:0]
+		for _, p := range infos {
+			if strings.Contains(strings.ToLower(p.Name), search) || strings.Contains(strings.ToLower(p.Cmdline), search) {
+				filtered = append(filtered, p)
+			}
+		}
+		infos = filtered
+	}
+
+	desc := strings.EqualFold(c.Query("order"), "desc")
+	switch strings.ToLower(c.Query("sort")) {
+	case "cpu":
+		sort.Slice(infos, func(i, j int) bool { return less(infos[i].CPUPercent, infos[j].CPUPercent, desc) })
+	case "mem":
+		sort.Slice(infos, func(i, j int) bool { return less(infos[i].MemPercent, infos[j].MemPercent, desc) })
+	case "name":
+		sort.Slice(infos, func(i, j int) bool {
+			if desc {
+				return infos[i].Name > infos[j].Name
+			}
+			return infos[i].Name < infos[j].Name
+		})
+	default:
+		sort.Slice(infos, func(i, j int) bool { return less(infos[i].Pid, infos[j].Pid, desc) })
+	}
+
+	if limitParam := c.Query("limit"); limitParam != "" {
+		if limit, err := strconv.Atoi(limitParam); err == nil && limit >= 0 && limit < len(infos) {
+			infos = infos[:limit]
+		}
+	}
+
+	return c.JSON(infos)
+}
+
+// less orders two ordered values ascending, or descending when desc is true.
+func less[T int32 | float64 | float32](a, b T, desc bool) bool {
+	if desc {
+		return a > b
+	}
+	return a < b
 }
 
 // Product returns a JSON response of the Product information

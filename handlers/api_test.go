@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http/httptest"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -303,6 +304,122 @@ func TestMemoryErrorHandling(t *testing.T) {
 			bd := body(t, resp)
 			for _, s := range c.wantInBody {
 				assert.Contains(t, bd, s)
+			}
+		})
+	}
+}
+
+// TestProcessErrorHandling covers the panic-to-error conversion in
+// process.Info() (nitr-core, unvendored). Against the old code
+// (return c.JSON(process.Info())), a listing failure panicked the request
+// instead of returning a mapped status -- there was no error path to test.
+func TestProcessErrorHandling(t *testing.T) {
+	setupEnv(t)
+
+	orig := processesFunc
+	processesFunc = func() ([]ProcessInfo, error) { return nil, fmt.Errorf("could not list processes") }
+	t.Cleanup(func() { processesFunc = orig })
+
+	app := newTestApp()
+	app.Get("/processes", AuthAPI, Process)
+
+	req := httptest.NewRequest("GET", "/processes", nil)
+	req.Header.Set("x-api-key", "testapikey")
+	resp, err := app.Test(req, 30000)
+	require.NoError(t, err)
+	assert.Equal(t, 500, resp.StatusCode)
+	bd := body(t, resp)
+	assert.Contains(t, bd, `"status":500`)
+	assert.Contains(t, bd, "could not list processes")
+}
+
+func stubProcesses() []ProcessInfo {
+	return []ProcessInfo{
+		{Pid: 3, Name: "beta", Cmdline: "/usr/bin/beta --flag", CPUPercent: 10, MemPercent: 5},
+		{Pid: 1, Name: "alpha", Cmdline: "/usr/bin/alpha", CPUPercent: 30, MemPercent: 1},
+		{Pid: 2, Name: "gamma", Cmdline: "/usr/bin/gamma", CPUPercent: 20, MemPercent: 15},
+	}
+}
+
+func TestProcessSortOrderLimitSearch(t *testing.T) {
+	setupEnv(t)
+
+	orig := processesFunc
+	t.Cleanup(func() { processesFunc = orig })
+
+	type tc struct {
+		name       string
+		query      string
+		wantPids   []string // in expected order, as they must appear in the JSON array
+		wantStatus int
+	}
+	cases := []tc{
+		{
+			name:     "default sorts by pid ascending",
+			query:    "",
+			wantPids: []string{`"pid":1`, `"pid":2`, `"pid":3`},
+		},
+		{
+			name:     "sort=pid&order=desc reverses default",
+			query:    "?sort=pid&order=desc",
+			wantPids: []string{`"pid":3`, `"pid":2`, `"pid":1`},
+		},
+		{
+			name:     "sort=cpu&order=desc",
+			query:    "?sort=cpu&order=desc",
+			wantPids: []string{`"pid":1`, `"pid":2`, `"pid":3`},
+		},
+		{
+			name:     "sort=mem ascending",
+			query:    "?sort=mem",
+			wantPids: []string{`"pid":1`, `"pid":3`, `"pid":2`},
+		},
+		{
+			name:     "sort=name descending",
+			query:    "?sort=name&order=desc",
+			wantPids: []string{`"pid":2`, `"pid":3`, `"pid":1`}, // gamma, beta, alpha
+		},
+		{
+			name:     "limit truncates after sort",
+			query:    "?sort=cpu&order=desc&limit=2",
+			wantPids: []string{`"pid":1`, `"pid":2`},
+		},
+		{
+			name:     "search matches name case-insensitively",
+			query:    "?search=ALPHA",
+			wantPids: []string{`"pid":1`},
+		},
+		{
+			name:     "search matches cmdline substring",
+			query:    "?search=--flag",
+			wantPids: []string{`"pid":3`},
+		},
+	}
+
+	for _, c := range cases {
+		c := c
+		t.Run(c.name, func(t *testing.T) {
+			processesFunc = func() ([]ProcessInfo, error) { return stubProcesses(), nil }
+
+			app := newTestApp()
+			app.Get("/processes", AuthAPI, Process)
+
+			req := httptest.NewRequest("GET", "/processes"+c.query, nil)
+			req.Header.Set("x-api-key", "testapikey")
+			resp, err := app.Test(req, 30000)
+			require.NoError(t, err)
+			assert.Equal(t, 200, resp.StatusCode)
+			bd := body(t, resp)
+
+			lastIdx := -1
+			for _, want := range c.wantPids {
+				idx := strings.Index(bd, want)
+				assert.GreaterOrEqual(t, idx, 0, "expected %q in body %s", want, bd)
+				assert.Greater(t, idx, lastIdx, "expected %q to appear after previous entry in %s", want, bd)
+				lastIdx = idx
+			}
+			if c.name == "limit truncates after sort" {
+				assert.Equal(t, 2, strings.Count(bd, `"pid":`))
 			}
 		})
 	}
