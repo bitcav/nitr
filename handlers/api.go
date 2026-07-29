@@ -3,7 +3,6 @@ package handlers
 import (
 	"errors"
 	"io/fs"
-	"net/http"
 
 	"github.com/bitcav/go-memdev"
 	"github.com/bitcav/nitr-core/bandwidth"
@@ -30,14 +29,14 @@ func AuthAPI(c *fiber.Ctx) error {
 	key := c.Get("x-api-key")
 	storedKey, err := db.GetApiKey()
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).SendString(err.Error())
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
 	if storedKey == key {
 		return c.Next()
 	}
-	return c.Status(http.StatusUnauthorized).JSON(fiber.Map{
+	return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 		"message": "Unauthorized, please correct the api key of the target host",
-		"status":  http.StatusUnauthorized,
+		"status":  fiber.StatusUnauthorized,
 	})
 }
 
@@ -138,9 +137,9 @@ var memdevInfoFunc = memdev.Info
 func Memory(c *fiber.Ctx) error {
 	memInfo, err := memdevInfoFunc()
 	if err != nil {
-		code := http.StatusInternalServerError
+		code := fiber.StatusInternalServerError
 		if errors.Is(err, fs.ErrPermission) {
-			code = http.StatusForbidden
+			code = fiber.StatusForbidden
 		}
 		return c.Status(code).JSON(fiber.Map{
 			"message": err.Error(),

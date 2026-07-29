@@ -16,13 +16,13 @@ func TestLoginJSON(t *testing.T) {
 
 func TestPasswordModelJSON(t *testing.T) {
 	p := Password{
-		CurrentPassword:    "a",
-		NewPassword:        "b",
-		RepeateNewPassword: "b",
+		CurrentPassword:   "a",
+		NewPassword:       "b",
+		RepeatNewPassword: "b",
 	}
 	assert.Equal(t, "a", p.CurrentPassword)
 	assert.Equal(t, "b", p.NewPassword)
-	assert.Equal(t, "b", p.RepeateNewPassword)
+	assert.Equal(t, "b", p.RepeatNewPassword)
 }
 
 func TestApiKeyJSON(t *testing.T) {

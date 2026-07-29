@@ -10,9 +10,9 @@ type Login struct {
 }
 
 type Password struct {
-	CurrentPassword    string `form:"currentPassword"`
-	NewPassword        string `form:"newPassword"`
-	RepeateNewPassword string `form:"repeatNewPassword"`
+	CurrentPassword   string `form:"currentPassword"`
+	NewPassword       string `form:"newPassword"`
+	RepeatNewPassword string `form:"repeatNewPassword"`
 }
 
 type ApiKey struct {

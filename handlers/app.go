@@ -178,6 +178,10 @@ func PasswordSubmit(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
 
+	if password.NewPassword != password.RepeatNewPassword {
+		return c.Status(fiber.StatusBadRequest).SendString("new password and repeat password do not match")
+	}
+
 	nitrUser, err := db.GetUserByID("1")
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())

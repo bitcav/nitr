@@ -190,6 +190,20 @@ func TestPasswordSubmitWrongCurrent(t *testing.T) {
 	assert.Equal(t, 304, resp.StatusCode)
 }
 
+func TestPasswordSubmitMismatchedRepeat(t *testing.T) {
+	setupEnv(t)
+	app := newTestApp()
+	app.Post("/password", PasswordSubmit)
+
+	resp := post(t, app, "/password", "currentPassword=123456&newPassword=newpass&repeatNewPassword=different")
+	assert.Equal(t, fiber.StatusBadRequest, resp.StatusCode)
+
+	// password must not have changed in db
+	u, err := db.GetUserByID("1")
+	require.NoError(t, err)
+	assert.Equal(t, utils.PasswordHash("123456"), u.Password)
+}
+
 func TestAuthMiddlewareAllowsSession(t *testing.T) {
 	setupEnv(t)
 	app := newTestApp()

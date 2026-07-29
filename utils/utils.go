@@ -309,46 +309,31 @@ func StartServer(app *fiber.App) {
 	if cfgFile == "" {
 		cfgFile = "config.ini"
 	}
+	protocol := "http"
+	listen := func() error { return ListenFunc(app, addr) }
 	if sslEnabled {
+		protocol = "https"
 		cert := viper.GetString("ssl_certificate")
 		key := viper.GetString("ssl_certificate_key")
-
-		StartMessage("https", port)
-
-		openBrowser := viper.GetBool("open_browser_on_startup")
-		if openBrowser {
-			LogError(openBrowserFunc("https://localhost", port))
-		}
-
-		log.Println("Starting server")
-
-		err := app.ListenTLS(addr, cert, key)
-		if err != nil {
-			fmt.Println(err, "\nCheck settings at "+cfgFile)
-		}
-		LogError(err)
-
-	} else {
-		StartMessage("http", port)
-		openBrowser := viper.GetBool("open_browser_on_startup")
-		if openBrowser {
-			LogError(openBrowserFunc("http://localhost", port))
-		}
-
-		log.Println("Starting server")
-
-		err := ListenFunc(app, addr)
-		if err != nil {
-			fmt.Println(err, "\nCheck settings at "+cfgFile)
-		}
-		LogError(err)
+		listen = func() error { return app.ListenTLS(addr, cert, key) }
 	}
+
+	StartMessage(protocol, port)
+	if viper.GetBool("open_browser_on_startup") {
+		LogError(openBrowserFunc(protocol+"://localhost", port))
+	}
+
+	log.Println("Starting server")
+
+	err := listen()
+	if err != nil {
+		fmt.Println(err, "\nCheck settings at "+cfgFile)
+	}
+	LogError(err)
 }
 
 func PasswordHash(password string) string {
 	h := sha256.New()
 	h.Write([]byte(password))
-	sha1_hash := hex.EncodeToString(h.Sum(nil))
-
-	return sha1_hash
+	return hex.EncodeToString(h.Sum(nil))
 }

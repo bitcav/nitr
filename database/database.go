@@ -40,19 +40,19 @@ func SetupDB() error {
 	db, err := bolt.Open(DBPath(), fileMode, nil)
 
 	if err != nil {
-		return fmt.Errorf("could not open db, %v", err)
+		return fmt.Errorf("could not open db, %w", err)
 	}
 	defer db.Close()
 
 	err = db.Update(func(tx *bolt.Tx) error {
 		_, err := tx.CreateBucketIfNotExists([]byte("users"))
 		if err != nil {
-			return fmt.Errorf("could not create root bucket: %v", err)
+			return fmt.Errorf("could not create root bucket: %w", err)
 		}
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("could not set up buckets, %v", err)
+		return fmt.Errorf("could not set up buckets, %w", err)
 	}
 	return nil
 }
@@ -62,13 +62,13 @@ func SetUserData(id string, user models.User) error {
 	db, err := bolt.Open(DBPath(), fileMode, nil)
 
 	if err != nil {
-		return fmt.Errorf("could not open db, %v", err)
+		return fmt.Errorf("could not open db, %w", err)
 	}
 	defer db.Close()
 
 	userBytes, err := json.Marshal(user)
 	if err != nil {
-		return fmt.Errorf("could not marshal entry json: %v", err)
+		return fmt.Errorf("could not marshal entry json: %w", err)
 	}
 	err = db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("users"))
@@ -77,7 +77,7 @@ func SetUserData(id string, user models.User) error {
 		}
 		err := b.Put([]byte(id), []byte(userBytes))
 		if err != nil {
-			return fmt.Errorf("could not insert entry: %v", err)
+			return fmt.Errorf("could not insert entry: %w", err)
 		}
 
 		return nil
@@ -90,7 +90,7 @@ func GetUserByID(id string) (models.User, error) {
 	db, err := bolt.Open(DBPath(), fileMode, nil)
 
 	if err != nil {
-		return models.User{}, fmt.Errorf("could not open db, %v", err)
+		return models.User{}, fmt.Errorf("could not open db, %w", err)
 	}
 
 	defer db.Close()
@@ -103,7 +103,7 @@ func GetUserByID(id string) (models.User, error) {
 		}
 		user := b.Get([]byte(id))
 		if err := json.Unmarshal(user, &userData); err != nil {
-			return fmt.Errorf("could not unmarshal user %q: %v", id, err)
+			return fmt.Errorf("could not unmarshal user %q: %w", id, err)
 		}
 
 		return nil
@@ -135,11 +135,6 @@ func SetAPIData() {
 		log.Println("Adding default user")
 
 		APIKey := utils.RandString(10)
-
-		port := viper.GetString("port")
-		if port == "" {
-			port = "3000"
-		}
 
 		user := models.User{Password: utils.PasswordHash("123456"), Apikey: APIKey}
 		err = SetUserData("1", user)
