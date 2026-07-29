@@ -173,13 +173,13 @@ func runInfoWatch(ctx context.Context, w io.Writer, r infoResource, asJSON bool,
 
 	for {
 		if isTTY(w) {
-			fmt.Fprint(w, "\x1b[H\x1b[2J")
+			_, _ = fmt.Fprint(w, "\x1b[H\x1b[2J")
 		}
 		if err := runInfoOnce(w, r, asJSON); err != nil {
 			fmt.Fprintln(os.Stderr, "Error:", err)
 		}
 		if !asJSON {
-			fmt.Fprintln(w)
+			_, _ = fmt.Fprintln(w)
 		}
 		select {
 		case <-ctx.Done():

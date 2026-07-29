@@ -56,8 +56,8 @@ func renderValue(w io.Writer, v any) error {
 	rv := reflect.ValueOf(v)
 	for rv.Kind() == reflect.Pointer {
 		if rv.IsNil() {
-			fmt.Fprintln(w, "(none)")
-			return nil
+			_, err := fmt.Fprintln(w, "(none)")
+			return err
 		}
 		rv = rv.Elem()
 	}
@@ -77,7 +77,8 @@ func renderValue(w io.Writer, v any) error {
 
 // renderObject prints one "Label:\tvalue" line per exported field of rv onto
 // tw, recursing (with deeper indent) into nested structs such as
-// overview.Overview's embedded HostInfo and RAM.
+// overview.Overview's embedded HostInfo and RAM. Write errors are dropped
+// here because tw retains the first one and the caller's Flush reports it.
 func renderObject(tw *tabwriter.Writer, rv reflect.Value, indent int, color bool) {
 	prefix := strings.Repeat("  ", indent)
 	t := rv.Type()
@@ -89,11 +90,11 @@ func renderObject(tw *tabwriter.Writer, rv reflect.Value, indent int, color bool
 		fv := rv.Field(i)
 		label := colorize(color, ansiBold+ansiCyan, fieldLabel(f))
 		if fv.Kind() == reflect.Struct {
-			fmt.Fprintf(tw, "%s%s:\n", prefix, label)
+			_, _ = fmt.Fprintf(tw, "%s%s:\n", prefix, label)
 			renderObject(tw, fv, indent+1, color)
 			continue
 		}
-		fmt.Fprintf(tw, "%s%s:\t%s\n", prefix, label, formatScalar(fv))
+		_, _ = fmt.Fprintf(tw, "%s%s:\t%s\n", prefix, label, formatScalar(fv))
 	}
 }
 
@@ -113,7 +114,7 @@ func renderTable(w io.Writer, rv reflect.Value, color bool) error {
 	if elemType.Kind() != reflect.Struct {
 		tw := tabwriter.NewWriter(w, 0, 2, 2, ' ', 0)
 		for i := 0; i < rv.Len(); i++ {
-			fmt.Fprintln(tw, formatScalar(rv.Index(i)))
+			_, _ = fmt.Fprintln(tw, formatScalar(rv.Index(i)))
 		}
 		return tw.Flush()
 	}
@@ -134,7 +135,7 @@ func renderTable(w io.Writer, rv reflect.Value, color bool) error {
 	for i, h := range headers {
 		headerCells[i] = colorize(color, ansiBold+ansiCyan, h)
 	}
-	fmt.Fprintln(tw, strings.Join(headerCells, "\t"))
+	_, _ = fmt.Fprintln(tw, strings.Join(headerCells, "\t"))
 
 	for i := 0; i < rv.Len(); i++ {
 		row := rv.Index(i)
@@ -145,7 +146,7 @@ func renderTable(w io.Writer, rv reflect.Value, color bool) error {
 		for j, fi := range fieldIdx {
 			cells[j] = formatScalar(row.Field(fi))
 		}
-		fmt.Fprintln(tw, strings.Join(cells, "\t"))
+		_, _ = fmt.Fprintln(tw, strings.Join(cells, "\t"))
 	}
 	return tw.Flush()
 }

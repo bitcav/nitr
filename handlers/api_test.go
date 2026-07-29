@@ -397,8 +397,7 @@ func TestProcessSortOrderLimitSearch(t *testing.T) {
 	type tc struct {
 		name       string
 		query      string
-		wantPids   []string // in expected order, as they must appear in the JSON array
-		wantStatus int
+		wantPids []string // in expected order, as they must appear in the JSON array
 	}
 	cases := []tc{
 		{
