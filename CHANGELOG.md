@@ -212,6 +212,59 @@ behavioral and API changes that would be considered breaking after 1.0; patch
   current directory, sets the exec bit, and runs `nitr version` to
   confirm it works — modeled on direnv's installer, with no root or sudo
   step anywhere (the README's previous `sudo install` step is gone). ([4935256](https://github.com/bitcav/nitr/commit/4935256))
+- **Opt-in metric history retention in `nitr.db`, with time-range queries
+  on the four usage-metric endpoints.** Three new config keys follow the
+  standard `--flag > NITR_* env > config.ini > default` precedence:
+  `history_enabled` (`--history-enabled`, `NITR_HISTORY_ENABLED`,
+  **default off**), `history_interval` (`--history-interval`,
+  `NITR_HISTORY_INTERVAL`, default `10` seconds), and
+  `history_retention_hours` (`--history-retention-hours`,
+  `NITR_HISTORY_RETENTION_HOURS`, default `24`). When enabled, a
+  background sampler writes one CPU/RAM/disk/bandwidth sample every
+  `history_interval` seconds — all four in a single transaction, one
+  fsync per tick — and prunes samples older than the retention window in
+  the same transaction, so steady state at the defaults is 8640 samples
+  per metric (24h at 10s) and the bbolt file plateaus at that high-water
+  size rather than growing without bound. Retention defaults **off**
+  deliberately, not as an oversight: sustained small writes wear
+  flash/SD storage, and Raspberry Pi is an explicitly targeted
+  deployment, so SBC users opt in knowing the tradeoff. On the query
+  side, `/api/v1/cpu`, `/ram`, `/disks`, and `/bandwidth` now accept
+  `?from=`, `?to=`, and `?resolution=`: with **any** of them present the
+  response switches to a series of retained samples,
+  `[{"timestamp":"2026-07-29T15:44:28.502661692Z","data":{…}}, …]`,
+  where each `data` carries the exact payload the endpoint's
+  instantaneous form returns; `from`/`to` take RFC3339 or Unix seconds
+  (defaulting to the oldest retained sample and now), and `resolution`
+  thins to at most one sample per that many seconds, keeping the first
+  sample in each window without averaging or altering payloads. **With
+  none of the parameters present the response is byte-identical to
+  before this change** — existing calls are unaffected. With retention
+  disabled, any range parameter returns `400`
+  `{"message":"metric history retention is disabled; set
+  history_enabled (off by default) to use from/to/resolution","status":400}`.
+  Verified against the built binary: a default run leaves no `history`
+  bucket in `nitr.db` and range parameters return the 400 above; with
+  `--history-enabled --history-interval 1` the bucket appears with 10
+  samples per metric after ~10s, the instantaneous `/cpu` payload is
+  unchanged, `?resolution=5` thins 10 samples to 3, and `?from=garbage`
+  returns `400 invalid from`. ([bd6dbd9](https://github.com/bitcav/nitr/commit/bd6dbd9))
+- A **`linux/arm64` cross-compile target and an `arm64-probe` CI job**,
+  the evidence-gathering step toward shipping ARM64 (Raspberry Pi / ARM
+  SBC / ARM VPS). CI now builds `nitr_linux_arm64` and uploads it with
+  the other build artifacts, and a new job executes that exact binary on
+  a real ARM64 runner (`ubuntu-24.04-arm`), probes every `/api/v1/*`
+  endpoint via `scripts/linux_arm64_endpoint_probe.sh`, and uploads a
+  per-endpoint report. The job is **evidence-only, not a release gate**:
+  it fails CI only if the binary won't run, the server won't start, or
+  the API key can't be obtained — a red endpoint cell in the report is a
+  finding, not a failure (a follow-up commit restores the exec bit the
+  artifact download drops, so a download artifact is not misdiagnosed as
+  a platform verdict). `nitr_linux_arm64` is deliberately **absent from
+  the Draft Release artifact list** — it joins only once the probe shows
+  the core endpoints working on real ARM64 hardware — so **linux/arm64
+  is not a published or supported target yet**; the README's "under
+  evaluation" framing stands. ([31fe814](https://github.com/bitcav/nitr/commit/31fe814), [25ffecf](https://github.com/bitcav/nitr/commit/25ffecf))
 
 ### Changed
 
