@@ -115,7 +115,7 @@
       "get": {
         "operationId": "getDisks",
         "summary": "Disk usage",
-        "description": "With no query parameters this returns the instantaneous disk payload. With any of from/to/resolution present it returns a time-range series of retained samples instead (requires history retention, off by default: history_enabled).",
+        "description": "With no query parameters this returns the instantaneous disk payload. Bind mounts duplicating an already-listed device (e.g. /snap) are excluded (gopsutil v4's disk.Partitions). With any of from/to/resolution present it returns a time-range series of retained samples instead (requires history retention, off by default: history_enabled).",
         "parameters": [
           { "$ref": "#/components/parameters/HistoryFrom" },
           { "$ref": "#/components/parameters/HistoryTo" },
@@ -485,7 +485,7 @@
         "type": "object",
         "properties": {
           "name": { "type": "string" },
-          "type": { "type": "string", "description": "Drive type, e.g. \"SSD\", \"HDD\", \"unknown\"." },
+          "type": { "type": "string", "enum": ["unknown", "hdd", "fdd", "odd", "ssd", "virtual"], "description": "Drive type from ghw's drive-type detection; always lowercase on the wire (ghw's DriveType.MarshalJSON lowercases). \"virtual\" covers loop devices, \"unknown\" covers ram disks and undetected types." },
           "model": { "type": "string" },
           "serial": { "type": "string" }
         },
@@ -626,12 +626,12 @@
           "usedPercent": { "type": "number", "description": "Usage percentage, 0-100." },
           "sin": { "type": "integer", "description": "Bytes swapped in since boot." },
           "sout": { "type": "integer", "description": "Bytes swapped out since boot." },
-          "pgin": { "type": "integer", "description": "Swap pages read in." },
-          "pgout": { "type": "integer", "description": "Swap pages written out." },
-          "pgfault": { "type": "integer" },
-          "pgmajfault": { "type": "integer", "description": "Linux only; 0 elsewhere." }
+          "pgIn": { "type": "integer", "description": "Swap pages read in." },
+          "pgOut": { "type": "integer", "description": "Swap pages written out." },
+          "pgFault": { "type": "integer" },
+          "pgMajFault": { "type": "integer", "description": "Linux only; 0 elsewhere." }
         },
-        "required": ["total", "used", "free", "usedPercent", "sin", "sout", "pgin", "pgout", "pgfault", "pgmajfault"]
+        "required": ["total", "used", "free", "usedPercent", "sin", "sout", "pgIn", "pgOut", "pgFault", "pgMajFault"]
       },
       "LoadAvg": {
         "type": "object",
@@ -646,9 +646,11 @@
         "type": "object",
         "properties": {
           "sensorKey": { "type": "string", "description": "Sensor identifier, platform-dependent (e.g. a hwmon label)." },
-          "sensorTemperature": { "type": "number", "description": "Degrees Celsius." }
+          "temperature": { "type": "number", "description": "Degrees Celsius." },
+          "sensorHigh": { "type": "number", "description": "High threshold in degrees Celsius; 0 when the sensor exposes none." },
+          "sensorCritical": { "type": "number", "description": "Critical threshold in degrees Celsius; 0 when the sensor exposes none." }
         },
-        "required": ["sensorKey", "sensorTemperature"]
+        "required": ["sensorKey", "temperature", "sensorHigh", "sensorCritical"]
       },
       "CPUSample": {
         "type": "object",

@@ -382,6 +382,13 @@ behavioral and API changes that would be considered breaking after 1.0; patch
 
 ### Fixed
 
+- **The embedded OpenAPI spec now matches the migrated wire format.**
+  `Drive.type` documents the lowercase `unknown`/`hdd`/`fdd`/`odd`/`ssd`/`virtual`
+  enum ghw v0.25 actually serializes (previously it omitted `virtual` and showed
+  wrong casing), `/sensors`' `sensorTemperature` → `temperature` (+ `sensorHigh`/
+  `sensorCritical`) and `/swap`'s `pgin`/`pgout`/`pgfault`/`pgmajfault` →
+  `pgIn`/`pgOut`/`pgFault`/`pgMajFault` key renames from gopsutil v4 are
+  corrected, and `/disks` notes that bind mounts are excluded.
 - **Six endpoints no longer panic when their hardware probe fails.**
   `/api/v1/baseboard`, `/api/v1/bios`, `/api/v1/chassis`,
   `/api/v1/product`, `/api/v1/drives` and `/api/v1/devices` logged a
