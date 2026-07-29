@@ -36,6 +36,22 @@ behavioral and API changes that would be considered breaking after 1.0; patch
   consumers matching on `mountPoint` should expect fewer entries.
   Root cause lives in the `github.com/bitcav/nitr-core` dependency
   (v0.2.0, [bb3fb9b](https://github.com/bitcav/nitr-core/commit/bb3fb9bfb578e9b35e9035b9b41ac1cb37992648)).
+- **`/api/v1/swap` renames its four page-fault keys.** The handler
+  serializes gopsutil's `SwapMemoryStat` directly, and the v2 → v4 bump
+  camel-cased its JSON tags: `pgin` → `pgIn`, `pgout` → `pgOut`,
+  `pgfault` → `pgFault`, `pgmajfault` → `pgMajFault`. **Consumers reading
+  the old lowercase keys get `undefined` after upgrading and must switch
+  to the new names.** The other six keys (`total`, `used`, `free`,
+  `usedPercent`, `sin`, `sout`) are unchanged. Verified by struct-tag
+  diff of v2.20.7 against v4.26.6 and against the live response.
+- **`/api/v1/sensors` renames `sensorTemperature` → `temperature` and adds
+  `sensorHigh`/`sensorCritical`.** Same mechanism: the handler serializes
+  gopsutil's `TemperatureStat` directly, and gopsutil v4 changed the tag
+  (the struct also moved from the `host` package to the new `sensors`
+  package). The two threshold keys are additive — new keys are not
+  breaking on their own — but the rename is: **consumers reading
+  `sensorTemperature` must switch to `temperature`.** `sensorKey` is
+  unchanged. Verified by struct-tag diff of v2.20.7 against v4.26.6.
 - **`/api/v1/product` no longer emits `assetTag`; the product name moved to a
   new `name` key.** The value serialized under `assetTag` was always the
   product **name** (`ghw.Product().Name`), never an asset tag — ghw's
@@ -312,10 +328,14 @@ behavioral and API changes that would be considered breaking after 1.0; patch
   everywhere, `process.Status()` now returns a slice (collapsed to its
   first element — byte-identical to v2's string on every supported
   platform), and `SensorsTemperatures` moved from the `host` package to
-  the new `sensors` package. The endpoint-visible consequences are the
-  two breaking entries above; everything else is byte-identical modulo
-  live-sampled values (measured with an identical before/after harness
-  across all 14 nitr-core collectors).
+   the new `sensors` package. The endpoint-visible consequences are the
+   breaking entries above. The before/after JSON harness covered the 14
+   **nitr-core collectors** only — everything they serve is byte-identical
+   modulo live-sampled values — but `/swap` and `/sensors` are serialized
+   straight from gopsutil by nitr's own handlers and never touch nitr-core,
+   so they were outside the harness; those endpoints were verified
+   separately by struct-tag comparison of v2.20.7 against v4.26.6, which
+   is how the two key renames above were found.
 - **`windows/arm64` now builds.** `GOOS=windows GOARCH=arm64 go build .`
   succeeds for the first time — it previously failed inside gopsutil
   v2 / go-ole. The full matrix — windows/{arm64,amd64,386},
@@ -385,10 +405,9 @@ behavioral and API changes that would be considered breaking after 1.0; patch
 - **The embedded OpenAPI spec now matches the migrated wire format.**
   `Drive.type` documents the lowercase `unknown`/`hdd`/`fdd`/`odd`/`ssd`/`virtual`
   enum ghw v0.25 actually serializes (previously it omitted `virtual` and showed
-  wrong casing), `/sensors`' `sensorTemperature` → `temperature` (+ `sensorHigh`/
-  `sensorCritical`) and `/swap`'s `pgin`/`pgout`/`pgfault`/`pgmajfault` →
-  `pgIn`/`pgOut`/`pgFault`/`pgMajFault` key renames from gopsutil v4 are
-  corrected, and `/disks` notes that bind mounts are excluded.
+  wrong casing), the `/sensors` and `/swap` schemas use the key names gopsutil
+  v4 emits (see the breaking entries above), and `/disks` notes that bind
+  mounts are excluded.
 - **Six endpoints no longer panic when their hardware probe fails.**
   `/api/v1/baseboard`, `/api/v1/bios`, `/api/v1/chassis`,
   `/api/v1/product`, `/api/v1/drives` and `/api/v1/devices` logged a
