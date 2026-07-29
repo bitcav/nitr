@@ -93,14 +93,12 @@ jobs:
           GOOS: linux
           GOARCH: '386'
         run: go build -o nitr_linux_386
-      # linux/arm64 is UNDER EVALUATION as a shipped target (Raspberry Pi /
-      # ARM SBC / ARM VPS audience): the arm64-probe job below executes this
-      # exact binary on a real ARM64 runner and smoke-gates it. It is built
-      # and uploaded but deliberately absent from the Draft Release `files:`
-      # list until the probe leg is green on real hardware. SMBIOS-dependent
-      # endpoints (/bios, /chassis, /baseboard, /product, /memory) are
-      # expected to be thin on SBCs, which have no SMBIOS — documented in
-      # the README, not a ship blocker.
+      # linux/arm64 is a shipped target (Raspberry Pi / ARM SBC / ARM VPS
+      # audience): the arm64-probe job below executes this exact binary on a
+      # real ARM64 runner and smoke-gates it, and it is included in the Draft
+      # Release `files:` list. SMBIOS-dependent endpoints (/bios, /chassis,
+      # /baseboard, /product, /memory) are expected to be thin on SBCs, which
+      # have no SMBIOS — documented in the README, not a ship blocker.
       - name: Build Linux arm64
         env:
           GOOS: linux
@@ -222,16 +220,12 @@ jobs:
         with:
           draft: true
           name: nitr ${{ github.ref_name }}
-          # nitr_linux_arm64 is built and uploaded (the arm64-probe job
-          # downloads it) but intentionally NOT released yet: it joins the
-          # list below only after the probe leg's first green run on real
-          # ARM64 hardware shows /cpu populated — under qemu-on-x86 /cpu
-          # 500s, and that must be ruled out on the real thing before we
-          # publish. (This comment must live OUTSIDE the `files: |` block:
-          # that is a literal scalar and `#` lines inside it are handed to
+          # (Any comment must live OUTSIDE the `files: |` block: that is a
+          # literal scalar and `#` lines inside it are handed to
           # action-gh-release as glob patterns, not comments.)
           files: |
             nitr_linux_amd64
             nitr_linux_386
+            nitr_linux_arm64
             nitr_windows_amd64.exe
             nitr_windows_386.exe
