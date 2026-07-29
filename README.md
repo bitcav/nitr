@@ -182,7 +182,13 @@ Go to [http://localhost:8000](http://localhost:8000) in your web browser
 
 Access with default **password**: **123456**
 
+![preview](https://raw.githubusercontent.com/bitcav/nitr/master/images/panel-metrics-web.png)
+
+> Metrics tab — live CPU, RAM and disk usage (dark theme)
+
 ![preview](https://raw.githubusercontent.com/bitcav/nitr/master/images/panel-web.png)
+
+> Overview tab — host info, API key and QR code
 
 The panel is organised into two tabs — **Overview** (host info, API key, QR code) and **Metrics** — and supports a **dark/light theme** that follows the OS `prefers-color-scheme` by default with a manual toggle in the header; the choice is stored in the browser's `localStorage` and overrides the OS setting in both directions.
 
