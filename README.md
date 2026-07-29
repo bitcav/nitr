@@ -18,7 +18,7 @@ A **cross-platform remote monitoring tool** written in Go that exposes **system 
     <img alt="Nitr" src="https://raw.githubusercontent.com/bitcav/nitr/master/images/usage.gif" style="width:100%;">
 </p>
 
-> curl + jq demo
+> CLI demo — basic system info, no API key required
 
 **Quick start:**
 
