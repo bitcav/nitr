@@ -35,7 +35,7 @@ SRV_PID=$!
 # server can't hold the port and break the next run.
 cleanup() {
   kill -9 "$SRV_PID" 2>/dev/null || true
-  rm -rf "$DATA_DIR" /tmp/nitr-demo-cookies /tmp/nitr-demo-start
+  rm -rf "$DATA_DIR" /tmp/nitr-demo-cookies /tmp/nitr-demo-start /tmp/nitr-demo-cli
 }
 trap cleanup EXIT
 
